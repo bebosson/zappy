@@ -14,17 +14,7 @@ pub mod zappy;
 pub mod action;
 
 
-fn handle_connection(mut stream: TcpStream) {
-    println!("here");
-    let buf_reader = BufReader::new(&mut stream);
-    let http_request: Vec<_> = buf_reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
 
-    println!("Request: {:#?}", http_request);
-}
 
 
 fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
@@ -35,25 +25,29 @@ fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
     
 }
 
-fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, team_names: &Vec<String>)
+fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args)
 {
     let mut buffer = [0 as u8; 32];
     let mut string_schrink: String = String::new();
     if let  Ok(_) = stream.read(& mut buffer)  {
 
         for i in buffer.as_slice(){
-            if *i == b'\0' {break;} //bancale 
+            if *i == b'\0' {break} //bancale 
             else {
                 string_schrink.push(*i as char);
             }
         }
         println!("{:?}", string_schrink);
-        match team_names.contains(&string_schrink){
+        match args.n.contains(&string_schrink){
             true => {
                 let i = hashmap
                 .entry( string_schrink)
                 .or_insert(0);
                 *i += 1;
+                if i > & mut args.c
+                {
+                    println!("ca fait beaucoup la non"); 
+                }
             }
             false => {
                 println!("bad_entry");
@@ -85,7 +79,7 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, team_names
 
 fn main() {
     let vec_args: Vec<String> = env::args().collect();
-    let server_arg: Args = Args::parial_new(vec_args);
+    let mut server_arg: Args = Args::parial_new(vec_args);
     // println!("{:?}", team_names);
     let mut table: HashMap<String, u8>= HashMap::new();
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
@@ -100,7 +94,7 @@ fn main() {
             // if sec % 5 == 0{
                 // println!("{:?}", sec);
                 send_bienvenue(& mut stream_wrt, msg);
-                receive(stream_wrt, & mut table, &server_arg.n);
+                receive(stream_wrt, & mut table, & mut server_arg);
                 println!("{:?}", table);
             // }
     

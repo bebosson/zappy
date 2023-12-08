@@ -3,7 +3,7 @@ pub mod args{
     #[derive(Debug)]
     pub struct Args{
         pub n: Vec<String>,
-        c: u8,
+        pub c: u8,
         // p: Option<u16>,
         // x: Option<u8>,
         // y: Option<u16>,
