@@ -1,9 +1,16 @@
 pub mod zappy{
-    use crate::{gamer::game::Game, args::args::Args};
+
+    use crate::{args::args::Args, gamecontrol::game::GameController};
 
     struct Zappy{
-        game: Game,
-        args: Args,
-        sockfd: u16,
+        game: Option<GameController>,
+        args: Option<Args>,
+        sockfd: Option<u16>,
+    }
+
+    impl Zappy{
+        // pub fn partial_new() -> Self{
+
+        // }
     }
 }

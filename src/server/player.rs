@@ -1,11 +1,5 @@
 pub mod player{
-    use crate::{ressources::ressources::Ressources, cell::cell::Point};
-
-    enum State{
-        Idle,
-        Wait,
-        Action,
-    }
+    use crate::{ressources::ressources::Ressources, cell::cell::Point, action::action::Action};
 
     pub enum Orientation{
         N,
@@ -14,10 +8,6 @@ pub mod player{
         O
     }
 
-    pub struct Action{
-        state: State,
-        count: u16,    
-    }
 
     pub struct Player{
         pub id: u16,
