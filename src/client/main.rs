@@ -36,7 +36,7 @@ fn main() {
                         }
                     },
                     Err(e) => {
-                        // println!("Failed to receive data: {}", e);
+                        println!("Failed to receive data: {}", e);
                     }
                 }
             }

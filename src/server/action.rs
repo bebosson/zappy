@@ -1,21 +1,40 @@
-pub mod action{
+pub mod action
+{
 
-    enum State{
+    enum State
+    {
         Idle,
         Wait,
         Action,
     }
-    enum EnumAction{
+    enum EnumAction
+    {
+        Noaction,
         Mouvement,
         Info,
         Death
     }
     
-    pub struct Action{
+    pub struct Action
+    {
         state: State,
         count: u16,  
         timestamp: u64,
         action: EnumAction,
+    }
+
+    impl Action
+    {
+        pub fn new() -> Self
+        {
+            Action
+            {
+                state: State::Idle,
+                count: 0,
+                timestamp: 0,
+                action: EnumAction::Noaction,
+            }
+        }
     }
     // enum Mouvement{
         //     Avance,

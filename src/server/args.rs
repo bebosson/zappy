@@ -1,51 +1,148 @@
 pub mod args{
+    use std::error::Error;
+    use std::fmt;
+    use std::collections::HashSet;
 
     #[derive(Debug)]
     pub struct Args{
         pub n: Vec<String>,
         pub c: u8,
-        // p: Option<u16>,
-        // x: Option<u8>,
-        // y: Option<u16>,
-        // t: Option<u16>
+        pub p: u16,
+        pub x: u8,
+        pub y: u8,
+        pub t: u16
     }
-    fn get_arg_of_teams(env_args: &Vec<String>) -> Option<Vec<String>>
+
+    #[derive(Debug)]
+    pub struct ParsingError {
+        description : String
+    }
+
+    impl ParsingError {
+        fn new(description : &str) -> ParsingError {
+            ParsingError { description: description.to_string() }
+        }
+    }
+
+    impl Error for ParsingError {}
+
+    impl fmt::Display for ParsingError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.description)
+        }
+    }
+
+/*
+    get teams name from the arg -n until -c is reach
+
+    params : 
+        env_args : arguments list
+    
+    return :
+        list of string with each team name
+
+    TODO:   - changer la dependance au -c (ex: il n'y a pa de -c)
+            - -c placer avant -n ne doit pas declencher d'erreur
+*/
+
+    fn get_team_name(env_args: &Vec<String>) -> Result<Vec<String>, ParsingError>
     {
         let flag_n = "-n";
         let flag_c: &str = "-c";
         let name_team: Vec<String>;
-        let index_n = env_args.iter().position(|r| r == flag_n).unwrap();
-        let index_c = env_args.iter().position(|r| r == flag_c).unwrap();
+
+        let index_n = env_args.iter()
+            .position(|r| r == flag_n)
+            .ok_or(ParsingError::new("argument -n missing"))?;
         
+        if let Some(_) = env_args[index_n + 1..].iter()
+            .position(|r| r == flag_n) {
+                return Err(ParsingError::new("argument -n specified twice"));
+            };
+        
+        
+        let index_c = env_args.iter()
+            .position(|r| r == flag_c)
+            .ok_or(ParsingError::new("argument -c missing"))?;
+
+        println!("index_c {:?}", index_c);
+        println!("index_n {:?}", index_n);
+        if index_c <= index_n + 1 {
+            return Err(ParsingError::new("your -c argument must be after -n or you must specify team name"));
+        }
         name_team = env_args[index_n..index_c].to_vec();
-        // println!("{:?}", env_args.index(flag_n));
-        Some(name_team)
+        Ok(name_team)
     }
-    fn get_arg_num_by_team(env_args: &Vec<String>) -> Option<u8>
+
+/*
+    get teams name from the arg -n until -c is reach
+
+    params : 
+        env_args : arguments list
+    
+    return :
+        list of string with each team name
+*/
+    fn get_nb_team(env_args: &Vec<String>) -> Result<u8, ParsingError>
     {
         let flag_c: &str = "-c";
-        let index_c = env_args.iter().position(|r| r == flag_c).unwrap();
-        let player_by_team_slice = &env_args[index_c + 1 ..];
-        if player_by_team_slice.len() > 1 {
-            return None
-        }
-        else{
-            return Some(player_by_team_slice[0].parse::<u8>().unwrap()) // DAMN
-            
-        }
-        
+        let index_c = env_args
+            .iter()
+            .position(|r| r == flag_c)
+            .ok_or(ParsingError::new("argument -c missing"))?;
 
+        if index_c >= env_args.len() - 1 {
+            return Err(ParsingError::new("parameter -c require integer but missing here"));
+        }
+
+        let player_by_team_slice = &env_args[index_c + 1];
+        let ret = player_by_team_slice
+            .parse::<u8>()
+            .ok();
+        ret.ok_or(ParsingError::new("Error: -c option require integer"))
     }
-    impl Args{
-        pub fn parial_new(env_args: Vec<String>) -> Self{
-            // env_args.
-            // let vec_env_args: Vec<String> = env::args().collect();
-            let name_teams: Vec<String> = get_arg_of_teams(&env_args).unwrap();
-            let num_by_team = get_arg_num_by_team(&env_args).unwrap();
-            Args{
-                n: name_teams,
-                c: num_by_team,
+
+
+    fn find_duplicates(list: &Vec<String>) -> Vec<String> 
+    {
+        let mut seen = HashSet::new();
+        let mut duplicates = Vec::new();
+
+        for item in list.iter() {
+            if !seen.insert(item.clone()) {
+                // If the item is not added to the set (i.e., it was already present), it's a duplicate
+                duplicates.push(item.clone());
             }
         }
+        duplicates
     }
+
+    impl Args{
+        pub fn parial_new(env_args: Vec<String>) -> Result<Self, ParsingError>{
+            // env_args.
+            // let vec_env_args: Vec<String> = env::args().collect();
+            let name_teams: Vec<String> = get_team_name(&env_args)?;
+
+            let duplicates = find_duplicates(&name_teams);
+            if duplicates.is_empty() == false {
+                return Err(ParsingError::new(format!("team name {:?} are duplicates", duplicates).as_str()));
+            }
+
+            let num_by_team = get_nb_team(&env_args)?;
+            //println!("wesh c'est quoi les bails {}", num_by_team);
+
+            let args = Args{
+                n: name_teams,
+                c: num_by_team,
+                x: 10,
+                y: 10,
+                p: 1312,
+                t: 1,
+            };
+            //println!("igo faut qu j me taille {:?}", args);
+
+            Ok(args)
+        }
+    }
+
 }

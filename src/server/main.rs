@@ -1,6 +1,6 @@
-use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write, Read}, time::SystemTime, str::from_utf8, collections::HashMap, env};
+use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write, Read}, time::SystemTime, str::from_utf8, collections::HashMap, env, fmt::Error, error::Error as GenericError};
 
-use args::args::Args;
+use args::args::{Args, ParsingError};
 
 //add module in the crate root
 pub mod args;
@@ -13,7 +13,7 @@ pub mod egg;
 pub mod zappy;
 pub mod action;
 
-
+static SERVER_PORT: u16 = 1312;
 
 
 
@@ -27,27 +27,32 @@ fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
 
 fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args)
 {
-    let mut buffer = [0 as u8; 32];
+    let mut buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
     let mut string_schrink: String = String::new();
+    
     if let  Ok(_) = stream.read(& mut buffer)  {
-
+        
         for i in buffer.as_slice(){
             if *i == b'\0' {break} //bancale 
             else {
                 string_schrink.push(*i as char);
             }
         }
+        // let mut ref_string_shrink = &string_schrink;
         println!("{:?}", string_schrink);
         match args.n.contains(&string_schrink){
             true => {
                 let i = hashmap
-                .entry( string_schrink)
+                .entry( string_schrink.clone())
                 .or_insert(0);
                 *i += 1;
                 if i > & mut args.c
                 {
-                    println!("ca fait beaucoup la non"); 
+                    println!("team {:?} is full", string_schrink);
+                    //display arsenal/chelsea est full
+                    //couper la connexion 
                 }
+                //create a new id + send 
             }
             false => {
                 println!("bad_entry");
@@ -58,31 +63,20 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mu
     // mut &mut hashtable 
     
 }
-/*let now = SystemTime::now();
-
-   // we sleep for 2 seconds
-   sleep(Duration::new(2, 0));
-   match now.elapsed() {
-       Ok(elapsed) => {
-           // it prints '2'
-           println!("{}", elapsed.as_secs());
-       }
-       Err(e) => {
-           // an error occurred!
-           println!("Error: {e:?}");
-       }
-   } */
-   // int toto;
-// int *ptr_toto = &toto;
-// ptr_toto += 1; toto 
 
 
-fn main() {
+fn parsing() -> Result<Args, ParsingError> {
     let vec_args: Vec<String> = env::args().collect();
-    let mut server_arg: Args = Args::parial_new(vec_args);
+    let mut server_arg: Args = Args::parial_new(vec_args)?;
+    Ok(server_arg)
+}
+
+fn main() -> Result<(), Box<dyn GenericError>> {
+    let mut vec_args = parsing()?;
+
     // println!("{:?}", team_names);
     let mut table: HashMap<String, u8>= HashMap::new();
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
     let first = SystemTime::now();
     let msg = b"Bienvenue";
         for stream in listener.incoming() {
@@ -91,15 +85,13 @@ fn main() {
             let sec = first.elapsed().unwrap().as_secs();
             println!("{:?}", sec);
 
-            // if sec % 5 == 0{
-                // println!("{:?}", sec);
-                send_bienvenue(& mut stream_wrt, msg);
-                receive(stream_wrt, & mut table, & mut server_arg);
-                println!("{:?}", table);
-            // }
+            send_bienvenue(& mut stream_wrt, msg);
+            receive(stream_wrt, & mut table, & mut vec_args);
+            println!("{:?}", table);
     
             // handle_connection(stream);
     
         }
+        Ok(())
     
 }

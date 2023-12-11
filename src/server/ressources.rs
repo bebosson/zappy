@@ -8,4 +8,10 @@ pub mod ressources{
         phiras: u8,
         thystate: u8,
     }
+
+    impl Ressources{
+        pub fn new() -> Self {
+            Ressources { food: 0, sibur: 0, mendiane: 0, linemate: 0, deraumere: 0, phiras: 0, thystate: 0 }
+        }
+    }
 }

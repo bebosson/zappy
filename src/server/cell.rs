@@ -9,4 +9,11 @@ pub mod cell{
         //players: linkedList<Player>,
         //egg: LinkedList<Egg>,
     }
+
+    impl Point{
+        pub fn new(x: u32, y: u32) -> Self
+        {
+            Point {x, y}
+        }
+    }
 }

@@ -19,4 +19,20 @@ pub mod player{
         pub level: u8,
         pub state: Action,
     }
+
+    impl Player{
+        pub fn new() -> Self
+        {
+            Player{
+                id: 0,
+                port: 0,
+                coor: Point::new(0,0),
+                ivt: Ressources::new(),
+                life: 1260,
+                orient: Orientation::N,
+                level: 1,
+                state: Action::new(),
+            }
+        }
+    }
 }
