@@ -4,3 +4,8 @@ client/target
 client/Cargo.lock
 gfx/target
 gfx/Cargo.lock
+
+
+# Added by cargo
+
+/target
