@@ -2,14 +2,15 @@
 pub mod game{
     use std::collections::LinkedList;
 
-    use crate::{teams::teams::Teams, cell::cell::Cell, args::args::Args};
+    use crate::{teams::team::Team, args::args::Args};
 
+    #[derive(Debug)]
     pub struct GameController{
-        x: u8,
-        y: u8,
+        pub x: u8,
+        pub y: u8,
         // cases: Vec<Vec<Cell>>,
-        teams: Vec<Teams>,
-        timestamp: u32,
+        pub teams: Vec<Team>,
+        pub timestamp: u32,
         //  recv_pkt: Vec<Tcphdr(?)>
         //  send_pkt: Vec<ToSend>
     }
@@ -20,14 +21,21 @@ pub mod game{
     }
 
     impl GameController{
-        // pub fn new(args: &mut Args) -> Self
-        // {
-        //     GameController{
-        //         x :  args.x,
-        //         y: args.y,
-        //         teams: args.n,
-        //         t = args.t
-        //     }
-        // }
+        pub fn new(args: &Args) -> Self
+        {
+            let mut vec_teams: Vec<Team> = vec![];
+
+            args.n
+                .iter()
+                .map(|x| vec_teams.push(Team::new(&x.clone())))
+                .for_each(drop);
+
+            GameController{
+                x: args.x,
+                y: args.y,
+                teams: vec_teams,
+                timestamp: 0,
+            }
+        }
     }
 }

@@ -1,4 +1,6 @@
 pub mod ressources{
+    
+    #[derive(Debug)]
     pub struct Ressources{
         food: u8,
         sibur: u8,

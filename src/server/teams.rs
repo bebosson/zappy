@@ -2,7 +2,8 @@ pub mod team{
     use std::collections::LinkedList;
 
     use crate::{egg::egg::Egg, player::player::Player, args::args::Args};
-
+    
+    #[derive(Debug)]
     pub struct Team{
         pub name: String,
         pub port_start_index: u16,
@@ -13,7 +14,7 @@ pub mod team{
     
 
     impl Team{
-        fn new(name: &String) -> Self
+        pub fn new(name: &String) -> Self
         {
             Team{
                 name: name.clone(),

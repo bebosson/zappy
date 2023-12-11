@@ -1,6 +1,7 @@
-use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write, Read}, time::SystemTime, str::from_utf8, collections::HashMap, env, fmt::Error, error::Error as GenericError};
+use std::{net::{TcpListener, TcpStream}, io::{BufReader, BufRead, Write, Read}, time::SystemTime, str::from_utf8, collections::HashMap, env, fmt::Error, error::Error as GenericError, alloc::System};
 
 use args::args::{Args, ParsingError};
+use gamecontrol::game::GameController;
 
 //add module in the crate root
 pub mod args;
@@ -25,10 +26,11 @@ fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
     
 }
 
-fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args)
+fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, first: &SystemTime)
 {
     let mut buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
     let mut string_schrink: String = String::new();
+    let mut id_player = 0;
     
     if let  Ok(_) = stream.read(& mut buffer)  {
         
@@ -52,6 +54,12 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mu
                     //display arsenal/chelsea est full
                     //couper la connexion 
                 }
+                else {
+                    println!("{:?}", SystemTime::now());
+                    id_player = first.elapsed().unwrap().as_millis();
+                    println!("id = {:?}", id_player);
+                    stream.write(id_player.to_string().as_bytes());
+                }
                 //create a new id + send 
             }
             false => {
@@ -73,7 +81,8 @@ fn parsing() -> Result<Args, ParsingError> {
 
 fn main() -> Result<(), Box<dyn GenericError>> {
     let mut vec_args = parsing()?;
-
+    let mut game_ctrl = GameController::new(&vec_args);
+    println!("{:?}", game_ctrl);
     // println!("{:?}", team_names);
     let mut table: HashMap<String, u8>= HashMap::new();
     let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
@@ -86,7 +95,7 @@ fn main() -> Result<(), Box<dyn GenericError>> {
             println!("{:?}", sec);
 
             send_bienvenue(& mut stream_wrt, msg);
-            receive(stream_wrt, & mut table, & mut vec_args);
+            receive(stream_wrt, & mut table, & mut vec_args, &first);
             println!("{:?}", table);
     
             // handle_connection(stream);

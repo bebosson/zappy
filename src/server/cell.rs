@@ -1,5 +1,7 @@
 pub mod cell{
     use crate::ressources::ressources::Ressources;
+    
+    #[derive(Debug)]
     pub struct Point{
         x: u32,
         y: u32,

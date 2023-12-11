@@ -1,6 +1,7 @@
 pub mod player{
     use crate::{ressources::ressources::Ressources, cell::cell::Point, action::action::Action};
 
+    #[derive(Debug)]
     pub enum Orientation{
         N,
         E,
@@ -8,7 +9,7 @@ pub mod player{
         O
     }
 
-
+    #[derive(Debug)]
     pub struct Player{
         pub id: u16,
         pub port: u16,

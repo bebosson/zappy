@@ -1,12 +1,13 @@
 pub mod action
 {
-
+    #[derive(Debug)]
     enum State
     {
         Idle,
         Wait,
         Action,
     }
+    #[derive(Debug)]
     enum EnumAction
     {
         Noaction,
@@ -14,7 +15,7 @@ pub mod action
         Info,
         Death
     }
-    
+    #[derive(Debug)]
     pub struct Action
     {
         state: State,
