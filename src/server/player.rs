@@ -11,7 +11,7 @@ pub mod player{
 
     #[derive(Debug)]
     pub struct Player{
-        pub id: u128,
+        pub id: u32,
         pub port: u16,
         pub coor: Point,
         pub ivt: Ressources,
@@ -37,7 +37,7 @@ pub mod player{
             }
         }
 
-        pub fn new_with_id(id_a: u128) -> Self
+        pub fn new_with_id(id_a: u32) -> Self
         {
             Player{
                 id: id_a,

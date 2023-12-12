@@ -38,11 +38,10 @@ fn schrink_buffer(string_schrink: & mut String, buffer: & mut [u8; 32])
     }
 }
 
-fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, first: &SystemTime, game_ctrl: & mut GameController)
+fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
 {
     let mut buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
     let mut string_schrink: String = String::new();
-    let mut id_player = 0;
     
     if let  Ok(_) = stream.read(& mut buffer)  
     {
@@ -60,20 +59,20 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mu
                 if i == & mut args.c
                 {
                     println!("team {:?} is full", string_schrink);
+                    stream.write("Endconnection".to_string().as_bytes());
                     //display arsenal/chelsea est full
                     //kick the player
-                    stream.shutdown(Shutdown::Both).expect("shutdown call failed");
-                    // drop(stream)
+                    drop(stream)
                 }
                 else 
                 {
                     //create a new id + send 
                     *i += 1;
                     println!("{:?}", SystemTime::now());
-                    id_player = first.elapsed().unwrap().as_millis();
-                    println!("id = {:?}", id_player);
-                    stream.write(id_player.to_string().as_bytes());
-                    game_ctrl.get_team_and_push(&string_schrink, id_player);
+                    *id += 1;
+                    println!("id = {:?}", *id);
+                    stream.write(&*id.to_string().as_bytes());
+                    game_ctrl.get_team_and_push(&string_schrink, *id);
                     println!("{:#?}", game_ctrl);
                     // gamecontrol.
                     //enregistrer player ? 
@@ -98,27 +97,33 @@ fn parsing() -> Result<Args, ParsingError>
     Ok(server_arg)
 }
 
+
+
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut vec_args = parsing()?;
     println!("{:#?}", vec_args);
-
+    let mut id: u32 = 0;
     let mut game_ctrl = GameController::new(&vec_args);
     println!("{:#?}", game_ctrl);
     // println!("{:?}", team_names);
-    let mut table: HashMap<String, u8>= HashMap::new();
+    let mut hashmap: HashMap<String, u8>= HashMap::new();
     let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
-    let first = SystemTime::now();
     let msg = b"Bienvenue";
-        for stream in listener.incoming() {
+        for tcpstream in listener.incoming() {
             println!("Connection established!");
-            let mut stream_wrt = stream.unwrap();
-            let sec = first.elapsed().unwrap().as_secs();
-            println!("{:?}", sec);
-
-            send_bienvenue(& mut stream_wrt, msg);
-            receive(stream_wrt, & mut table, & mut vec_args, &first, & mut game_ctrl);
-            println!("{:?}", table);
+            let mut stream = tcpstream?;
+            send_bienvenue(& mut stream, msg);
+            if vec_args.client_all_connect(& mut hashmap) == false
+            {
+                receive(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+            }
+            else 
+            {
+                println!("all teams are full");
+                stream.write("Endconnection".to_string().as_bytes())?;
+                drop(stream);
+            }
     
             // handle_connection(stream);
     

@@ -16,12 +16,12 @@ fn flush(data: &mut [u8])
 }
 
 
+
 fn main() {
 
     let mut args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
-    let mut data = [0 as u8; 9]; // using 6 byte buffer
-    
+    let mut data = [0 as u8; 256]; // using 6 byte buffer
     println!("{:?}", args);
     
     
@@ -41,29 +41,30 @@ fn main() {
                 match stream.read(&mut data) 
                 {
                     Ok(_) => {
-                        if &data == b"Bienvenue" 
+                        // let our_str = from_utf8(&data).unwrap();
+                        let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
+                        let string_buffer = string_buffer.trim_matches(char::from(0));
+                        
+                        match string_buffer
                         {
-                            println!("Reply is ok! Send back teamname = {:?}", teamname);
-                            // data.;
-                            // stream.write(teamname.as_bytes()).unwrap();
-                            stream.write_all(teamname.as_bytes());
-                            flush(& mut data);
-                            
-                            match stream.read(&mut data)
+                            "Bienvenue" => 
                             {
-                                Ok(_) => {
-                                    println!("{:?}", &data);
-                                } 
-                                Err(e) => {
-                                    println!("Failed to receive data: {}", e);
-                                }  
+                                println!("Reply is ok! Send back teamname = {:?}", teamname);
+                                // data.;
+                                // stream.write(teamname.as_bytes()).unwrap();
+                                stream.write_all(teamname.as_bytes()); // on envoie le teamname
+                                flush(& mut data);
                             }
-                        } else 
-                        {
-                            let text = from_utf8(&data).unwrap();
-                            println!("id = {}", text);
-                            // exit(1);
-                        }
+                            "Endconnection" =>
+                            {
+                                exit(0);
+                            }
+                            _ => 
+                            {
+                                // let text = from_utf8(&data).unwrap();
+                                println!("id = {}", string_buffer);
+                            }   
+                        } 
                     },
                     Err(e) => 
                     {

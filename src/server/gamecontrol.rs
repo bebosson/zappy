@@ -1,6 +1,6 @@
 
 pub mod game{
-    use std::{collections::LinkedList, fmt};
+    use std::{collections::{LinkedList, HashMap}, fmt};
 
     use crate::{teams::team::Team, args::args::Args, player::player:: Player};
 
@@ -38,7 +38,7 @@ pub mod game{
             }
         }
 
-        pub fn get_team_and_push(& mut self, teamname: &String, id: u128)
+        pub fn get_team_and_push(& mut self, teamname: &String, id: u32)
         {
             for i in & mut self.teams
             {
@@ -48,6 +48,8 @@ pub mod game{
                 }
             }
         }
+
+       
     }
 
    

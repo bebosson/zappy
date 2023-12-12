@@ -1,7 +1,7 @@
 pub mod args{
     use std::error::Error;
     use std::fmt;
-    use std::collections::HashSet;
+    use std::collections::{HashSet, HashMap};
 
     #[derive(Debug)]
     pub struct Args{
@@ -143,6 +143,20 @@ pub mod args{
 
             Ok(args)
         }
+    
+        pub fn client_all_connect(&self, hashmap: &mut HashMap<String, u8>) -> bool
+        {
+                let len_team = self.n.len();
+                match hashmap
+                    .iter()
+                    .filter(|&(_, &key)| key == self.c)
+                    .map(|_| 1)
+                    .count() {
+                        hashmap_len if hashmap_len == self.n.len() => {return true;}
+                        _ => {return false;}
+                    }
+                
+                //on regrette rien 
+        }
     }
-
 }
