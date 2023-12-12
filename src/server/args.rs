@@ -70,7 +70,7 @@ pub mod args{
         if index_c <= index_n + 1 {
             return Err(ParsingError::new("your -c argument must be after -n or you must specify team name"));
         }
-        name_team = env_args[index_n..index_c].to_vec();
+        name_team = env_args[index_n + 1..index_c].to_vec();
         Ok(name_team)
     }
 

@@ -1,8 +1,8 @@
 
 pub mod game{
-    use std::collections::LinkedList;
+    use std::{collections::LinkedList, fmt};
 
-    use crate::{teams::team::Team, args::args::Args};
+    use crate::{teams::team::Team, args::args::Args, player::player:: Player};
 
     #[derive(Debug)]
     pub struct GameController{
@@ -37,5 +37,27 @@ pub mod game{
                 timestamp: 0,
             }
         }
+
+        pub fn get_team_and_push(& mut self, teamname: &String, id: u128)
+        {
+            for i in & mut self.teams
+            {
+                if i.name.eq(teamname) == true
+                {
+                    i.players.push(Player::new_with_id(id))
+                }
+            }
+        }
     }
+
+   
+
+    // impl fmt::Debug for GameController {
+    //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    //         writeln!(f, "GameController")?;
+    //         writeln!(f, "x: {}", self.x)?;
+    //         writeln!(f, "y: {}", self.y)?;
+    //         writeln!(f, "teams: {:#?}", self.teams)
+    //     }
+    // }
 }

@@ -11,7 +11,7 @@ pub mod player{
 
     #[derive(Debug)]
     pub struct Player{
-        pub id: u16,
+        pub id: u128,
         pub port: u16,
         pub coor: Point,
         pub ivt: Ressources,
@@ -21,6 +21,7 @@ pub mod player{
         pub state: Action,
     }
 
+    
     impl Player{
         pub fn new() -> Self
         {
@@ -35,5 +36,20 @@ pub mod player{
                 state: Action::new(),
             }
         }
+
+        pub fn new_with_id(id_a: u128) -> Self
+        {
+            Player{
+                id: id_a,
+                port: 0,
+                coor: Point::new(0,0),
+                ivt: Ressources::new(),
+                life: 1260,
+                orient: Orientation::N,
+                level: 1,
+                state: Action::new(),
+            }
+        }   
     }
+    
 }
