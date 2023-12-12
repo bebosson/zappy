@@ -154,7 +154,7 @@ pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) 
 fn parsing() -> Result<Args, ParsingError> 
 {
     let vec_args: Vec<String> = env::args().collect();
-    let server_arg: Args = Args::new(vec_args)?;
+    let mut server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
 }
 
@@ -282,7 +282,6 @@ fn main() -> Result<(), Box<dyn GenericError>>
         }
     }
 
-    println!("", {});
 
     Ok(())
     

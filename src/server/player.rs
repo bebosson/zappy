@@ -13,14 +13,14 @@ pub mod player
         O
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct Egg
     {
         count: u16,
         coord: Point,
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct Player
     {
         pub id: u32,
