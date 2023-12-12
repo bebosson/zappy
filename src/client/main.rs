@@ -7,8 +7,6 @@ use std::str::from_utf8;
 
 const BUF_SIZE: usize = 160;
 
-
-
 fn flush(data: &mut [u8])
 {
     for i in & mut *data{
