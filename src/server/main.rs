@@ -13,9 +13,9 @@ pub mod teams;
 pub mod egg;
 pub mod zappy;
 pub mod action;
+pub mod init;
 
 static SERVER_PORT: u16 = 1312;
-
 
 
 fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
@@ -28,6 +28,7 @@ fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
 
 fn schrink_buffer(string_schrink: & mut String, buffer: & mut [u8; 32])
 {
+    // instead of this fucntion there is an memcpy equivalent : dst.clone_from_slice(&src);
     for i in buffer.as_slice()
     {
         if *i == b'\0' {break} //bancale 
@@ -93,41 +94,54 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mu
 fn parsing() -> Result<Args, ParsingError> 
 {
     let vec_args: Vec<String> = env::args().collect();
-    let mut server_arg: Args = Args::parial_new(vec_args)?;
+    let mut server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
 }
 
 
-
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
+    let mut hashmap: HashMap<String, u8>= HashMap::new();
+    let msg = b"Bienvenue";
+
+    // parsing
     let mut vec_args = parsing()?;
     println!("{:#?}", vec_args);
-    let mut id: u32 = 0;
+
+
+    // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
     println!("{:#?}", game_ctrl);
-    // println!("{:?}", team_names);
-    let mut hashmap: HashMap<String, u8>= HashMap::new();
+
+
+    // network initialization
     let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
-    let msg = b"Bienvenue";
-        for tcpstream in listener.incoming() {
-            println!("Connection established!");
-            let mut stream = tcpstream?;
-            send_bienvenue(& mut stream, msg);
-            if vec_args.client_all_connect(& mut hashmap) == false
-            {
-                receive(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-            }
-            else 
-            {
-                println!("all teams are full");
-                stream.write("Endconnection".to_string().as_bytes())?;
-                drop(stream);
-            }
     
-            // handle_connection(stream);
-    
+
+    // listen for client connexion
+    for stream in listener.incoming()
+    {
+        let mut stream = tcpstream?;
+        println!("Connection established!");
+
+        send_bienvenue(& mut stream_wrt, msg);
+        if vec_args.client_all_connect(& mut hashmap) == false
+        {
+            receive(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
         }
-        Ok(())
+        else 
+        {
+            println!("all teams are full");
+            stream.write("Endconnection".to_string().as_bytes())?;
+            drop(stream);
+        }
+    }
+
+
+    // start game
+    // ...
+
+
+    Ok(())
     
 }

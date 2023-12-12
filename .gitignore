@@ -1,10 +1,5 @@
-server/target
-server/Cargo.lock
-client/target
-client/Cargo.lock
-gfx/target
-gfx/Cargo.lock
 
+Cargo.lock
 
 # Added by cargo
 

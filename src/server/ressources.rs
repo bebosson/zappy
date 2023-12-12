@@ -2,13 +2,13 @@ pub mod ressources{
     
     #[derive(Debug)]
     pub struct Ressources{
-        food: u8,
-        sibur: u8,
-        mendiane: u8,
-        linemate: u8,
-        deraumere: u8,
-        phiras: u8,
-        thystate: u8,
+        pub food: u8,
+        pub sibur: u8,
+        pub mendiane: u8,
+        pub linemate: u8,
+        pub deraumere: u8,
+        pub phiras: u8,
+        pub thystate: u8,
     }
 
     impl Ressources{

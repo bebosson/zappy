@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+<<<<<<< HEAD
 
+=======
+rand = "0.8.4"
+>>>>>>> main
 
 [[bin]]
 name = "server"
