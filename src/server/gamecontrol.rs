@@ -1,26 +1,29 @@
 
-pub mod game{
-    use std::{collections::LinkedList, fmt};
+pub mod game
+{
+    use crate::teams::team::Team;
+    use crate::args::args::Args;
+    use crate::player::player::Player;
+    use crate::cell::cell::Cell;
+    use crate::init::init::init_map_cells;
 
-    use crate::{teams::team::Team, args::args::Args, player::player:: Player};
-
+/**********************************************************************
+ * Struct GameController, this is the main structure of the program
+***********************************************************************/
     #[derive(Debug)]
-    pub struct GameController{
+    pub struct GameController
+    {
         pub x: u8,
         pub y: u8,
-        // cases: Vec<Vec<Cell>>,
+        pub cells: Vec<Vec<Cell>>,
         pub teams: Vec<Team>,
         pub timestamp: u32,
         //  recv_pkt: Vec<Tcphdr(?)>
         //  send_pkt: Vec<ToSend>
     }
 
-    struct ToSend{
-        gfx_pkt: Vec<String>,
-        client: String,
-    }
-
-    impl GameController{
+    impl GameController
+    {
         pub fn new(args: &Args) -> Self
         {
             let mut vec_teams: Vec<Team> = vec![];
@@ -30,9 +33,11 @@ pub mod game{
                 .map(|x| vec_teams.push(Team::new(&x.clone())))
                 .for_each(drop);
 
-            GameController{
+            GameController
+            {
                 x: args.x,
                 y: args.y,
+                cells : init_map_cells(args.x, args.y),
                 teams: vec_teams,
                 timestamp: 0,
             }
@@ -50,14 +55,13 @@ pub mod game{
         }
     }
 
-   
 
-    // impl fmt::Debug for GameController {
-    //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    //         writeln!(f, "GameController")?;
-    //         writeln!(f, "x: {}", self.x)?;
-    //         writeln!(f, "y: {}", self.y)?;
-    //         writeln!(f, "teams: {:#?}", self.teams)
-    //     }
-    // }
+/**********************************************************************
+ * Struct ToSend
+***********************************************************************/
+    struct ToSend
+    {
+        gfx_pkt: Vec<String>,
+        client: String,
+    }
 }

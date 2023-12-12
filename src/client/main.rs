@@ -5,24 +5,22 @@ use std::process::exit;
 use std::str::from_utf8;
 
 
-
-
 fn flush(data: &mut [u8])
 {
     for i in & mut *data{
         *i = 0;
     }
-    println!("{:?}", data);
+    //println!("{:?}", data);
 }
 
 
 fn main() {
 
-    let mut args: Vec<String> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
     let mut data = [0 as u8; 9]; // using 6 byte buffer
     
-    println!("{:?}", args);
+    //println!("{:?}", args);
     
     
     match TcpStream::connect("localhost:1312") 

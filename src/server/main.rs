@@ -13,9 +13,9 @@ pub mod teams;
 pub mod egg;
 pub mod zappy;
 pub mod action;
+pub mod init;
 
 static SERVER_PORT: u16 = 1312;
-
 
 
 fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
@@ -28,6 +28,7 @@ fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
 
 fn schrink_buffer(string_schrink: & mut String, buffer: & mut [u8; 32])
 {
+    // instead of this fucntion there is an memcpy equivalent : dst.clone_from_slice(&src);
     for i in buffer.as_slice()
     {
         if *i == b'\0' {break} //bancale 
@@ -94,35 +95,52 @@ fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mu
 fn parsing() -> Result<Args, ParsingError> 
 {
     let vec_args: Vec<String> = env::args().collect();
-    let mut server_arg: Args = Args::parial_new(vec_args)?;
+    let mut server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
 }
 
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
+    let mut table: HashMap<String, u8>= HashMap::new();
+    let msg = b"Bienvenue";
+
+
+    // parsing
     let mut vec_args = parsing()?;
     println!("{:#?}", vec_args);
 
+
+    // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
     println!("{:#?}", game_ctrl);
-    // println!("{:?}", team_names);
-    let mut table: HashMap<String, u8>= HashMap::new();
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
-    let first = SystemTime::now();
-    let msg = b"Bienvenue";
-        for stream in listener.incoming() {
-            println!("Connection established!");
-            let mut stream_wrt = stream.unwrap();
-            let sec = first.elapsed().unwrap().as_secs();
-            println!("{:?}", sec);
 
-            send_bienvenue(& mut stream_wrt, msg);
-            receive(stream_wrt, & mut table, & mut vec_args, &first, & mut game_ctrl);
-            println!("{:?}", table);
+
+    // network initialization
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
     
-            // handle_connection(stream);
+    // get current time for game cadency
+    let first = SystemTime::now();
     
-        }
-        Ok(())
+    // listen for client connexion
+    for stream in listener.incoming()
+    {
+        println!("Connection established!");
+        let mut stream_wrt = stream.unwrap();
+        let sec = first.elapsed().unwrap().as_secs();
+        println!("{:?}", sec);
+
+        send_bienvenue(& mut stream_wrt, msg);
+        receive(stream_wrt, & mut table, & mut vec_args, &first, & mut game_ctrl);
+        println!("{:?}", table);
+
+        // handle_connection(stream);
+    }
+
+
+    // start game
+    // ...
+
+
+    Ok(())
     
 }
