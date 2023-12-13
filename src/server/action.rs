@@ -72,6 +72,20 @@ pub mod action
             }
         }
 
+        pub fn action_with_const(action_const : ActionType) -> Self
+        {
+            // let toto = action_const
+            Action
+            {
+                state: State::Idle,
+                count: action_const.2,
+                timestamp: 0,
+                action: action_const.0,
+            }
+        }
+        
+        
+
         // a refaire
         pub fn avance(game: GameController, id: u32) -> bool
         {
@@ -84,4 +98,39 @@ pub mod action
         }
     }
 
+
+    fn is_valid_obj(object: &str)
+    {
+        match object
+        {
+            "food" => println!("it is food"),
+            "linemate" => println!("it is linemate"),
+            "deraumere" => println!("it is deraumere"),
+            "sibur" => println!("it is sibur"),
+            "mendiane" => println!("it is mendiane"),
+            "phiras" => println!("it is phiras"),
+            "thystame" => println!("it is thystame"),
+            _ => println!("it is ta mere")
+        }
+    } 
+
+    fn is_valid_cmd(buf: &str)
+    {
+        match buf
+        {
+            "avance" => return AVANCE,
+            "droite" => println!("droite ok"),
+            "gauche" => println!("gauche ok"),
+            "voir" => println!("voir ok"),
+            "inventaire" => println!("inventaire ok"),
+            txt if txt.starts_with("prend ") => { print!("prend ok => "); is_valid_obj(&buf[6..]);},
+            txt if txt.starts_with("pose ") => { print!("pose ok => "); is_valid_obj(&buf[5..]);},
+            "expulse" => println!("expulse ok"),
+            txt if txt.starts_with("broadcast ") => println!("broadcast ok"),
+            "incantation" => println!("incantation ok"),
+            "fork" => println!("fork ok"),
+            "connect_nbr" => println!("connect_nbr ok"),
+            _ => println!("###PAS OK"),
+        }
+    }
 }
