@@ -1,0 +1,12 @@
+avance
+droite
+gauche
+voir
+inventaire
+prend <object>
+pose <object>
+expulse
+broadcast <text>
+incantation
+fork
+connect_nbr
