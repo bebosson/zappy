@@ -1,5 +1,8 @@
-use std::{net::{TcpListener, TcpStream, Shutdown}, io::{BufReader, BufRead, Write, Read}, time::SystemTime, str::from_utf8, collections::HashMap, env, fmt::Error, error::Error as GenericError, alloc::System};
-
+use std::collections::HashMap;
+use std::env;
+use std::error::Error as GenericError;
+use std::io::{Write, Read};
+use std::net::{TcpListener, TcpStream};
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 
@@ -18,65 +21,87 @@ pub mod init;
 static SERVER_PORT: u16 = 1312;
 
 
-fn send_bienvenue(stream: & mut TcpStream, msg: &[u8])
+
+
+ /***********************************************************************************
+     * Simple implementation of cpy_from_slice use for translate the buffer receive 
+     * in the stream to the teamname
+     * 
+     * params:
+     *      buffer: [u8; 32]
+     * 
+     * return:
+     *       String
+    *********************************************************************************/
+
+
+fn cpy_from_slice(buffer: [u8; 32]) -> String
 {
-    // let msg = b"Bienvenue";
-    stream.write(msg);
-    println!("send bienvenue !");
-    
+    let string_dst = buffer
+        .iter() // into_iter 
+        .take_while(|&x| *x != b'\0')
+        .map(|x| *x as char)
+        .collect();
+
+    string_dst
+
 }
 
-fn schrink_buffer(string_schrink: & mut String, buffer: & mut [u8; 32])
-{
-    // instead of this fucntion there is an memcpy equivalent : dst.clone_from_slice(&src);
-    for i in buffer.as_slice()
-    {
-        if *i == b'\0' {break} //bancale 
-        else 
-        {
-            string_schrink.push(*i as char);
-        }
-    }
-}
 
-fn receive(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
+
+ /***********************************************************************************
+     * Check if the packet contains the correct teamname, then proceed our handshake.
+     * Kick the player if his team is full and drop the connexion
+     * Generate the player in the Gamecontroller structure with a new id
+     * 
+     * 
+     * params:
+     *      mut stream: TcpStream
+     *      hashmap: & mut HashMap<String, u8>
+     *      args: & mut Args
+     *      id: & mut u32, 
+     *      game_ctrl: & mut GameController
+     * 
+     * return:
+     *       ()
+    *********************************************************************************/
+
+fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
 {
-    let mut buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
-    let mut string_schrink: String = String::new();
-    
-    if let  Ok(_) = stream.read(& mut buffer)  
+    let mut teamname_buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
+    let string_teamname_buffer: String;
+    if let  Ok(_) = stream.read(& mut teamname_buffer)  
     {
-        schrink_buffer(& mut string_schrink, &mut buffer);
-    
-        // let mut ref_string_shrink = &string_schrink;
-        println!("{:?}", string_schrink);
-        match args.n.contains(&string_schrink)
+        string_teamname_buffer = cpy_from_slice(teamname_buffer);
+        match args.n.contains(&string_teamname_buffer)
         {
             true => 
             {
-                let i = hashmap
-                    .entry( string_schrink.clone())
+                //Add the receive teamname to the hashtable and verify if the team is full or not
+                let nbr_player_in_current_team =  hashmap
+                    .entry( string_teamname_buffer.clone())
                     .or_insert(0);
-                if i == & mut args.c
+
+                //compare the teamnames received with the teamnames parsed
+                if nbr_player_in_current_team == & mut args.c
                 {
-                    println!("team {:?} is full", string_schrink);
-                    stream.write("Endconnection".to_string().as_bytes());
                     //display arsenal/chelsea est full
+                    //send the Endconnection to kill the client
                     //kick the player
+                    println!("team {:?} is full", string_teamname_buffer);
+                    stream.write("Endconnection".to_string().as_bytes());
                     drop(stream)
                 }
                 else 
                 {
-                    //create a new id + send 
-                    *i += 1;
-                    println!("{:?}", SystemTime::now());
+                    //create a new id
+                    //send back the id to the client
+                    //save the player 
+                    *nbr_player_in_current_team += 1;
                     *id += 1;
-                    println!("id = {:?}", *id);
-                    stream.write(&*id.to_string().as_bytes());
-                    game_ctrl.get_team_and_push(&string_schrink, *id);
+                    stream.write(&id.to_string().as_bytes());
+                    game_ctrl.get_team_and_push(&string_teamname_buffer, *id);
                     println!("{:#?}", game_ctrl);
-                    // gamecontrol.
-                    //enregistrer player ? 
                 }
             }
             false => 
@@ -102,8 +127,7 @@ fn parsing() -> Result<Args, ParsingError>
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut hashmap: HashMap<String, u8>= HashMap::new();
-    let msg = b"Bienvenue";
-
+    let mut id: u32 = 0;
     // parsing
     let mut vec_args = parsing()?;
     println!("{:#?}", vec_args);
@@ -119,15 +143,15 @@ fn main() -> Result<(), Box<dyn GenericError>>
     
 
     // listen for client connexion
-    for stream in listener.incoming()
+    for tcpstream in listener.incoming()
     {
         let mut stream = tcpstream?;
         println!("Connection established!");
 
-        send_bienvenue(& mut stream_wrt, msg);
+        stream.write(b"Bienvenue");
         if vec_args.client_all_connect(& mut hashmap) == false
         {
-            receive(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+            create_player_or_kick(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
         }
         else 
         {
