@@ -174,7 +174,8 @@ pub mod args
     }
 
 
-    impl Args{
+    impl Args
+    {
         pub fn new(env_args: Vec<String>) -> Result<Self, ParsingError>
         {
             // get the -n param value(s), this param represent the team(s) name
@@ -208,20 +209,6 @@ pub mod args
                             y: y,
                             p: p,
                             t: t});
-        }
-        
-        pub fn client_all_connect(&self, hashmap: &mut HashMap<String, u8>) -> bool
-        {
-                match hashmap
-                    .iter()
-                    .filter(|&(_, &key)| key == self.c)
-                    .map(|_| 1)
-                    .count() {
-                        hashmap_len if hashmap_len == self.n.len() => {return true;}
-                        _ => {return false;}
-                    }
-                
-                //on regrette rien 
         }
     }
 

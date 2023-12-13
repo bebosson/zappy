@@ -1,10 +1,12 @@
-pub mod team{
-    use std::collections::LinkedList;
-
-    use crate::{egg::egg::Egg, player::player::{Player}, args::args::Args};
+pub mod team
+{
+    use crate::egg::egg::Egg;
+    use crate::player::player::Player;
+    use crate::args::args::Args;
     
     #[derive(Debug)]
-    pub struct Team{
+    pub struct Team
+    {
         pub name: String,
         pub port_start_index: u16,
         pub players: Vec<Player>,
@@ -28,10 +30,12 @@ pub mod team{
         
     }
 
-    impl Team{
+    impl Team
+    {
         pub fn new(name: &String) -> Self
         {
-            Team{
+            Team
+            {
                 name: name.clone(),
                 port_start_index: 0,
                 players: vec![],
@@ -41,15 +45,14 @@ pub mod team{
 
         pub fn new_with_size(name: &String, size: u8) -> Self
         {
-            Team{
+            Team
+            {
                 name: name.clone(),
                 port_start_index: 0,
                 players: create_players(size),
                 eggs: vec![],
             }
         }
-
-       
         // pub fn update_player 
     }
 

@@ -5,6 +5,7 @@ use std::io::{Write, Read};
 use std::net::{TcpListener, TcpStream};
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
+use teams::team::Team;
 
 //add module in the crate root
 pub mod args;
@@ -20,19 +21,22 @@ pub mod init;
 
 static SERVER_PORT: u16 = 1312;
 
-
+fn check_winner(teams: &Vec<Team>) -> bool
+{
+    false
+}
 
 
  /***********************************************************************************
-     * Simple implementation of cpy_from_slice use for translate the buffer receive 
-     * in the stream to the teamname
-     * 
-     * params:
-     *      buffer: [u8; 32]
-     * 
-     * return:
-     *       String
-    *********************************************************************************/
+ * Simple implementation of cpy_from_slice use for translate the buffer receive 
+ * in the stream to the teamname
+ * 
+ * params:
+ *      buffer: [u8; 32]
+ * 
+ * return:
+ *       String
+*********************************************************************************/
 fn cpy_from_slice(buffer: [u8; 32]) -> String
 {
     let string_dst = buffer
@@ -46,24 +50,24 @@ fn cpy_from_slice(buffer: [u8; 32]) -> String
 
 
  /***********************************************************************************
-     * Check if the packet contains the correct teamname, then proceed our handshake.
-     * Kick the player if his team is full and drop the connexion
-     * Generate the player in the Gamecontroller structure with a new id
-     * 
-     * 
-     * params:
-     *      mut stream: TcpStream
-     *      hashmap: & mut HashMap<String, u8>
-     *      args: & mut Args
-     *      id: & mut u32, 
-     *      game_ctrl: & mut GameController
-     * 
-     * return:
-     *       ()
-    *********************************************************************************/
+ * Check if the packet contains the correct teamname, then proceed our handshake.
+ * Kick the player if his team is full and drop the connexion
+ * Generate the player in the Gamecontroller structure with a new id
+ * 
+ * 
+ * params:
+ *      mut stream: TcpStream
+ *      hashmap: & mut HashMap<String, u8>
+ *      args: & mut Args
+ *      id: & mut u32, 
+ *      game_ctrl: & mut GameController
+ * 
+ * return:
+ *       ()
+*********************************************************************************/
 fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
 {
-    let mut teamname_buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
+    let mut teamname_buffer = [0 as u8; 32];
     let string_teamname_buffer: String;
     if let  Ok(_) = stream.read(& mut teamname_buffer)  
     {
@@ -96,7 +100,7 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
                     *id += 1;
                     stream.write(&id.to_string().as_bytes());
                     game_ctrl.get_team_and_push(&string_teamname_buffer, *id);
-                    println!("{:#?}", game_ctrl);
+                    //println!("{:#?}", game_ctrl);
                 }
             }
             false => 
@@ -106,8 +110,32 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
         }
        
     }
-    // mut &mut hashtable 
-    
+    // mut &mut hashtable   
+}
+
+
+ /***********************************************************************************
+ * Verify if all clients in a team are connected
+ * 
+ * params:
+ *      c: number of client / team
+ *      len: number of team
+ *      hashmap: represent the number of player connecteds / team --> {'team_name': nb_player}
+ * 
+ * return:
+ *       true if everybody are connected in a team
+*********************************************************************************/
+pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) -> bool
+{
+    match hashmap
+        .iter()
+        .filter(|&(_, &key)| key == c)
+        .map(|_| 1)
+        .count()
+    {
+        hashmap_len if hashmap_len == len   => {return true;}
+        _                                          => {return false;}
+    }
 }
 
 
@@ -128,7 +156,6 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     // parsing
     let mut vec_args = parsing()?;
-    //println!("{:#?}", vec_args);
 
 
     // game controller initialization
@@ -147,21 +174,26 @@ fn main() -> Result<(), Box<dyn GenericError>>
         println!("Connection established!");
 
         stream.write(b"Bienvenue");
-        if vec_args.client_all_connect(& mut hashmap) == false
+        create_player_or_kick(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+        if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) == true
         {
-            create_player_or_kick(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-        }
-        else 
-        {
-            println!("all teams are full");
-            stream.write("Endconnection".to_string().as_bytes())?;
-            drop(stream);
+            //stream.write("Endconnection".to_string().as_bytes())?;
+            //drop(stream);
+            break;
         }
     }
 
+    println!("Everybody is connected, let's start the game");
+    // marquer timestamp
 
-    // start game
-    // ...
+    loop
+    {
+        if check_winner(&game_ctrl.teams)
+        {
+            break;
+        }
+        // parti de Julien
+    }
 
 
     Ok(())
