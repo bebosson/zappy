@@ -33,8 +33,6 @@ static SERVER_PORT: u16 = 1312;
      * return:
      *       String
     *********************************************************************************/
-
-
 fn cpy_from_slice(buffer: [u8; 32]) -> String
 {
     let string_dst = buffer
@@ -44,9 +42,7 @@ fn cpy_from_slice(buffer: [u8; 32]) -> String
         .collect();
 
     string_dst
-
 }
-
 
 
  /***********************************************************************************
@@ -65,7 +61,6 @@ fn cpy_from_slice(buffer: [u8; 32]) -> String
      * return:
      *       ()
     *********************************************************************************/
-
 fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
 {
     let mut teamname_buffer = [0 as u8; 32]; //[a,r,s,e,n,a,l,\0,\0]
@@ -128,14 +123,17 @@ fn main() -> Result<(), Box<dyn GenericError>>
 {
     let mut hashmap: HashMap<String, u8>= HashMap::new();
     let mut id: u32 = 0;
+
+    println!("Start server");
+
     // parsing
     let mut vec_args = parsing()?;
-    println!("{:#?}", vec_args);
+    //println!("{:#?}", vec_args);
 
 
     // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
-    println!("{:#?}", game_ctrl);
+    //println!("{:#?}", game_ctrl);
 
 
     // network initialization
