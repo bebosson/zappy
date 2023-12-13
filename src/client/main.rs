@@ -1,8 +1,12 @@
-use std::env;
+use std::ops::Deref;
+use std::{env, fs};
 use std::net::{TcpStream};
 use std::io::{Read, Write};
 use std::process::exit;
 use std::str::from_utf8;
+
+
+
 
 
 fn flush(data: &mut [u8])
@@ -14,6 +18,18 @@ fn flush(data: &mut [u8])
 }
 
 
+fn extract_lines(buffer: &str) -> Vec<String> {
+    buffer.lines().map(String::from).collect()
+}
+
+fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command_sent: &mut u8)
+{
+    for command in vec_string{
+        stream.write(command.as_bytes());
+        *number_command_sent += 1;
+        if *number_command_sent > 3 { break ;}
+    }
+}
 
 fn main() {
 
@@ -21,6 +37,13 @@ fn main() {
     let teamname = args[1].clone();
     let mut data = [0 as u8; 256]; // using 6 byte buffer
     println!("{:?}", args);
+
+    let contents = fs::read_to_string("test/command.txt")
+        .expect("Should have been able to read the file");
+    println!("{:?}", contents);
+    let vec_command = extract_lines(&contents);
+    println!("{:?}", vec_command);
+    let mut number_command_send: u8 = 0;
     
     
     match TcpStream::connect("localhost:1312") 
@@ -28,20 +51,14 @@ fn main() {
         Ok(mut stream) => {
             println!("Successfully connected to server in port 7878");
 
-            // let msg = teamname;
-
-            // stream.write(msg).unwrap();
-            // stream.write(msg).unwrap();
-            // println!("Sent Hello, awaiting reply...");
-            
             loop
             {
                 match stream.read(&mut data) 
                 {
                     Ok(_) => {
-                        // let our_str = from_utf8(&data).unwrap();
+                        //convert data(buffer) into string and flush (overkill)
                         let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
-                        let string_buffer = string_buffer.trim_matches(char::from(0));
+                        let string_buffer = string_buffer.trim_matches(char::from(0));  
                         
                         match string_buffer
                         {
@@ -59,8 +76,10 @@ fn main() {
                             }
                             _ => 
                             {
-                                // let text = from_utf8(&data).unwrap();
                                 println!("id = {}", string_buffer);
+                                send_command(&mut stream, &vec_command, &mut number_command_send);
+                                
+                                // let text = from_utf8(&data).unwrap();
                             }   
                         } 
                     },
