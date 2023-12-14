@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::{env, fs};
 use std::net::{TcpStream};
 use std::io::{Read, Write};
-use std::process::exit;
+use std::process::{exit, ExitStatus};
 use std::str::from_utf8;
 
 
@@ -25,9 +25,18 @@ fn extract_lines(buffer: &str) -> Vec<String> {
 fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command_sent: &mut u8)
 {
     for command in vec_string{
-        stream.write(command.as_bytes());
-        *number_command_sent += 1;
-        if *number_command_sent > 3 { break ;}
+        if *number_command_sent < 8
+        {
+            println!("{}", command);
+            stream.write(command.as_bytes());
+            stream.write(b"\0");
+            
+            // stream.write(b"]");
+            // use std::thread::sleep as sleep;
+            // use std::time::Duration as dudu;
+            // sleep(dudu::from_secs(2));
+            *number_command_sent += 1;
+        }
     }
 }
 
@@ -50,7 +59,6 @@ fn main() {
     {
         Ok(mut stream) => {
             println!("Successfully connected to server in port 7878");
-
             loop
             {
                 match stream.read(&mut data) 
@@ -67,19 +75,23 @@ fn main() {
                                 println!("Reply is ok! Send back teamname = {:?}", teamname);
                                 // data.;
                                 // stream.write(teamname.as_bytes()).unwrap();
-                                stream.write_all(teamname.as_bytes()); // on envoie le teamname
+                                stream.write(teamname.as_bytes()); // on envoie le teamname
                                 flush(& mut data);
                             }
                             "Endconnection" =>
                             {
                                 exit(0);
                             }
+                            "sendme" => 
+                            {
+                                send_command(&mut stream, &vec_command, &mut number_command_send);
+                                // println!("{}", number_command_send);
+                                // let text = from_utf8(&data).unwrap();
+                            }
                             _ => 
                             {
+                                println!("{:?}", stream);
                                 println!("id = {}", string_buffer);
-                                send_command(&mut stream, &vec_command, &mut number_command_send);
-                                
-                                // let text = from_utf8(&data).unwrap();
                             }   
                         } 
                     },

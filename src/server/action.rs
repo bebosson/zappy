@@ -26,7 +26,7 @@ pub mod action
         count       : u16,
     }
 
-    const NO_ACTION: Action_template     = Action_template{ action_name: "",            arg: None,                  count: 0};
+    pub const NO_ACTION: Action_template     = Action_template{ action_name: "",            arg: None,                  count: 0};
     const AVANCE: Action_template        = Action_template{ action_name: "avance",      arg: None,                  count: 7};
     const DROITE: Action_template        = Action_template{ action_name: "droite",      arg: None,                  count: 7};
     const GAUCHE: Action_template        = Action_template{ action_name: "gauche",      arg: None,                  count: 7};

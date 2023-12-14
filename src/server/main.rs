@@ -3,6 +3,7 @@ use std::env;
 use std::error::Error as GenericError;
 use std::io::{Write, Read};
 use std::net::{TcpListener, TcpStream};
+use std::time::Duration;
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
@@ -20,6 +21,8 @@ pub mod action;
 pub mod init;
 
 static GFX_SERVER_PORT: u16 = 1312;
+
+
 
 fn check_winner(teams: &Vec<Team>) -> bool
 {
@@ -65,7 +68,7 @@ fn cpy_from_slice(buffer: [u8; 32]) -> String
  * return:
  *       ()
 *********************************************************************************/
-fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
+fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
 {
     let mut teamname_buffer = [0 as u8; 32];
     let string_teamname_buffer: String;
@@ -114,7 +117,8 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
 }
 
 
- /***********************************************************************************
+
+/***********************************************************************************
  * Verify if all clients in a team are connected
  * 
  * params:
@@ -124,9 +128,9 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
  * 
  * return:
  *       true if everybody are connected in a team
-*********************************************************************************/
-pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) -> bool
-{
+ *********************************************************************************/
+ pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) -> bool
+ {
     match hashmap
         .iter()
         .filter(|&(_, &key)| key == c)
@@ -137,8 +141,8 @@ pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) 
         _                                          => {return false;}
     }
 }
-
-
+    
+    
 fn parsing() -> Result<Args, ParsingError> 
 {
     let vec_args: Vec<String> = env::args().collect();
@@ -146,11 +150,31 @@ fn parsing() -> Result<Args, ParsingError>
     Ok(server_arg)
 }
 
+fn test_receive_send_action(stream: & mut TcpStream)
+{
+    let mut action_receive = [0 as u8; 32];
+    println!("{:?}", stream);
+    if let  Ok(_) = stream.read(& mut action_receive)  
+    {
+        let string_teamname_buffer: String;
+        string_teamname_buffer = cpy_from_slice(action_receive);
+        let strings: Vec<String> = action_receive
+        .split(|&b| b == b'\0') // Divise la slice à chaque zéro
+        .map(|subslice| String::from_utf8_lossy(subslice).into_owned())
+        .collect();
+        println!("{:?}", action_receive);
+        println!("{:?}", string_teamname_buffer);
+        println!("{:?}", strings);
+    }
+}
+
 
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
+    let mut vec_stream: Vec<TcpStream> = vec![];
     let mut hashmap: HashMap<String, u8>= HashMap::new();
     let mut id: u32 = 0;
+    let duration: Duration = Duration::new(0, 100000000);
 
     println!("Start server");
 
@@ -166,34 +190,49 @@ fn main() -> Result<(), Box<dyn GenericError>>
     // network initialization
     let listener = TcpListener::bind(format!("127.0.0.1:{}", vec_args.p)).unwrap();
     
-
+    let index = 0; 
     // listen for client connexion
     for tcpstream in listener.incoming()
     {
+        
+        // println!("{:?}", listener.incoming());
         let mut stream = tcpstream?;
         println!("Connection established!");
-
+        println!("{:?}", stream);
+        
         stream.write(b"Bienvenue");
-        create_player_or_kick(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-        if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) == true
+        create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+        stream.set_read_timeout(Some(duration))?;
+        vec_stream.push(stream);
+        if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap)
         {
-            //stream.write("Endconnection".to_string().as_bytes())?;
-            //drop(stream);
-            break;
+           break ;
         }
     }
-
     println!("Everybody is connected, let's start the game");
-    // marquer timestamp
-
     loop
     {
-        if check_winner(&game_ctrl.teams)
+        // ?.0.set_read_timeout(Some(duration))?;
+        // let test = listener.accept()?;
+    
+        for mut stream in & mut vec_stream
         {
-            break;
+            
+            println!("sendme");
+            if check_winner(&game_ctrl.teams)
+            {
+                break;
+            }
+            stream.write(b"sendme");
+            
+            // println!("{:?}", listener.incoming());
+            test_receive_send_action(& mut stream);
+            // println!("{:?}", stream);
+            // parti de Julien
         }
-        // parti de Julien
     }
+    // marquer timestamp
+    
 
 
     Ok(())

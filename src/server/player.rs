@@ -1,5 +1,5 @@
 pub mod player{
-    use crate::{ressources::ressources::Ressources, cell::cell::Point, action::action::Action};
+    use crate::{ressources::ressources::Ressources, cell::cell::Point, action::action::{Action, Action_template, NO_ACTION}};
 
     #[derive(Debug)]
     pub enum Orientation{
@@ -18,25 +18,12 @@ pub mod player{
         pub life: u16,
         pub orient: Orientation,
         pub level: u8,
-        pub state: Action,
+        pub state: Vec<Action>,
     }
 
     
     impl Player{
-        pub fn new() -> Self
-        {
-            Player{
-                id: 0,
-                port: 0,
-                coor: Point::new(0,0),
-                ivt: Ressources::new(),
-                life: 1260,
-                orient: Orientation::N,
-                level: 1,
-                state: Action::new(),
-            }
-        }
-
+        
         pub fn new_with_id(id_a: u32) -> Self
         {
             Player{
@@ -47,7 +34,7 @@ pub mod player{
                 life: 1260,
                 orient: Orientation::N,
                 level: 1,
-                state: Action::new(),
+                state: Vec::new(),
             }
         }   
     }
