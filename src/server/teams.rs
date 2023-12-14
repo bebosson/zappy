@@ -1,10 +1,8 @@
 pub mod team
 {
-    use crate::egg::egg::Egg;
-    use crate::player::player::Player;
-    use crate::args::args::Args;
+    use crate::player::player::{Player, Egg};
     
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Team
     {
         pub name: String,
@@ -14,7 +12,6 @@ pub mod team
         // pub nb_players: u8,
     }
 
-   
 
     impl Team
     {
@@ -24,8 +21,8 @@ pub mod team
             {
                 name: name.clone(),
                 port_start_index: 0,
-                players: vec![],
-                eggs: vec![],
+                players: Vec::new(),
+                eggs: Vec::new(),
             }
         }
 

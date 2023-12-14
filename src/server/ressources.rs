@@ -1,6 +1,6 @@
 pub mod ressources{
     
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Ressources{
         pub food: u8,
         pub sibur: u8,

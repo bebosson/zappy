@@ -18,8 +18,6 @@ pub mod game
         pub cells: Vec<Vec<Cell>>,
         pub teams: Vec<Team>,
         pub timestamp: u32,
-        //  recv_pkt: Vec<Tcphdr(?)>
-        //  send_pkt: Vec<ToSend>
     }
 
     impl GameController

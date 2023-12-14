@@ -2,7 +2,7 @@ pub mod args
 {
     use std::error::Error;
     use std::fmt;
-    use std::collections::{HashSet, HashMap};
+    use std::collections::HashSet;
 
 
 /************************************************************************************
