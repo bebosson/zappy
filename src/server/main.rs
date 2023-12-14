@@ -19,7 +19,7 @@ pub mod zappy;
 pub mod action;
 pub mod init;
 
-static SERVER_PORT: u16 = 1312;
+static GFX_SERVER_PORT: u16 = 1312;
 
 fn check_winner(teams: &Vec<Team>) -> bool
 {
@@ -164,7 +164,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
 
     // network initialization
-    let listener = TcpListener::bind(format!("127.0.0.1:{}", SERVER_PORT)).unwrap();
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", vec_args.p)).unwrap();
     
 
     // listen for client connexion
