@@ -3,9 +3,12 @@ use std::env;
 use std::error::Error as GenericError;
 use std::io::{Write, Read};
 use std::net::{TcpListener, TcpStream};
+use std::time::Duration;
+
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
+use action::action::ReadyAction;
 
 //add module in the crate root
 pub mod args;
@@ -14,14 +17,13 @@ pub mod gamecontrol;
 pub mod player;
 pub mod ressources;
 pub mod teams;
-pub mod egg;
 pub mod zappy;
 pub mod action;
 pub mod init;
 
 static GFX_SERVER_PORT: u16 = 1312;
 
-fn check_winner(teams: &Vec<Team>) -> bool
+fn check_winner(_teams: &Vec<Team>) -> bool
 {
     false
 }
@@ -82,13 +84,13 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
                     .or_insert(0);
 
                 //compare the teamnames received with the teamnames parsed
-                if nbr_player_in_current_team == & mut args.c
+                if nbr_player_in_current_team >= & mut args.c
                 {
                     //display arsenal/chelsea est full
                     //send the Endconnection to kill the client
                     //kick the player
                     println!("team {:?} is full", string_teamname_buffer);
-                    stream.write("Endconnection".to_string().as_bytes());
+                    let _ = stream.write("Endconnection".to_string().as_bytes());
                     drop(stream)
                 }
                 else 
@@ -98,7 +100,7 @@ fn create_player_or_kick(mut stream: TcpStream, hashmap: & mut HashMap<String, u
                     //save the player 
                     *nbr_player_in_current_team += 1;
                     *id += 1;
-                    stream.write(&id.to_string().as_bytes());
+                    let _ = stream.write(&id.to_string().as_bytes());
                     game_ctrl.get_team_and_push(&string_teamname_buffer, *id);
                     //println!("{:#?}", game_ctrl);
                 }
@@ -142,8 +144,66 @@ pub fn client_all_connect(c: u8, len: usize, hashmap: &mut HashMap<String, u8>) 
 fn parsing() -> Result<Args, ParsingError> 
 {
     let vec_args: Vec<String> = env::args().collect();
-    let mut server_arg: Args = Args::new(vec_args)?;
+    let server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
+}
+
+
+fn get_ready_action_list(teams: &Vec<Team>) -> Vec<ReadyAction>
+{
+    let mut ready_action: Vec<ReadyAction> = Vec::new();
+
+    for team in teams
+    {
+        for player in &team.players
+        {
+            for action in &player.actions
+            {
+                if action.count == 0
+                {
+                    let action_to_push = ReadyAction{id: player.id, action: action.clone()};
+                    ready_action.push(action_to_push);
+                }
+            }
+        }
+    }
+    println!("list of ready actions ---> {:?}", ready_action);
+    ready_action
+}
+
+/*
+// same fucntion as above but more functionnal
+fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
+{
+    teams
+        .iter()
+        .flat_map(|team| 
+        {
+            team.players
+                .iter()
+                .flat_map(|player|
+                {
+                    player
+                        .actions
+                        .iter()
+                        .filter(|action| action.count == 0)
+                        .map(move |action| ReadyAction
+                        {
+                            id: player.id,
+                            action: action.clone(),
+                        })
+                })
+                .collect::<Vec<ReadyAction>>()
+        })
+        .collect()
+}
+*/
+
+
+fn exec_action(ready_action: ReadyAction) -> Option<String>
+{
+    println!("{}", ready_action.id);
+    Some(String::new())
 }
 
 
@@ -170,10 +230,13 @@ fn main() -> Result<(), Box<dyn GenericError>>
     // listen for client connexion
     for tcpstream in listener.incoming()
     {
+        //let lala = tcpstream?;
+        //lala.set_read_timeout(Some(Duration::new(0, 1000000)))?;
+
         let mut stream = tcpstream?;
         println!("Connection established!");
 
-        stream.write(b"Bienvenue");
+        let _ = stream.write(b"Bienvenue");
         create_player_or_kick(stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) == true
         {
@@ -188,11 +251,25 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     loop
     {
-        if check_winner(&game_ctrl.teams)
+        if check_winner(&game_ctrl.teams) // + ctrl+C ou petite croix rouge
         {
             break;
         }
-        // parti de Julien
+
+        // parti de Julien : recv pkt + check valid + attach Action au player
+        
+        // when command finish to wait, execute action and send packet to client and gfx
+        let ready_action_list = get_ready_action_list(&game_ctrl.teams);
+        if ready_action_list.len() > 0
+        {
+            for ready_action in ready_action_list
+            {
+                let action_result = exec_action(ready_action);
+                //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
+                //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
+                //let ret = send_pkt(gfx_pkt, client_pkt);
+            }
+        }
     }
 
 

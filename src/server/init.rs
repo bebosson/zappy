@@ -19,7 +19,7 @@ pub mod init
     {
         let mut map : Vec<Vec<Cell>> = Vec::with_capacity(y as usize);
 
-        for i in 0..y
+        for _i in 0..y
         {
             let mut line : Vec<Cell> = Vec::with_capacity(x as usize);
             for _ in 0..x

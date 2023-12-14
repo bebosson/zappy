@@ -1,12 +1,12 @@
-pub mod cell{
-    use std::fmt;
+pub mod cell
+{
     use crate::ressources::ressources::Ressources;
     
 
 /**********************************************************************
  * Struct Point
 ***********************************************************************/
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Point
     {
         x: u32,
