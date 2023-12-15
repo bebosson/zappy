@@ -23,8 +23,18 @@ pub mod init;
 
 static GFX_SERVER_PORT: u16 = 1312;
 
-fn check_winner(_teams: &Vec<Team>) -> bool
+fn check_winner(teams: &Vec<Team>) -> bool
 {
+    for team in teams
+    {
+        for player in &team.players
+        {
+            if player.level == 8
+            {
+                return true;
+            }
+        }
+    }
     false
 }
 
@@ -256,7 +266,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             break;
         }
 
-        // parti de Julien : recv pkt + check valid + attach Action au player
+        // parti de Julien : recv pkt + check valid + attach Action au player ()
         
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
@@ -272,6 +282,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
         }
     }
 
+    println!("", {});
 
     Ok(())
     
