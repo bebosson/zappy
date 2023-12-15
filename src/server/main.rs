@@ -21,8 +21,9 @@ pub mod action;
 pub mod init;
 
 static GFX_SERVER_PORT: u16 = 1312;
-
-
+use std::sync::Arc;
+const command_slice: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
+const rcrs_slice: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"]; 
 
 fn check_winner(teams: &Vec<Team>) -> bool
 {
@@ -149,8 +150,32 @@ fn parsing() -> Result<Args, ParsingError>
     let mut server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
 }
+fn is_valid_obj(object: &str)
+{
+    match object
+    {
+        txt if rcrs_slice.iter().any(|&s| s == txt) => (println!("{} ok", txt)),
+        _ => println!("it is ta mere")
+    }
+} 
 
-fn test_receive_send_action(stream: & mut TcpStream)
+fn is_valid_cmd(buf: &str)
+{
+    match buf
+    {
+        txt if command_slice.iter().any(|&s| s == txt) => println!("{} ok", txt),
+        txt if command_slice.iter().any(|&s| txt.starts_with(s)) => {
+            println!("{} ok", txt);
+            is_valid_obj(&buf[txt.len()..])
+        }
+        _ => println!("{} PAS OK", buf) ,
+        // txt if txt.starts_with("prend ") => { print!("prend ok => "); is_valid_obj(&buf[6..]);},
+        // txt if txt.starts_with("pose ") => { print!("pose ok => "); is_valid_obj(&buf[5..]);},
+        // txt if txt.starts_with("broadcast ") => println!("broadcast ok"),
+    }
+}
+
+fn test_receive_action(stream: & mut TcpStream)
 {
     let mut action_receive = [0 as u8; 32];
     println!("{:?}", stream);
@@ -162,6 +187,8 @@ fn test_receive_send_action(stream: & mut TcpStream)
         .split(|&b| b == b'\0') // Divise la slice à chaque zéro
         .map(|subslice| String::from_utf8_lossy(subslice).into_owned())
         .collect();
+        strings.iter().map(|s| is_valid_cmd(&s)).for_each(drop);
+        // is_valid_cmd()
         println!("{:?}", action_receive);
         println!("{:?}", string_teamname_buffer);
         println!("{:?}", strings);
@@ -226,7 +253,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             stream.write(b"sendme");
             
             // println!("{:?}", listener.incoming());
-            test_receive_send_action(& mut stream);
+            test_receive_action(& mut stream);
             // println!("{:?}", stream);
             // parti de Julien
         }
