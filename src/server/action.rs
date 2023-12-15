@@ -70,17 +70,7 @@ pub mod action
         }
 
         // a refaire
-        pub fn avance(_game: GameController, _id: u32) -> bool
-        {
-            /*
-            for team in game.teams
-            {
-
-            }
-            */
-
-            true
-        }
+       
     }
 
 }

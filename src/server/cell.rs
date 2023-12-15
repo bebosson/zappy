@@ -9,8 +9,8 @@ pub mod cell
     #[derive(Debug)]
     pub struct Point
     {
-        x: u32,
-        y: u32,
+        pub x: u32,
+        pub y: u32,
     }
 
     impl Point
