@@ -25,8 +25,18 @@ use std::sync::Arc;
 const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
 const RESSOURCES_SLICE: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"]; 
 
-fn check_winner(_teams: &Vec<Team>) -> bool
+fn check_winner(teams: &Vec<Team>) -> bool
 {
+    for team in teams
+    {
+        for player in &team.players
+        {
+            if player.level == 8
+            {
+                return true;
+            }
+        }
+    }
     false
 }
 
@@ -316,7 +326,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             // parti de Julien
         }
 
-        // parti de Julien : recv pkt + check valid + attach Action au player
+        // parti de Julien : recv pkt + check valid + attach Action au player ()
         
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
@@ -334,6 +344,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
     // marquer timestamp
     
 
+    println!("", {});
 
     Ok(())
     
