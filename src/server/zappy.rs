@@ -5,7 +5,6 @@ pub mod zappy{
     struct Zappy{
         game: Option<GameController>,
         args: Option<Args>,
-        sockfd: Option<u16>,
     }
 
     impl Zappy{

@@ -9,13 +9,13 @@ pub mod cell
     #[derive(Debug, Clone)]
     pub struct Point
     {
-        x: u32,
-        y: u32,
+        pub x: u8,
+        pub y: u8,
     }
 
     impl Point
     {
-        pub fn new(x: u32, y: u32) -> Self
+        pub fn new(x: u8, y: u8) -> Self
         {
             Point {x, y}
         }

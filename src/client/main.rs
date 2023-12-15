@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::process::{exit, ExitStatus};
 use std::str::from_utf8;
 
-
+const BUF_SIZE: usize = 160;
 
 
 
@@ -18,18 +18,30 @@ fn flush(data: &mut [u8])
 }
 
 
-fn extract_lines(buffer: &str) -> Vec<String> {
+fn extract_lines(buffer: &str) -> Vec<String>
+{
     buffer.lines().map(String::from).collect()
 }
 
 fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command_sent: &mut u8)
 {
-    for command in vec_string{
-        if *number_command_sent < 8
+    for command in vec_string
+    {
+        if *number_command_sent < 2
         {
-            println!("{}", command);
-            stream.write(command.as_bytes());
-            stream.write(b"\0");
+            //println!("{}", command);
+            //stream.write(command.as_bytes());
+            let mut array = Vec::with_capacity(16);
+            array.extend(command.chars());
+            array.extend(std::iter::repeat('0').take(16 - command.len()));
+            //println!("our fucking array ------------> {}", array);
+            
+            let mut result_array = [0u8; 16];
+            for (i, &c) in array.iter().enumerate()
+            {
+                result_array[i] = c as u8;
+            }
+            stream.write(&result_array);
             
             // stream.write(b"]");
             // use std::thread::sleep as sleep;
@@ -44,21 +56,22 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
-    let mut data = [0 as u8; 256]; // using 6 byte buffer
-    println!("{:?}", args);
+    let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
+    //println!("{:?}", args);
 
-    let contents = fs::read_to_string("test/command.txt")
+    let contents = fs::read_to_string(args[2].clone())
         .expect("Should have been able to read the file");
-    println!("{:?}", contents);
+    //println!("{:?}", contents);
     let vec_command = extract_lines(&contents);
-    println!("{:?}", vec_command);
+    //println!("{:?}", vec_command);
     let mut number_command_send: u8 = 0;
     
     
     match TcpStream::connect("localhost:1312") 
     {
-        Ok(mut stream) => {
-            println!("Successfully connected to server in port 7878");
+        Ok(mut stream) =>
+        {
+            println!("Successfully connected to server in port 1312");
             loop
             {
                 match stream.read(&mut data) 

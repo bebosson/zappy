@@ -1,6 +1,12 @@
 
 pub mod game
 {
+    use std::arch::x86_64::_CMP_TRUE_US;
+    use std::net::TcpStream;
+    use std::sync::Arc;
+    use std::time::SystemTime;
+
+    use crate::find_player_from_id;
     use crate::teams::team::Team;
     use crate::args::args::Args;
     use crate::player::player::Player;
@@ -41,16 +47,65 @@ pub mod game
             }
         }
 
-        pub fn get_team_and_push(& mut self, teamname: &String, id: u32)
+        pub fn print_all_players(&self)
         {
-            for i in & mut self.teams
+            for team in & self.teams
             {
-                if i.name.eq(teamname) == true
+                println!("team {}", team.name);
+                team.print_players_from_team();
+                println!(" - - - - - - - - -");
+            }
+        }
+
+        pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream)
+        {
+            let port = stream
+                                .peer_addr()
+                                .unwrap()
+                                .port();
+
+            for team in & mut self.teams
+            {
+                if team.name.eq(teamname) == true
                 {
-                    i.players.push(Player::new_with_id(id))
+                    team.players.push(Player::new(id, port));
                 }
             }
         }
+
+        pub fn update_timestamp(& mut self, start_time: &SystemTime, t: u16) -> bool
+        {
+            let now = start_time.elapsed();
+            let millis = now.unwrap().as_millis();
+
+            let theorical_time: f64 = 1000.0 / (t as f64);
+            let theorical_time: f64 = theorical_time * self.timestamp as f64;
+            if theorical_time <= millis as f64
+            {
+                self.timestamp = self.timestamp + 1;
+                return true;
+            }
+            false
+        }
+
+        pub fn update_game_datas(& mut self)
+        {
+            for team in & mut self.teams
+            {
+                for player in & mut team.players
+                {
+                    for action in & mut player.actions
+                    {
+                        action.count = action.count - 1;
+                    }
+                }
+                for egg in & mut team.eggs
+                {
+                    egg.count = egg.count - 1;
+                }
+            }
+        }
+
     }
 
 

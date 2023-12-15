@@ -2,7 +2,7 @@ pub mod team
 {
     use crate::player::player::{Player, Egg};
     
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct Team
     {
         pub name: String,
@@ -26,7 +26,13 @@ pub mod team
             }
         }
 
-        // pub fn update_player 
+        pub fn print_players_from_team(&self)
+        {
+            for player in &self.players
+            {
+                println!("my player is --> {:?}", player);
+            }
+        }
     }
 
     
