@@ -22,8 +22,8 @@ pub mod init;
 
 static GFX_SERVER_PORT: u16 = 1312;
 use std::sync::Arc;
-const command_slice: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
-const rcrs_slice: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"]; 
+const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
+const RESSOURCES_SLICE: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"]; 
 
 fn check_winner(teams: &Vec<Team>) -> bool
 {
@@ -150,11 +150,12 @@ fn parsing() -> Result<Args, ParsingError>
     let mut server_arg: Args = Args::new(vec_args)?;
     Ok(server_arg)
 }
+
 fn is_valid_obj(object: &str)
 {
     match object
     {
-        txt if rcrs_slice.iter().any(|&s| s == txt) => (println!("{} ok", txt)),
+        txt if RESSOURCES_SLICE.iter().any(|&s| s == txt) => (println!("{} ok", txt)),
         _ => println!("it is ta mere")
     }
 } 
@@ -163,8 +164,8 @@ fn is_valid_cmd(buf: &str)
 {
     match buf
     {
-        txt if command_slice.iter().any(|&s| s == txt) => println!("{} ok", txt),
-        txt if command_slice.iter().any(|&s| txt.starts_with(s)) => {
+        txt if COMMAND_SLICE.iter().any(|&s| s == txt) => println!("{} ok", txt),
+        txt if RESSOURCES_SLICE.iter().any(|&s| txt.starts_with(s)) => {
             println!("{} ok", txt);
             is_valid_obj(&buf[txt.len()..])
         }
@@ -181,17 +182,17 @@ fn test_receive_action(stream: & mut TcpStream)
     println!("{:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
     {
-        let string_teamname_buffer: String;
-        string_teamname_buffer = cpy_from_slice(action_receive);
-        let strings: Vec<String> = action_receive
-        .split(|&b| b == b'\0') // Divise la slice à chaque zéro
-        .map(|subslice| String::from_utf8_lossy(subslice).into_owned())
-        .collect();
-        strings.iter().map(|s| is_valid_cmd(&s)).for_each(drop);
-        // is_valid_cmd()
+        // let string_teamname_buffer: String;
+        // string_teamname_buffer = cpy_from_slice(action_receive);
         println!("{:?}", action_receive);
-        println!("{:?}", string_teamname_buffer);
-        println!("{:?}", strings);
+        let vec_string_command: Vec<String> = action_receive
+            .split(|&b| b == b'\0') // Divise la slice à chaque zéro
+            .map(|subslice| String::from_utf8_lossy(subslice).into_owned()) // transforme la slice de byte en string
+            .collect(); // constitue le vec<string>
+
+        println!("{:?}", vec_string_command);
+        vec_string_command.iter().map(|s| is_valid_cmd(&s)).for_each(drop);
+        // is_valid_cmd()
     }
 }
 
@@ -229,7 +230,6 @@ fn main() -> Result<(), Box<dyn GenericError>>
         
         stream.write(b"Bienvenue");
         create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-        stream.set_read_timeout(Some(duration))?;
         vec_stream.push(stream);
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap)
         {
