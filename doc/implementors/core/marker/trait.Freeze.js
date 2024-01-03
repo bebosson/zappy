@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"args":[["impl Freeze for <a class=\"struct\" href=\"args/args/struct.ParsingError.html\" title=\"struct args::args::ParsingError\">ParsingError</a>",1,["args::args::ParsingError"]],["impl Freeze for <a class=\"struct\" href=\"args/args/struct.Args.html\" title=\"struct args::args::Args\">Args</a>",1,["args::args::Args"]]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -1,0 +1,5 @@
+var searchIndex = JSON.parse('{\
+"args":{"doc":"","t":"ADDLLLLMLLLLLLLMLMLMLLLLLLLMM","n":["args","Args","ParsingError","borrow","borrow","borrow_mut","borrow_mut","c","fmt","fmt","fmt","from","from","into","into","n","new","p","provide","t","to_string","try_from","try_from","try_into","try_into","type_id","type_id","x","y"],"q":[[0,"args"],[1,"args::args"]],"d":["","","","","","","","","","","","Returns the argument unchanged.","Returns the argument unchanged.","Calls <code>U::from(self)</code>.","Calls <code>U::from(self)</code>.","","","","","","","","","","","","","",""],"i":[0,0,0,1,4,1,4,4,1,1,4,1,4,1,4,4,4,4,1,4,1,1,4,1,4,1,4,4,4],"f":[0,0,0,[[]],[[]],[[]],[[]],0,[[1,2],3],[[1,2],3],[[4,2],3],[[]],[[]],[[]],[[]],0,[[[6,[5]]],[[7,[4,1]]]],0,[8],0,[[],5],[[],7],[[],7],[[],7],[[],7],[[],9],[[],9],0,0],"c":[],"p":[[3,"ParsingError"],[3,"Formatter"],[6,"Result"],[3,"Args"],[3,"String"],[3,"Vec"],[4,"Result"],[3,"Demand"],[3,"TypeId"]]}\
+}');
+if (typeof window !== 'undefined' && window.initSearch) {window.initSearch(searchIndex)};
+if (typeof exports !== 'undefined') {exports.searchIndex = searchIndex};

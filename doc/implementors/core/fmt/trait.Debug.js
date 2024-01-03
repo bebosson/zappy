@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"args":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.70.0/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a> for <a class=\"struct\" href=\"args/args/struct.Args.html\" title=\"struct args::args::Args\">Args</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.70.0/core/fmt/trait.Debug.html\" title=\"trait core::fmt::Debug\">Debug</a> for <a class=\"struct\" href=\"args/args/struct.ParsingError.html\" title=\"struct args::args::ParsingError\">ParsingError</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

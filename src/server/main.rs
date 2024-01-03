@@ -10,7 +10,8 @@ use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
-use action::action::ReadyAction;
+use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
+use paket_crafter::paquet_crafter::craft_gfx_packet;
 
 //add module in the crate root
 pub mod args;
@@ -22,6 +23,7 @@ pub mod teams;
 pub mod zappy;
 pub mod action;
 pub mod init;
+pub mod paket_crafter;
 
 static GFX_SERVER_PORT: u16 = 1312;
 const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
@@ -327,32 +329,34 @@ fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
     i
 }
 
-fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> bool
+fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> Option<ActionResult>
 {
     let tmp_player = find_player_from_id(& mut game_ctrl.teams, &ready_action.id);
 
     //println!("INSIDE EXEC_ACTION");
 
     let player = tmp_player.unwrap();
+    let action = Action::new(NO_ACTION);
+    //let ret = match ready_action.action.action_name.as_str()
     let ret = match ready_action.action.action_name.as_str()
     {
-        "avance" => player.avance(&game_ctrl.x, &game_ctrl.y),
-        "droite" => true,
-        "gauche" => true,
-        "voir" => true,
-        "inventaire" => true,
-        "prend" => true,
-        "pose" => true,
-        "expulse" => true,
-        "broadcast" => true,
-        "incantation" => true,
-        "fork" => true,
-        "connect_nbr" => true,
-        _ => false,
+        "avance" => ActionResult::ActionBool(action.avance(&game_ctrl.x, &game_ctrl.y, player)),
+        "droite" => ActionResult::ActionBool(action.droite(player)),
+        "gauche" => ActionResult::ActionBool(action.gauche(player)),
+        "voir" => ActionResult::ActionBool(true),
+        "inventaire" => ActionResult::ActionString(action.inventaire(player)),
+        "prend" => ActionResult::ActionBool(true),
+        "pose" => ActionResult::ActionBool(true),
+        "expulse" => ActionResult::ActionBool(true),
+        "broadcast" => ActionResult::ActionBool(true),
+        "incantation" => ActionResult::ActionBool(true),
+        "fork" => ActionResult::ActionBool(true),
+        "connect_nbr" => ActionResult::ActionBool(true),
+        _ => return None,
     };
     let index_action = find_index_action(&ready_action, &player);
     player.actions.remove(index_action);
-    ret
+    Some(ret)
 }
 
 
@@ -427,9 +431,9 @@ fn main() -> Result<(), Box<dyn GenericError>>
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(ready_action, & mut game_ctrl);
-                //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
+                let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
-                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT);
+                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
         }
 
@@ -443,8 +447,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("\n");
         }
 
-        //game_ctrl.print_all_players();
-        //println!("\n\n");
+        game_ctrl.print_all_players();
     }
     
 }

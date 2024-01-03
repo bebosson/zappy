@@ -1,6 +1,7 @@
 pub mod action
 {
     //use crate::gamecontrol::game::GameController;
+    use crate::player::player::{Player, Orientation};
 
     #[derive(Debug, Copy, Clone)]
     pub enum State
@@ -43,8 +44,16 @@ pub mod action
     #[derive(Debug)]
     pub struct ReadyAction
     {
-        pub id: u32,
+        pub id: u32, // player id
         pub action: Action,
+    }
+
+    pub enum ActionResult
+    {
+        ActionBool(bool),
+        ActionString(String),
+        ActionInt(u8),
+        ActionError
     }
 
     #[derive(Debug, Clone)]
@@ -70,6 +79,55 @@ pub mod action
                 arg: action.arg,
             }
         }
+
+        pub fn avance(&self, height: &u8, width: &u8, player: &mut Player) -> bool
+        {
+            match player.orientation {
+                Orientation::N => player.coord.y += 1 % height,
+                Orientation::E => player.coord.x += 1 % width,
+                Orientation::S => player.coord.y -= 1 % height,
+                Orientation::O => player.coord.y -= 1 % width,
+            }
+            true
+        }
+
+        pub fn droite(&self, player: &mut Player) -> bool
+        {
+            match player.orientation
+            {
+                Orientation::N => player.orientation = Orientation::E,
+                Orientation::E => player.orientation = Orientation::S,
+                Orientation::S => player.orientation = Orientation::O,
+                Orientation::O => player.orientation = Orientation::N,
+            }
+            true
+        }
+
+        pub fn gauche(&self, player: &mut Player) -> bool
+        {
+            match player.orientation
+            {
+                Orientation::N => player.orientation = Orientation::O,
+                Orientation::E => player.orientation = Orientation::N,
+                Orientation::S => player.orientation = Orientation::E,
+                Orientation::O => player.orientation = Orientation::S,
+            }
+            true
+        }
+
+        // pub fn voir
+
+        pub fn inventaire(&self, player: &Player) -> String
+        {
+            let str = format!("food: {}, sibur: {}, mediane: {}, linemate: {}, deraumere: {}, phiras: {}, thystate: {}",
+                                    player.ivt.food, player.ivt.sibur, player.ivt.mendiane, player.ivt.linemate, player.ivt.deraumere, player.ivt.phiras, player.ivt.thystate);
+            str
+        }
+
+        // pub fn prend
+        // pub fn pose
+        // pub fn expulse
+
 
     }
 

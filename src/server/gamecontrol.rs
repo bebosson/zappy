@@ -52,6 +52,7 @@ pub mod game
                 team.print_players_from_team();
                 println!(" - - - - - - - - -");
             }
+            println!("\n\n");
         }
 
         pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream)
