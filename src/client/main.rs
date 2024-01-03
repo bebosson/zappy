@@ -28,7 +28,6 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
         println!("vec string {:?}", vec_string);
         if *number_command_sent < vec_string.len() as u8
         {
-            //println!("{}", command);
             //stream.write(command.as_bytes());
             let mut array = Vec::with_capacity(16);
             array.extend(command.chars());
@@ -40,6 +39,7 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
             {
                 result_array[i] = c as u8;
             }
+            println!("{:?}", result_array);
             stream.write(&result_array);
             // stream.write(b"]");
             // use std::thread::sleep as sleep;

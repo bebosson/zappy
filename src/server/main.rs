@@ -215,7 +215,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
     let mut action_receive = [0 as u8; BUF_SIZE];
     let mut actions : Vec<Action> = Vec::new();
 
-    //println!("receive action from : {:?}", stream);
+    // println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
     {
         for team in & mut game_ctrl.teams
@@ -228,6 +228,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
                                     .port()
                     && player.actions.len() < 11
                 {
+                    // println!("AAA");
                     let mut vec_string_command: Vec<String> = Vec::with_capacity(10);
                     for i in 0..10
                     {
@@ -441,18 +442,24 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     let start_time = SystemTime::now();
     println!("start_time ---> {:?}", start_time);
-    println!("-----------------------------------------------------------------------------------------------");
-
-
-    let mut current_actions : Vec<Action> = Vec::new();
-    let mut lala = true; // use for sending the first request
+    let mut lala: bool = false;
+    match TcpStream::connect("localhost:8080")
+    {
+        Ok(mut stream) =>
+        {
+            println!("Successfully connected to server in port server gfx");
+            stream.write(b"Bienvenue");
+        }
+        Err(e) => 
+        {
+            println!("Failed to connect: {}", e);
+        }
+    } 
     loop
     {
         for mut stream in & mut vec_stream
         {
-            
-
-            //println!("sendme");
+            // println!("sendme");
             if check_winner(&game_ctrl.teams)
             {
                 break;

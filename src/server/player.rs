@@ -82,6 +82,7 @@ pub mod player
                     break ;
                 }
             }
+            // println!("Action {:?}", action);
             self.actions.push(action.clone());
         }
 
