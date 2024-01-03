@@ -3,7 +3,7 @@ pub mod player
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::Point;
     use crate::action::action::{Action, ActionTemplate};
-    use crate::{COMMAND_SLICE, get_obj_from_string};
+    use crate::get_obj_from_string;
     use crate::action::action::*;
 
 
@@ -61,11 +61,11 @@ pub mod player
             let mut action: Action = Action::new(NO_ACTION);
             let object: Option<String> = get_obj_from_string(&command_full);
 
-            for COMMAND in COMMANDS
+            for tmp_command in COMMANDS
             {
-                if command_full.starts_with(COMMAND.action_name)
+                if command_full.starts_with(tmp_command.action_name)
                 {
-                    action = Action::new(ActionTemplate{action_name: COMMAND.action_name, arg: object, count: COMMAND.count});
+                    action = Action::new(ActionTemplate{action_name: tmp_command.action_name, arg: object, count: tmp_command.count});
                     break ;
                 }
             }

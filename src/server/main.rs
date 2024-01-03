@@ -3,7 +3,6 @@ use std::env;
 use std::error::Error as GenericError;
 use std::io::{Write, Read};
 use std::net::{TcpListener, TcpStream};
-use std::process::Command;
 use std::time::Duration;
 use std::time::SystemTime;
 
@@ -330,7 +329,7 @@ fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
 
 fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> bool
 {
-    let mut tmp_player = find_player_from_id(& mut game_ctrl.teams, &ready_action.id);
+    let tmp_player = find_player_from_id(& mut game_ctrl.teams, &ready_action.id);
 
     //println!("INSIDE EXEC_ACTION");
 
@@ -362,9 +361,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let mut vec_stream: Vec<TcpStream> = vec![];
     let mut hashmap: HashMap<String, u8>= HashMap::new();
     let mut id: u32 = 0;
-    let duration: Duration = Duration::new(0, 100000000);
-
-    println!("Start server");
+    //let duration: Duration = Duration::new(0, 100000000);
 
     // parsing
     let mut vec_args = parsing()?;
@@ -377,8 +374,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     // network initialization
     let listener = TcpListener::bind(format!("127.0.0.1:{}", vec_args.p)).unwrap();
+
+    println!("Start server");
     
-    let index = 0; 
+    //let index = 0; 
     // listen for client connexion
     for tcpstream in listener.incoming()
     {
@@ -386,9 +385,9 @@ fn main() -> Result<(), Box<dyn GenericError>>
         let mut stream = tcpstream?;
         println!("Connection established!");
         
-        stream.write(b"Bienvenue");
+        let _ = stream.write(b"Bienvenue");
         create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-        stream.set_read_timeout(Some(Duration::new(0, 10000000)));
+        let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
         vec_stream.push(stream);
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap)
         {
@@ -413,7 +412,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             {
                 break;
             }
-            stream.write(b"sendme");
+            let _ = stream.write(b"sendme");
             receive_action(& mut stream, & mut game_ctrl);
             break ;
         }
@@ -430,7 +429,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let action_result = exec_action(ready_action, & mut game_ctrl);
                 //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
-                //let ret = send_pkt(gfx_pkt, client_pkt);
+                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT);
             }
         }
 
@@ -447,7 +446,5 @@ fn main() -> Result<(), Box<dyn GenericError>>
         //game_ctrl.print_all_players();
         //println!("\n\n");
     }
-
-    Ok(())
     
 }

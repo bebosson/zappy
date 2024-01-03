@@ -2,9 +2,7 @@ import subprocess
 
 subprocess.run(["cargo", "build", "--bin", "server"])
 
-print("- - - - - - - - - - - - - - - - - -")
-print("- - - - - - - - - - - - - - - - - -")
-print("- - - - - - - - - - - - - - - - - -")
+print("- - - - - - - - - - - - - - - - - -\n\n\n")
 
 error_test = [
 "target/debug/server -x 2 -y 2 -p 1312 -t 1 -n lala -c",
@@ -23,10 +21,10 @@ error_test = [
 
 
 for elem in error_test : 
-    print(f"trying to test {elem}")
+    print(f"trying to test :    {elem}")
     result = subprocess.run(elem.split())
     if result.returncode == 0:
-        print(f"error for test {result.args}")
+        print(f"--------> error for test {result.args}")
     print("- - - - - - - - - - - - - - - - - -")
     print("")
 
