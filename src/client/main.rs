@@ -25,7 +25,7 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
 {
     for command in vec_string
     {
-        println!("vec string {:?}", vec_string);
+        //println!("vec string {:?}", vec_string);
         if *number_command_sent < vec_string.len() as u8
         {
             //stream.write(command.as_bytes());

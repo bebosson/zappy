@@ -4,10 +4,10 @@
 //! into a texture atlas, and changing the displayed image periodically.
 
 pub mod sprite_player{
-    mod map;
+    // mod map;
 
     use bevy::prelude::*;
-    use map::map::spawn_map;
+    // use map::map::spawn_map;
     
     const MAP_WIDTH: f32 = 50. * 10.0;
     const MAP_HEIGHT: f32 = 50.0;
@@ -16,33 +16,33 @@ pub mod sprite_player{
     
     
     
-    fn main() {
-        App::new()
-            .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest())) // prevents blurry sprites
-            .add_systems(Startup, setup)
-            .add_systems(Startup, spawn_map)
-            .add_systems(Update, animate_sprite)
-            .add_systems(Update, sprite_movement)
-            .run();
-    }
+    // fn main() {
+    //     App::new()
+    //         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest())) // prevents blurry sprites
+            // .add_systems(Startup, setup)
+    //         .add_systems(Startup, spawn_map)
+    //         .add_systems(Update, animate_sprite)
+    //         .add_systems(Update, sprite_movement)
+    //         .run();
+    // }
     
     
     #[derive(Component)]
-    enum Direction {
+    pub enum Direction {
         Left,
         Right,
     }
     
     #[derive(Component)]
-    struct AnimationIndices {
+    pub struct AnimationIndices {
         first: usize,
         last: usize,
     }
     
     #[derive(Component, Deref, DerefMut)]
-    struct AnimationTimer(Timer);
+    pub struct AnimationTimer(Timer);
     
-    fn animate_sprite(
+    pub fn animate_sprite(
         time: Res<Time>,
         mut query: Query<(
             &AnimationIndices,
@@ -62,18 +62,19 @@ pub mod sprite_player{
         }
     }
     
-    fn setup(
+    pub fn setup_sprite(
         mut commands: Commands,
         asset_server: Res<AssetServer>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     ) {
+        commands.spawn(Camera2dBundle::default());
         let texture_handle = asset_server.load("gabe-idle-run.png");
         let texture_atlas =
             TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
         // Use only the subset of sprites in the sheet that make up the run animation
         let animation_indices = AnimationIndices { first: 1, last: 6 };
-        commands.spawn(Camera2dBundle::default());
+        // commands.spawn(Camera2dBundle::default());
         commands.spawn((
             Direction::Right,
             SpriteSheetBundle {
@@ -88,7 +89,7 @@ pub mod sprite_player{
     }
     
     
-    fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
+    pub fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
         for (mut logo, mut transform) in &mut sprite_position {
             match *logo {
                 Direction::Right => transform.translation.x += 30. * time.delta_seconds(),

@@ -181,7 +181,7 @@ fn is_valid_obj(object: &str) -> bool
 
 fn is_valid_cmd(buf: &String) -> bool
 {
-    let lala = match buf
+    match buf
     {
         txt if COMMAND_SLICE.iter().any(|&s| s == txt) =>  true,
         txt if COMMAND_SLICE.iter().any(|&s| txt.starts_with(s)) => {
@@ -190,8 +190,7 @@ fn is_valid_cmd(buf: &String) -> bool
             is_valid_obj(tmp.next().unwrap())
         },
         _ => false,
-    };
-    lala
+    }
 }
 
 fn get_obj_from_string(command: &String) -> Option<String>
@@ -397,6 +396,35 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     Some(ret)
 }
 
+fn send_to_server_gfx(game_ctrl: &GameController)
+{
+    let mut string_map = format!("msz {} {}\n", game_ctrl.x, game_ctrl.y);
+    println!("{:?}", string_map);
+    match TcpStream::connect("localhost:8080")
+    {
+        Ok(mut stream) =>
+        {
+            println!("Successfully connected to server in port server gfx");
+            // stream.write(b"BIENVENUE");
+            let mut array = Vec::with_capacity(16);
+            array.extend(string_map.chars());
+            array.extend(std::iter::repeat('0').take(16 - string_map.len()));
+            //println!("our fucking array ------------> {}", array);
+            
+            let mut result_array = [0u8; 16];
+            for (i, &c) in array.iter().enumerate()
+            {
+                result_array[i] = c as u8;
+            }
+            println!("{:?}", result_array);
+            stream.write(&result_array);
+        }
+        Err(e) => 
+        {
+            println!("Failed to connect: {}", e);
+        }
+    } 
+}
 
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
@@ -442,7 +470,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     let start_time = SystemTime::now();
     println!("start_time ---> {:?}", start_time);
-    let mut lala: bool = false;
+    let mut wait_for_answer: bool = false;
     match TcpStream::connect("localhost:8080")
     {
         Ok(mut stream) =>
@@ -455,6 +483,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("Failed to connect: {}", e);
         }
     } 
+    let mut wait_for_answer: bool = false;
+    /*Send msz X Y \n to server_gfx*/
+    send_to_server_gfx(&game_ctrl);
+    
     loop
     {
         for mut stream in & mut vec_stream
@@ -464,10 +496,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
             {
                 break;
             }
-            if lala == true
+            if wait_for_answer == true
             {
                 let _ = stream.write(b"sendme");
-                lala = false;
+                wait_for_answer = false;
                 //println!("sendme");
             }
             current_actions = receive_action(& mut stream, & mut game_ctrl);
