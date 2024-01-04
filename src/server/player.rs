@@ -6,6 +6,8 @@ pub mod player
     use crate::get_obj_from_string;
     use crate::action::action::*;
 
+    use rand::{thread_rng, Rng};
+
 
     #[derive(Debug, Clone)]
     pub enum Orientation
@@ -23,7 +25,7 @@ pub mod player
         pub coord: Point,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Player
     {
         pub id: u32,
@@ -40,17 +42,25 @@ pub mod player
     
     impl Player
     {
-        pub fn new(id_a: u32, port: u16) -> Self
+        pub fn new(id_a: u32, port: u16, width: u8, height: u8) -> Self
         {
+            let mut rng = thread_rng();
 
             Player
             {
                 id: id_a,
                 port: port,
-                coord: Point::new(0, 0),
+                coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
                 ivt: Ressources::new(),
                 life: 1260,
-                orientation: Orientation::N,
+                orientation: match rng.gen_range(0..4)
+                {
+                    0 => Orientation::N,
+                    1 => Orientation::E,
+                    2 => Orientation::S,
+                    3 => Orientation::O,
+                    _ => Orientation::N,
+                },
                 level: 1,
                 actions: Vec::new(),
             }

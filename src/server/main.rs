@@ -13,6 +13,8 @@ use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
 use paket_crafter::paquet_crafter::craft_gfx_packet;
 
+use crate::gamecontrol::game;
+
 //add module in the crate root
 pub mod args;
 pub mod cell;
@@ -120,7 +122,7 @@ fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String,
                     *nbr_player_in_current_team += 1;
                     *id += 1;
                     let _ = stream.write(&id.to_string().as_bytes());
-                    game_ctrl.get_team_and_push(&string_teamname_buffer, *id, &stream);
+                    game_ctrl.get_team_and_push(&string_teamname_buffer, *id, &stream, args.x, args.y);
                     //println!("{:#?}", game_ctrl);
                 }
             }
@@ -297,11 +299,28 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 }
 */
 
-fn find_player_from_id<'a, 'b>(teams: &'a mut Vec<Team>, id: &'b u32) -> Option<&'a mut Player>
+/*
+fn find_player_from_id<'a>(teams: &'a mut Vec<Team>, id: &'a u32) -> Option<&'a mut Player>
 {
     for team in teams
     {
         for player in & mut team.players
+        {
+            if id == &player.id
+            {
+                return Some(player);
+            }
+        }
+    }
+    None
+}
+*/
+
+fn find_player_from_id(teams: Vec<Team>, id: &u32) -> Option<Player>
+{
+    for team in teams
+    {
+        for player in team.players
         {
             if id == &player.id
             {
@@ -329,25 +348,25 @@ fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
     i
 }
 
-fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> Option<ActionResult>
+fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> Option<ActionResult>
 {
-    let tmp_player = find_player_from_id(& mut game_ctrl.teams, &ready_action.id);
+    let tmp_player = find_player_from_id(game_ctrl.teams.clone(), &ready_action.id);
 
     //println!("INSIDE EXEC_ACTION");
 
-    let player = tmp_player.unwrap();
+    let mut player = tmp_player.unwrap();
     let action = Action::new(NO_ACTION);
     //let ret = match ready_action.action.action_name.as_str()
     let ret = match ready_action.action.action_name.as_str()
     {
-        "avance" => ActionResult::ActionBool(action.avance(&game_ctrl.x, &game_ctrl.y, player)),
-        "droite" => ActionResult::ActionBool(action.droite(player)),
-        "gauche" => ActionResult::ActionBool(action.gauche(player)),
-        "voir" => ActionResult::ActionBool(true),
-        "inventaire" => ActionResult::ActionString(action.inventaire(player)),
-        "prend" => ActionResult::ActionBool(true),
-        "pose" => ActionResult::ActionBool(true),
-        "expulse" => ActionResult::ActionBool(true),
+        "avance" => ActionResult::ActionBool(action.avance(&game_ctrl.x, &game_ctrl.y, &mut player)),
+        "droite" => ActionResult::ActionBool(action.droite(&mut player)),
+        "gauche" => ActionResult::ActionBool(action.gauche(&mut player)),
+        "voir" => ActionResult::ActionVecHashMap(action.voir(&mut player, &game_ctrl.cells, game_ctrl.teams.clone())),
+        "inventaire" => ActionResult::ActionHashMap(action.inventaire(&mut player)),
+        "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
+        "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
+        "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &mut player, &game_ctrl.x, &game_ctrl.y)),
         "broadcast" => ActionResult::ActionBool(true),
         "incantation" => ActionResult::ActionBool(true),
         "fork" => ActionResult::ActionBool(true),
@@ -356,6 +375,20 @@ fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> Op
     };
     let index_action = find_index_action(&ready_action, &player);
     player.actions.remove(index_action);
+    
+    for team in &mut game_ctrl.teams
+    {
+        for team_player in &mut team.players
+        {
+            if (player.id == team_player.id)
+            {
+                team_player.clone_from(&player);
+            }
+        }
+    }
+
+    println!("ret -----------> {:?}", ret);
+    
     Some(ret)
 }
 
@@ -363,7 +396,7 @@ fn exec_action(ready_action: ReadyAction, game_ctrl: & mut GameController) -> Op
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut vec_stream: Vec<TcpStream> = vec![];
-    let mut hashmap: HashMap<String, u8>= HashMap::new();
+    let mut hashmap: HashMap<String, u8> = HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
 
@@ -406,17 +439,23 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let start_time = SystemTime::now();
     println!("start_time ---> {:?}", start_time);
 
+    let mut lala = true; // use for sending the first request
     loop
     {
         for mut stream in & mut vec_stream
         {
             
+
             //println!("sendme");
             if check_winner(&game_ctrl.teams)
             {
                 break;
             }
-            let _ = stream.write(b"sendme");
+            if lala == true
+            {
+                let _ = stream.write(b"sendme");
+                lala = false;
+            }
             receive_action(& mut stream, & mut game_ctrl);
             break ;
         }
@@ -430,8 +469,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
-                let action_result = exec_action(ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
+                let action_result = exec_action(&ready_action, & mut game_ctrl);
+                let gfx_pkt = craft_gfx_packet(&ready_action, &action_result, &game_ctrl.teams);
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
@@ -447,7 +486,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("\n");
         }
 
-        game_ctrl.print_all_players();
+        //game_ctrl.print_all_players();
     }
     
 }

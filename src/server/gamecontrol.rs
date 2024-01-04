@@ -13,7 +13,7 @@ pub mod game
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
 ***********************************************************************/
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct GameController
     {
         pub x: u8,
@@ -55,7 +55,7 @@ pub mod game
             println!("\n\n");
         }
 
-        pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream)
+        pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream, width: u8, height: u8)
         {
             let port = stream
                                 .peer_addr()
@@ -66,7 +66,7 @@ pub mod game
             {
                 if team.name.eq(teamname) == true
                 {
-                    team.players.push(Player::new(id, port));
+                    team.players.push(Player::new(id, port, width, height));
                 }
             }
         }

@@ -43,7 +43,8 @@ pub mod init
 
         let ressource : Ressources = Ressources {
             food        : rng.gen_range(0..4),
-            sibur       : rng.gen_range(0..2),
+            //sibur       : rng.gen_range(0..2),
+            sibur       : 1,
             mendiane    : rng.gen_range(0..2),
             linemate    : rng.gen_range(0..2),
             deraumere   : rng.gen_range(0..2),

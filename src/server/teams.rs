@@ -2,7 +2,7 @@ pub mod team
 {
     use crate::player::player::{Player, Egg};
     
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Team
     {
         pub name: String,

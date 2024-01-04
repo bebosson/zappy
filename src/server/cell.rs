@@ -25,7 +25,7 @@ pub mod cell
 /**********************************************************************
  * Struct Cell
 ***********************************************************************/
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct Cell
     {
         pub ressources: Ressources,
