@@ -3,7 +3,7 @@ pub mod sprite_player;
 
 use bevy::prelude::*;
 use crossbeam_channel::bounded;
-use map::map::{spawn_map, TilesPlugin};
+use map::map::{spawn_map, TilesPlugin, Map};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use sprite_player::sprite_player::{sprite_movement, setup_sprite, animate_sprite};
@@ -54,7 +54,8 @@ impl AppState {
 
 enum Parse{
     Map(i32, i32),
-    Movemement(i32, i32, i32)
+    Content_case(i32, i32, u8, u8, u8, u8, u8, u8, u8)
+    // Movemement(i32, i32, i32)
 }
 
 
@@ -75,6 +76,94 @@ fn copy_until_char(buffer: &[u8], char: u8) -> String
     string_dst
 }
 // dispatch what you parse 
+fn parser_server_packet(pkt_receive: String) -> Parse
+{
+    let mut iter = pkt_receive.split_ascii_whitespace();
+    let mut parse: Parse = Parse::Map{0:0, 1:0};
+    match iter.nth(0)
+    {
+        Some(content) => {
+            match content{
+                "msz" => {
+                    parse = take_dim_map(pkt_receive);
+                }
+                "bct" => {
+                    parse = Parse::Content_case(0, 0, 0, 0, 0, 0, 0, 0, 0);
+                }
+                "tna" => {
+                    todo!();
+                }
+                "pnw" => {
+                    todo!();
+                }
+                "ppo" => {
+                    todo!();
+                }
+                "plv" => {
+                    todo!();
+                }
+                "pin" => {
+                    todo!();
+                }
+                "pex" => {
+                    todo!();
+                }
+                "pic" => {
+                    todo!();
+                }
+                "pie" => {
+                    todo!();
+                }
+                "pfk" => {
+                    todo!();
+                }
+                "pdr" => {
+                    todo!();
+                }
+                "pgt" => {
+                    todo!();
+                }
+                "pdi" => {
+                    todo!();
+                }
+                "enw" => {
+                    todo!();
+                }
+                "eht" => {
+                    todo!();
+                }
+                "ebo" => {
+                    todo!();
+                }
+                "edi" => {
+                    todo!();
+                }
+                "sgt" => {
+                    todo!();
+                }
+                "seg" => {
+                    todo!();
+                }
+                "smg" => {
+                    todo!();
+                }
+                "suc" => {
+                    todo!();
+                }
+                "sbp" => {
+                    todo!();
+                }
+                _ => {
+
+                }
+            }
+        },
+        None => todo!(),
+    }
+    parse
+}
+
+
 fn take_dim_map(string_map: String) -> Parse
 {
     let iter = string_map.split_ascii_whitespace().skip(1);
@@ -113,7 +202,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                                 println!("Received data: {:?}", received_data);
                                 let str = copy_until_char(received_data, b'\n');
                                 println!("str {:?}", str);
-                                let parse : Parse = take_dim_map(str);
+                                let parse : Parse = parser_server_packet(str);
                                 tx.send(parse).unwrap();
                                 // Optionally, send a response back to the client
                             }

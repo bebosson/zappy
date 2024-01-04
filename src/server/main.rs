@@ -396,28 +396,50 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     Some(ret)
 }
 
+fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 50]
+{
+    let mut array = Vec::with_capacity(50);
+    array.extend(gfx_pck_string.chars());
+    array.extend(std::iter::repeat('0').take(50 - gfx_pck_string.len()));
+    //println!("our fucking array ------------> {}", array);
+    
+    let mut result_array = [0u8; 50];
+    for (i, &c) in array.iter().enumerate()
+    {
+        result_array[i] = c as u8;
+    }
+    println!("{:?}", result_array);
+    result_array
+}
+
+fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<String>
+{
+    let mut all_packets : Vec<String> = vec![];
+    all_packets.push(game_ctrl.packet_gfx_map_size());
+    // all_packets.push(game_ctrl.packet_gfx_timestamp());
+    for i in game_ctrl.packet_gfx_ressources_map()
+    {
+        all_packets.push(i);
+    }
+    all_packets
+}
+
 fn send_to_server_gfx(game_ctrl: &GameController)
 {
-    let mut string_map = format!("msz {} {}\n", game_ctrl.x, game_ctrl.y);
-    println!("{:?}", string_map);
+    // println!("{:?}", string_map);
+    let mut gfx_packet_to_send: [u8; 50];
+    let vec_gfx_pck_string: Vec<String> = get_initial_gfx_packets_from_game_ctrl(game_ctrl);
     match TcpStream::connect("localhost:8080")
     {
         Ok(mut stream) =>
         {
             println!("Successfully connected to server in port server gfx");
-            // stream.write(b"BIENVENUE");
-            let mut array = Vec::with_capacity(16);
-            array.extend(string_map.chars());
-            array.extend(std::iter::repeat('0').take(16 - string_map.len()));
-            //println!("our fucking array ------------> {}", array);
-            
-            let mut result_array = [0u8; 16];
-            for (i, &c) in array.iter().enumerate()
+            for gfx_pck_string in vec_gfx_pck_string
             {
-                result_array[i] = c as u8;
+                gfx_packet_to_send = translate_string_to_buffer(gfx_pck_string);
+                stream.write(&gfx_packet_to_send);
             }
-            println!("{:?}", result_array);
-            stream.write(&result_array);
+            // stream.write(b"BIENVENUE");
         }
         Err(e) => 
         {
@@ -471,21 +493,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let start_time = SystemTime::now();
     println!("start_time ---> {:?}", start_time);
     let mut wait_for_answer: bool = false;
-    match TcpStream::connect("localhost:8080")
-    {
-        Ok(mut stream) =>
-        {
-            println!("Successfully connected to server in port server gfx");
-            stream.write(b"Bienvenue");
-        }
-        Err(e) => 
-        {
-            println!("Failed to connect: {}", e);
-        }
-    } 
-    let mut wait_for_answer: bool = false;
-    /*Send msz X Y \n to server_gfx*/
-    send_to_server_gfx(&game_ctrl);
+    
+    /*****             Send init packets \n to server_gfx                  *****/
+    /*****             need to get the gfx_stream back from this func                   *****/
+    send_to_server_gfx(&game_ctrl); 
     
     loop
     {

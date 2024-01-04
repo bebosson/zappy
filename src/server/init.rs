@@ -54,4 +54,10 @@ pub mod init
         let cell : Cell = Cell {ressources : ressource};
         cell
     }
+
+    impl std::fmt::Display for Ressources {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}, {}, {}, {}, {}, {}, {}", self.food, self.sibur, self.mendiane, self.linemate, self.deraumere, self.phiras, self.thystate)
+        }
+    }
 }

@@ -1,5 +1,5 @@
 pub mod map{
-    use std::io::Empty;
+    use std::{io::Empty, vec};
 
     use bevy::{prelude::*, math::vec3};
 
@@ -35,9 +35,11 @@ pub mod map{
         }
     }
 
-    pub fn spawn_map(x: i32 , y: i32, commands: & mut Commands, asset_server: &Res<AssetServer>){
+    pub fn spawn_map(x: i32 , y: i32, commands: & mut Commands, asset_server: &Res<AssetServer>) -> Vec<Entity>
+    {
         // let mut x: i32;
         // let mut y: i32;
+            let mut vec_entity_map: Vec<Entity> = vec![];
             let texture_handle: Handle<Image> = asset_server.load("lawn.png");
             let start_x = - (x * TILES_WIDTH as i32) / 2 as i32;
             let end_x = x * TILES_WIDTH as i32 / 2 - 1;
@@ -53,30 +55,60 @@ pub mod map{
                     let i_f32 = i as f32;
                     let j_f32 = j as f32;
                     let vec = Vec3::new(orig_x as f32 + i_f32, orig_y as f32 + j_f32, 10.);
-                    commands.spawn((
+                    vec_entity_map.push(commands.spawn((
                             Tile(vec),
                             SpriteBundle {
                                 texture: texture_handle.clone(),
                                 transform: Transform::from_translation(vec),
                                 ..default()
                             }
-                        ) 
-                    );
+                        )
+                    ).id());
                 }
             }
+            // let child = commands.spawn(
+            //         SpriteBundle {
+            //             texture: asset_server.load("Ressource.png"),
+            //             transform: Transform::from_xyz(100., 0., 0.),
+            //             ..default()
+            //         }
+                
+            // ).id();
+            // println!("{:?}", child);
+            vec_entity_map
         }
 
-    
+    pub fn spawn_resources(commands: & mut Commands, vec_entity: &Vec<Entity>, asset_server: &Res<AssetServer>)
+    {
+        println!("{:?}", vec_entity);
+        println!("WESHHHHHHHHHHHHHHHHHHHHHH");
+        for i in vec_entity{
+            commands.entity(*i).with_children(|parent|
+                {
+                    parent.spawn(SpriteBundle{
+                        texture: asset_server.load("Ressource.png"),
+                        transform: Transform::from_xyz(100., 0., 0.),
+                        ..default()
+                    });
+                }
+
+            );
+        }
+    }
     
     pub fn dispatch_event(mut commands: Commands, asset_server: Res<AssetServer>, mut reader: EventReader<StreamEvent>)
     {
-        
+        let mut vec_map_entity: Vec<Entity> = vec![];
         for (_, event) in reader.read().enumerate() {
             let x = &event.0;
             match x
             {
-                crate::Parse::Map(x, y) => spawn_map(*x, *y, & mut commands, &asset_server),
-                crate::Parse::Movemement(_, _, _) => todo!(),
+                crate::Parse::Map(x, y) => vec_map_entity = spawn_map(*x, *y, & mut commands, &asset_server),
+                crate::Parse::Content_case(x, y, n, l, d, s,m , ph, th) => {
+                    spawn_resources(& mut commands, &vec_map_entity, &asset_server);
+
+                }
+                // crate::Parse::Movemement(_, _, _) => todo!(),
             }
             // let y = event.0;
         }

@@ -154,6 +154,34 @@ pub mod game
                 team = &mut tmp.clone();
             }
         }
+
+        pub fn packet_gfx_ressources_map(&self) -> Vec<String>
+        {
+            let mut vec_packet: Vec<String> = vec![];
+            let mut x = 0;
+            let mut y = 0; 
+        
+            for line in &self.cells{
+                x = 0;
+                for cell in line{
+                    vec_packet.push(format!("bct {} {} {}\n", x, y, cell.ressources));
+                    x += 1;
+                }
+                y += 1;
+            }
+            vec_packet
+        }
+
+        pub fn packet_gfx_timestamp(&self) -> String
+        {
+            format!("sgt {}\n", self.timestamp)
+        }
+
+        pub fn packet_gfx_map_size(&self) -> String
+        {
+            format!("msz {} {}\n", self.x, self.y)
+        }
+
     }
 
 
