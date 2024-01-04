@@ -51,14 +51,19 @@ impl AppState {
         // Additional setup if needed
     }
 }
-#[derive(Component)]
-struct Map(i32, i32);
+
+enum Parse{
+    Map(i32, i32),
+    Movemement(i32, i32, i32)
+}
+
+
 
 #[derive(Resource, Deref)]
-struct StreamReceiver(Receiver<Map>);
+struct StreamReceiver(Receiver<Parse>);
 
 #[derive(Event)]
-struct StreamEvent(Map);
+struct StreamEvent(Parse);
 
 fn copy_until_char(buffer: &[u8], char: u8) -> String
 {
@@ -69,8 +74,8 @@ fn copy_until_char(buffer: &[u8], char: u8) -> String
         .collect();
     string_dst
 }
-
-fn take_dim_map(string_map: String) -> Map
+// dispatch what you parse 
+fn take_dim_map(string_map: String) -> Parse
 {
     let iter = string_map.split_ascii_whitespace().skip(1);
     let mut vec_map: Vec<i32> = vec![];
@@ -81,7 +86,7 @@ fn take_dim_map(string_map: String) -> Map
         vec_map.push(string.parse::<i32>().ok().unwrap());
     }
     // let x = vec_map[0].parse::<u32>;
-    Map {0:vec_map[0],1:vec_map[1]}
+    Parse::Map {0:vec_map[0],1:vec_map[1]}
 }
 
 fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
@@ -91,7 +96,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
             Ok(mut stream) => {
                 // Spawn a new thread to handle each incoming connection
                 println!("toto1.5");
-                let (tx, rx) = bounded::<Map>(1);
+                let (tx, rx) = bounded::<Parse>(1);
                 thread::spawn(move || {
                     let mut buffer = [0; BUF_SIZE];
                     loop {
@@ -108,8 +113,8 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                                 println!("Received data: {:?}", received_data);
                                 let str = copy_until_char(received_data, b'\n');
                                 println!("str {:?}", str);
-                                let map : Map = take_dim_map(str);
-                                tx.send(map).unwrap();
+                                let parse : Parse = take_dim_map(str);
+                                tx.send(parse).unwrap();
                                 // Optionally, send a response back to the client
                             }
                             Err(e) => {

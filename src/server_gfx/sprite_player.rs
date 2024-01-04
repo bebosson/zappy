@@ -68,25 +68,45 @@ pub mod sprite_player{
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     ) {
         commands.spawn(Camera2dBundle::default());
-        let texture_handle = asset_server.load("gabe-idle-run.png");
+        let texture_handle = asset_server.load("yoshi_walking3.png");
         let texture_atlas =
-            TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1, None, None);
+            TextureAtlas::from_grid(texture_handle, Vec2::new(27.1, 32.0), 10, 1, None, None);
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
         // Use only the subset of sprites in the sheet that make up the run animation
-        let animation_indices = AnimationIndices { first: 1, last: 6 };
+        let animation_indices = AnimationIndices { first: 1, last: 9 };
         // commands.spawn(Camera2dBundle::default());
         commands.spawn((
-            Direction::Right,
+            Direction::Left,
             SpriteSheetBundle {
                 texture_atlas: texture_atlas_handle,
                 sprite: TextureAtlasSprite::new(animation_indices.first),
-                transform: Transform::from_xyz(10.,0.,15.),
+                transform: Transform::from_xyz(40.,0.,15.),
                 ..default()
             },
             animation_indices,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         ));
     }
+
+    
+    // pub fn sprite_orient(mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
+    //     for (mut logo, mut transform) in &mut sprite_position {
+    //         match *logo {
+    //             Direction::Right => transform.translation.x += 30. * time.delta_seconds(),
+    //             Direction::Left => transform.translation.x -= 30. * time.delta_seconds(),
+    //         }
+    
+    //         if transform.translation.x > 200. {
+    //             *logo = Direction::Left;
+    //             // transform.rotate_z(30.);
+    //             transform.scale.x *= -1.;
+    //         } else if transform.translation.x < -200. {
+    //             *logo = Direction::Right;
+    //             transform.scale.x *= -1.;
+    
+    //         }
+    //     }
+    // }
     
     
     pub fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, &mut Transform)>) {
