@@ -1,12 +1,11 @@
 pub mod action
 {
+    use std::arch::x86_64::_MM_FROUND_TO_NEAREST_INT;
     use std::collections::HashMap;
 
-    use crate::player;
-    //use crate::gamecontrol::game::GameController;
-    use crate::player::player::{Player, Orientation};
-    use crate::gamecontrol::game::GameController;
+    use crate::player::player::{Player, Orientation, Egg};
     use crate::cell::cell::{Point, Cell};
+    use crate::ressources::ressources::LEVEL_RESSOURCES_REQUIREMENT;
     use crate::teams::team::Team;
 
 
@@ -199,9 +198,119 @@ pub mod action
             true
         }
 
-        pub fn expulse(&self, teams: & mut Vec<Team>, player: & mut Player, width: &u8, height: &u8) -> bool
+        pub fn expulse(&self, teams: & mut Vec<Team>, player: & Player, width: &u8, height: &u8) -> bool
         {
+            let mut nb_kick_player = 0;
+            let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
 
+            for team in teams
+            {
+                for mut tmp_player in team.players
+                {
+                    if player.coord.x == tmp_player.coord.x
+                    {
+                        tmp_player.coord.x = target_cell.x;
+                        tmp_player.coord.y = target_cell.y;
+                        nb_kick_player += 1;
+                    }
+                }
+            }
+            if nb_kick_player == 0
+            {
+                return false;
+            }
+            true
+        }
+
+        pub fn fork(&self, player: &Player, teams: &mut Vec<Team>) -> bool
+        {
+            for team in teams
+            {
+                for tmp_player in team.players
+                {
+                    if tmp_player.id == player.id
+                    {
+                        team.eggs.push(Egg{count: 600, coord: player.coord});
+                    }
+                }
+            }
+            true
+        }
+
+        pub fn connect_nbr(&self, player: &Player, teams: &Vec<Team>) -> u8
+        {
+            for team in teams
+            {
+                for tmp_player in team.players
+                {
+                    if tmp_player.id == player.id
+                    {
+                        return team.connect_nbr;
+                    }
+                }
+            }
+            0
+        }
+
+        pub fn incantation(&self, player: &Player, teams: &Vec<Team>) -> String
+        {
+            let mut nb_players = 0;
+            let mut is_enough_players_on_coord = false;
+            let mut is_enough_ressources_for_player = true;
+            let level_requirement = LEVEL_RESSOURCES_REQUIREMENT[player.level as usize - 1];
+            let elems = vec!
+            [
+                (level_requirement.get("linemate"), player.ivt.linemate),
+                (level_requirement.get("deraumere"), player.ivt.deraumere),
+                (level_requirement.get("sibur"), player.ivt.sibur),
+                (level_requirement.get("mendiane"), player.ivt.mendiane),
+                (level_requirement.get("phiras"), player.ivt.phiras),
+                (level_requirement.get("thystate"), player.ivt.thystate),
+            ];
+
+            for team in teams
+            {
+                for tmp_player in team.players
+                {
+                    if tmp_player.coord.x == player.coord.x && tmp_player.coord.y == player.coord.y
+                    {
+                        nb_players += 1;
+                    }
+                }
+            }
+            if nb_players == *level_requirement.get("nb_players").unwrap()
+            {
+                is_enough_players_on_coord = true;
+            }
+            for elem in elems
+            {
+                if elem.0 != Some(&elem.1)
+                {
+                    is_enough_ressources_for_player = false;
+                }
+            }
+            if is_enough_players_on_coord == true && is_enough_ressources_for_player == true
+            {
+                return "Elevation en cours".to_string();
+            }
+            // qu'est ce qu'on envoie en cas d'erreur ???
+            "".to_string()
+        }
+
+        pub fn broadcast(&self, player: &Player, teams: &Vec<Team>) -> bool
+        {
+            for team in teams
+            {
+                for tmp_player in team.players
+                {
+                    let x1 = tmp_player.coord.x;
+                    let y1 = tmp_player.coord.y;
+                    let x2 = player.coord.x;
+                    let y2 = player.coord.y;
+                    let coeff: f32 = (y2 - y1) as f32 / (x2 - x1) as f32;
+                    
+                }
+            }
             true
         }
 
@@ -210,6 +319,33 @@ pub mod action
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fn find_target_cell_from_coord(orientation: &Orientation, coord: &Point, width: usize, height: usize) -> Point
+    {
+        let mut x = coord.x as i8;
+        let mut y = coord.y as i8;
+        match orientation
+        {
+            Orientation::E => {
+                if x as usize == width - 1 { x = -1;}
+                Point{x: x as u8 + 1, y: y as u8}
+            },
+            Orientation::N => {
+                if y as u8 == 0 { y = height as i8 - 1;}
+                Point{x: x as u8, y: y as u8 - 1}
+            },
+            Orientation::O => {
+                if x == 0 as i8 { x = width as i8 - 1;}
+                Point{x: x as u8 - 1, y: y as u8}
+            },
+            Orientation::S => {
+                if y as usize == height - 1 { y = - 1;}
+                Point{x: x, y: y as u8 + 1}
+            },
+            _ => Point{x: 0, y: 0},
+        }
+        
+    }
 
     fn check_obj_is_present_on_cell(obj: String, cell: &Cell) -> bool
     {
@@ -258,14 +394,8 @@ pub mod action
                     Orientation::E => player.coord.x as i8 + i,
                 };
                 //println!("x -----> {}", x);
-                if x < 0
-                {
-                    x = width as i8 + x;
-                }
-                else if x > width as i8 - 1
-                {
-                    x = x % width as i8;
-                }
+                if x < 0 { x = width as i8 + x; }
+                else if x > width as i8 - 1 { x = x % width as i8; }
                 let mut y = match player.orientation
                 {
                     Orientation::E => player.coord.y as i8 + (-1) * (i * 2 + 1) / 2 + j,
@@ -274,14 +404,8 @@ pub mod action
                     Orientation::S => player.coord.y as i8 + i,
                 };
                 //println!("y -----> {}", y);
-                if y < 0
-                {
-                    y = height as i8 + y;
-                }
-                else if y > height as i8 - 1
-                {
-                    y = y % height as i8;
-                }
+                if y < 0 { y = height as i8 + y; }
+                else if y > height as i8 - 1 { y = y % height as i8; }
                 cases_coord.push(Point{x: x as u8, y: y as u8});
                 println!("\n");
             }

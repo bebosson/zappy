@@ -366,11 +366,11 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
         "inventaire" => ActionResult::ActionHashMap(action.inventaire(&mut player)),
         "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
         "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
-        "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &mut player, &game_ctrl.x, &game_ctrl.y)),
-        "broadcast" => ActionResult::ActionBool(true),
-        "incantation" => ActionResult::ActionBool(true),
-        "fork" => ActionResult::ActionBool(true),
-        "connect_nbr" => ActionResult::ActionBool(true),
+        "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &player, &game_ctrl.x, &game_ctrl.y)),
+        "broadcast" => ActionResult::ActionBool(action.broadcast(&player, &game_ctrl.teams)),
+        "incantation" => ActionResult::ActionString(action.incantation(&player, &game_ctrl.teams)),
+        "fork" => ActionResult::ActionBool(action.fork(&player, &mut game_ctrl.teams)),
+        "connect_nbr" => ActionResult::ActionInt(action.connect_nbr(&player, &game_ctrl.teams)),
         _ => return None,
     };
     let index_action = find_index_action(&ready_action, &player);

@@ -31,7 +31,7 @@ pub mod game
 
             args.n
                 .iter()
-                .map(|x| vec_teams.push(Team::new(&x.clone())))
+                .map(|x| vec_teams.push(Team::new(&x.clone(), args.c)))
                 .for_each(drop);
 
             GameController
