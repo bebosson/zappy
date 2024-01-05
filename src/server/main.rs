@@ -396,14 +396,14 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     Some(ret)
 }
 
-fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 50]
+fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 32]
 {
-    let mut array = Vec::with_capacity(50);
+    let mut array = Vec::with_capacity(32);
     array.extend(gfx_pck_string.chars());
-    array.extend(std::iter::repeat('0').take(50 - gfx_pck_string.len()));
+    array.extend(std::iter::repeat('0').take(32 - gfx_pck_string.len()));
     //println!("our fucking array ------------> {}", array);
     
-    let mut result_array = [0u8; 50];
+    let mut result_array = [0u8; 32];
     for (i, &c) in array.iter().enumerate()
     {
         result_array[i] = c as u8;
@@ -427,7 +427,7 @@ fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<Str
 fn send_to_server_gfx(game_ctrl: &GameController)
 {
     // println!("{:?}", string_map);
-    let mut gfx_packet_to_send: [u8; 50];
+    let mut gfx_packet_to_send: [u8; 32];
     let vec_gfx_pck_string: Vec<String> = get_initial_gfx_packets_from_game_ctrl(game_ctrl);
     match TcpStream::connect("localhost:8080")
     {

@@ -80,6 +80,7 @@ fn parser_server_packet(pkt_receive: String) -> Parse
 {
     let mut iter = pkt_receive.split_ascii_whitespace();
     let mut parse: Parse = Parse::Map{0:0, 1:0};
+    println!("{}", pkt_receive);
     match iter.nth(0)
     {
         Some(content) => {
@@ -187,7 +188,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                 println!("toto1.5");
                 let (tx, rx) = bounded::<Parse>(1);
                 thread::spawn(move || {
-                    let mut buffer = [0; BUF_SIZE];
+                    let mut buffer = [0; 32];
                     loop {
                         println!("{:?}", stream);
                         match stream.read(&mut buffer) {
