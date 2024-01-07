@@ -5,8 +5,8 @@ pub mod action
 
     use crate::player::player::{Player, Orientation, Egg};
     use crate::cell::cell::{Point, Cell};
-    use crate::ressources::ressources::LEVEL_RESSOURCES_REQUIREMENT;
     use crate::teams::team::Team;
+    use crate::get_obj_from_string;
 
 
     #[derive(Debug, Copy, Clone)]
@@ -88,14 +88,53 @@ pub mod action
             }
         }
 
+        pub fn new_from_string(command_full: String) -> Self
+        {
+            let mut action: Action = Action::new(NO_ACTION);
+            let object: Option<String> = get_obj_from_string(&command_full);
+
+            for tmp_command in COMMANDS
+            {
+                if command_full.starts_with(tmp_command.action_name)
+                {
+                    action = Action::new(ActionTemplate{action_name: tmp_command.action_name, arg: object, count: tmp_command.count});
+                    break ;
+                }
+            }
+            action
+        }
+
         pub fn avance(&self, height: &u8, width: &u8, player: &mut Player) -> bool
         {
-            match player.orientation {
-                Orientation::N => player.coord.y += 1 % height,
-                Orientation::E => player.coord.x += 1 % width,
-                Orientation::S => player.coord.y -= 1 % height,
-                Orientation::O => player.coord.y -= 1 % width,
+            let mut x: i8 = player.coord.x as i8;
+            let mut y: i8 = player.coord.y as i8;
+
+            //println!("player coord X {}", player.coord.x);
+            //println!("player coord Y {}", player.coord.y);
+            match player.orientation
+            {
+                Orientation::N =>
+                {
+                    if y == 0 {y = *height as i8}
+                    y -= 1 % *height as i8;
+                },
+                Orientation::E => 
+                {
+                    if x == *width as i8 - 1 {x = -1}
+                    x += 1 % *width as i8
+                }
+                Orientation::S => {
+                    if y == *height as i8 - 1 {y = -1}
+                    y += 1 % *height as i8
+                },
+                Orientation::O =>
+                {
+                    if x == 0 {x = *width as i8}
+                    x -= 1 % *width as i8
+                }
             }
+            player.coord.x = x as u8;
+            player.coord.y = y as u8;
             true
         }
 
@@ -150,11 +189,9 @@ pub mod action
 
         pub fn prend(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
         {
-            println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
-            if (check_obj_is_present_on_cell(obj.to_string(), cell) == false)
-            {
-                return false;
-            }
+            //println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
+            if check_obj_is_present_on_cell(obj.to_string(), cell) == false { return false; }
+
             match obj.as_str()
             {
                 "food" => {
@@ -169,19 +206,15 @@ pub mod action
                 "phiras" => {player.ivt.phiras += 1; cell.ressources.phiras -= 1;},
                 "thystate" => {player.ivt.thystate += 1; cell.ressources.thystate -= 1;},
                 _ => {()},
-                _ => {()},
             }
-            println!("after 'prend', cell content -> {:?}", cell);
+            //println!("after 'prend', cell content -> {:?}", cell);
             true
         }
 
         pub fn pose(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
         {
-            println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
-            if (check_obj_is_present_on_player(obj.to_string(), player) == false)
-            {
-                return false;
-            }
+            //println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
+            if check_obj_is_present_on_player(obj.to_string(), player) == false { return false; }
 
             match obj.as_str()
             {
@@ -194,7 +227,7 @@ pub mod action
                 "thystate" => {player.ivt.thystate -= 1; cell.ressources.thystate += 1;},
                 _ => {()},
             }
-            println!("after 'prend', cell content -> {:?}", cell);
+            //println!("after 'prend', cell content -> {:?}", cell);
             true
         }
 
@@ -203,9 +236,10 @@ pub mod action
             let mut nb_kick_player = 0;
             let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
 
+            println!("target cell for player {} --> {:?}", player.id, target_cell);
             for team in teams
             {
-                for mut tmp_player in team.players
+                for tmp_player in &mut team.players
                 {
                     if player.coord.x == tmp_player.coord.x
                     {
@@ -226,11 +260,11 @@ pub mod action
         {
             for team in teams
             {
-                for tmp_player in team.players
+                for tmp_player in &team.players
                 {
                     if tmp_player.id == player.id
                     {
-                        team.eggs.push(Egg{count: 600, coord: player.coord});
+                        team.eggs.push(Egg{count: 600, coord: player.coord.clone()});
                     }
                 }
             }
@@ -241,7 +275,7 @@ pub mod action
         {
             for team in teams
             {
-                for tmp_player in team.players
+                for tmp_player in &team.players
                 {
                     if tmp_player.id == player.id
                     {
@@ -257,20 +291,21 @@ pub mod action
             let mut nb_players = 0;
             let mut is_enough_players_on_coord = false;
             let mut is_enough_ressources_for_player = true;
-            let level_requirement = LEVEL_RESSOURCES_REQUIREMENT[player.level as usize - 1];
+            let level_requirement = get_level_requirement();
+
             let elems = vec!
             [
-                (level_requirement.get("linemate"), player.ivt.linemate),
-                (level_requirement.get("deraumere"), player.ivt.deraumere),
-                (level_requirement.get("sibur"), player.ivt.sibur),
-                (level_requirement.get("mendiane"), player.ivt.mendiane),
-                (level_requirement.get("phiras"), player.ivt.phiras),
-                (level_requirement.get("thystate"), player.ivt.thystate),
+                (level_requirement[player.level as usize].get(&"linemate".to_string()), player.ivt.linemate),
+                (level_requirement[player.level as usize].get(&"deraumere".to_string()), player.ivt.deraumere),
+                (level_requirement[player.level as usize].get(&"sibur".to_string()), player.ivt.sibur),
+                (level_requirement[player.level as usize].get(&"mendiane".to_string()), player.ivt.mendiane),
+                (level_requirement[player.level as usize].get(&"phiras".to_string()), player.ivt.phiras),
+                (level_requirement[player.level as usize].get(&"thystate".to_string()), player.ivt.thystate),
             ];
 
             for team in teams
             {
-                for tmp_player in team.players
+                for tmp_player in &team.players
                 {
                     if tmp_player.coord.x == player.coord.x && tmp_player.coord.y == player.coord.y
                     {
@@ -278,7 +313,7 @@ pub mod action
                     }
                 }
             }
-            if nb_players == *level_requirement.get("nb_players").unwrap()
+            if nb_players == *level_requirement[player.level as usize].get(&"nb_players".to_string()).unwrap()
             {
                 is_enough_players_on_coord = true;
             }
@@ -301,7 +336,7 @@ pub mod action
         {
             for team in teams
             {
-                for tmp_player in team.players
+                for tmp_player in &team.players
                 {
                     let x1 = tmp_player.coord.x;
                     let y1 = tmp_player.coord.y;
@@ -331,16 +366,16 @@ pub mod action
                 Point{x: x as u8 + 1, y: y as u8}
             },
             Orientation::N => {
-                if y as u8 == 0 { y = height as i8 - 1;}
+                if y as u8 == 0 { y = height as i8;}
                 Point{x: x as u8, y: y as u8 - 1}
             },
             Orientation::O => {
-                if x == 0 as i8 { x = width as i8 - 1;}
+                if x == 0 as i8 { x = width as i8;}
                 Point{x: x as u8 - 1, y: y as u8}
             },
             Orientation::S => {
                 if y as usize == height - 1 { y = - 1;}
-                Point{x: x, y: y as u8 + 1}
+                Point{x: x as u8, y: y as u8 + 1}
             },
             _ => Point{x: 0, y: 0},
         }
@@ -446,6 +481,89 @@ pub mod action
         //println!("cell ({},{}) --> {:?}", coord.x, coord.y, cell_content);
         
         cell_content
+    }
+
+    fn get_level_requirement() -> Vec<HashMap<String, u8>>
+    {
+        let mut hashmap: Vec<HashMap<String, u8>> = vec![
+        { // level 1-2
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 1 as u8);
+            map.insert("linemate".to_string(), 1 as u8);
+            map.insert("deraumere".to_string(), 0 as u8);
+            map.insert("sibur".to_string(), 0 as u8);
+            map.insert("mendiane".to_string(), 0 as u8);
+            map.insert("phiras".to_string(), 0 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 2-3
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 2 as u8);
+            map.insert("linemate".to_string(), 1 as u8);
+            map.insert("deraumere".to_string(), 1 as u8);
+            map.insert("sibur".to_string(), 1 as u8);
+            map.insert("mendiane".to_string(), 0 as u8);
+            map.insert("phiras".to_string(), 0 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 3-4
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 2 as u8);
+            map.insert("linemate".to_string(), 2 as u8);
+            map.insert("deraumere".to_string(), 0 as u8);
+            map.insert("sibur".to_string(), 1 as u8);
+            map.insert("mendiane".to_string(), 0 as u8);
+            map.insert("phiras".to_string(), 2 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 4-5
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 4 as u8);
+            map.insert("linemate".to_string(), 1 as u8);
+            map.insert("deraumere".to_string(), 1 as u8);
+            map.insert("sibur".to_string(), 2 as u8);
+            map.insert("mendiane".to_string(), 0 as u8);
+            map.insert("phiras".to_string(), 1 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 5-6
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 4 as u8);
+            map.insert("linemate".to_string(), 1 as u8);
+            map.insert("deraumere".to_string(), 2 as u8);
+            map.insert("sibur".to_string(), 1 as u8);
+            map.insert("mendiane".to_string(), 3 as u8);
+            map.insert("phiras".to_string(), 0 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 6-7
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 6 as u8);
+            map.insert("linemate".to_string(), 1 as u8);
+            map.insert("deraumere".to_string(), 2 as u8);
+            map.insert("sibur".to_string(), 3 as u8);
+            map.insert("mendiane".to_string(), 0 as u8);
+            map.insert("phiras".to_string(), 1 as u8);
+            map.insert("thystate".to_string(), 0 as u8);
+            map
+        },
+        { // level 7-8
+            let mut map = HashMap::new();
+            map.insert("nb_players".to_string(), 6 as u8);
+            map.insert("linemate".to_string(), 2 as u8);
+            map.insert("deraumere".to_string(), 2 as u8);
+            map.insert("sibur".to_string(), 2 as u8);
+            map.insert("mendiane".to_string(), 2 as u8);
+            map.insert("phiras".to_string(), 2 as u8);
+            map.insert("thystate".to_string(), 1 as u8);
+            map
+        }];
+        hashmap
     }
 
 }

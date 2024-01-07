@@ -11,7 +11,7 @@ use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
-use paket_crafter::paquet_crafter::craft_gfx_packet;
+use paket_crafter::paquet_crafter::{craft_gfx_packet_post_action, craft_gfx_packet_pre_action};
 
 use crate::gamecontrol::game;
 
@@ -210,9 +210,10 @@ fn get_obj_from_string(command: &String) -> Option<String>
     }
 } 
 
-fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)
+fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<Action>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
+    let mut actions : Vec<Action> = Vec::new();
 
     //println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
@@ -238,15 +239,18 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)
                         {
                             if is_valid_cmd(&string_command)
                             {
+                                actions.push(Action::new_from_string(string_command.clone()));
                                 player.action_push(string_command);
                             }
                         }
                     }
                 }
-                player.print_player_actions();
+                //player.print_player_actions();
             }
         }
     }
+    //println!("actions -----------> {:?}", actions);
+    actions
 }
 
 
@@ -364,8 +368,8 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
         "gauche" => ActionResult::ActionBool(action.gauche(&mut player)),
         "voir" => ActionResult::ActionVecHashMap(action.voir(&mut player, &game_ctrl.cells, game_ctrl.teams.clone())),
         "inventaire" => ActionResult::ActionHashMap(action.inventaire(&mut player)),
-        "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
-        "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.clone().unwrap())),
+        "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
+        "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
         "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &player, &game_ctrl.x, &game_ctrl.y)),
         "broadcast" => ActionResult::ActionBool(action.broadcast(&player, &game_ctrl.teams)),
         "incantation" => ActionResult::ActionString(action.incantation(&player, &game_ctrl.teams)),
@@ -380,14 +384,14 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     {
         for team_player in &mut team.players
         {
-            if (player.id == team_player.id)
+            if player.id == team_player.id
             {
                 team_player.clone_from(&player);
             }
         }
     }
 
-    println!("ret -----------> {:?}", ret);
+    println!("exec action {} ---> {:?}", ready_action.action.action_name, ret);
     
     Some(ret)
 }
@@ -433,12 +437,14 @@ fn main() -> Result<(), Box<dyn GenericError>>
     }
     
     println!("Everybody is connected, let's start the game");
-    println!("-----------------------------------------------------------------------------------------------");
     //println!("{:?}", vec_stream);
 
     let start_time = SystemTime::now();
     println!("start_time ---> {:?}", start_time);
+    println!("-----------------------------------------------------------------------------------------------");
 
+
+    let mut current_actions : Vec<Action> = Vec::new();
     let mut lala = true; // use for sending the first request
     loop
     {
@@ -454,9 +460,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
             if lala == true
             {
                 let _ = stream.write(b"sendme");
-                lala = false;
+                //lala = false;
+                //println!("sendme");
             }
-            receive_action(& mut stream, & mut game_ctrl);
+            current_actions = receive_action(& mut stream, & mut game_ctrl);
             break ;
         }
         
@@ -464,13 +471,22 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
-        if ready_action_list.len() > 0
+        if ready_action_list.len() > 0 || current_actions.len() > 0
         {
+            println!("current action list --> {:?}", current_actions);
+            for current_action in &current_actions
+            {
+                let gfx_pkt = craft_gfx_packet_pre_action(&current_action, &game_ctrl.teams);
+                //println!("gfx pre action ---> {}", gfx_pkt.unwrap());
+                //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
+                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
+            }
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet(&ready_action, &action_result, &game_ctrl.teams);
+                let gfx_pkt = craft_gfx_packet_post_action(&ready_action, &action_result, &game_ctrl.teams);
+                //println!("gfx post action ---> {}", gfx_pkt.unwrap());
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
@@ -483,6 +499,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             game_ctrl.print_all_players();
             println!("timestamp --> {}", game_ctrl.timestamp);
             game_ctrl.update_game_datas();
+            println!("--------------------------------------------------------------\n");
             println!("\n");
         }
 

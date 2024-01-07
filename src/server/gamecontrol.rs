@@ -3,10 +3,12 @@ pub mod game
 {
     use std::net::TcpStream;
     use std::time::SystemTime;
+    use rand::{thread_rng, Rng};
 
+    use crate::ressources::ressources::Ressources;
     use crate::teams::team::Team;
     use crate::args::args::Args;
-    use crate::player::player::Player;
+    use crate::player::player::{Player, Orientation};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
 
@@ -48,9 +50,11 @@ pub mod game
         {
             for team in & self.teams
             {
-                println!("team {}", team.name);
+                println!("- - - - - - - team {} - - - - - - - - -", team.name);
                 team.print_players_from_team();
-                println!(" - - - - - - - - -");
+                println!("-------------------------------");
+                team.print_eggs_from_team();
+                println!(" - - - - - - - - - - - - - - - - - - - - - - - -");
             }
             println!("\n\n");
         }
@@ -88,10 +92,13 @@ pub mod game
 
         pub fn update_game_datas(& mut self)
         {
+            let tmp_team = self.teams.clone();
             for team in & mut self.teams
             {
                 for player in & mut team.players
                 {
+                    player.life -= 1;
+                    // remove player from team
                     for action in & mut player.actions
                     {
                         action.count = action.count - 1;
@@ -100,6 +107,30 @@ pub mod game
                 for egg in & mut team.eggs
                 {
                     egg.count = egg.count - 1;
+                    if egg.count == 0
+                    {
+                        let mut rng = thread_rng();
+                        team.players.push(Player
+                            {
+                                id: tmp_team.iter().map(|team| team.players.len() as u32).sum(),
+                                port: 42,
+                                coord: egg.coord.clone(),
+                                ivt: Ressources::new(),
+                                life: 1260,
+                                orientation: match rng.gen_range(0..4)
+                                {
+                                    0 => Orientation::N,
+                                    1 => Orientation::E,
+                                    2 => Orientation::S,
+                                    3 => Orientation::O,
+                                    _ => Orientation::N,
+                                },
+                                level: 1,
+                                actions: Vec::new(),
+                            }
+                        );
+                        //remove egg
+                    }
                 }
             }
         }

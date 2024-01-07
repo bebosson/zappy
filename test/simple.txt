@@ -1,3 +1,6 @@
+droite
+droite
+avance
 prend food
-prend sibur
-pose sibur
+prend linemate
+fork

@@ -32,7 +32,35 @@ pub mod team
         {
             for player in &self.players
             {
-                println!("my player is --> {:?}", player);
+                println!("player #{} :\n\
+                coord: {:?}\n\
+                orient: {:?}\n\
+                level/life: {} / {}\n\
+                ivt: {:?}\n\
+                actions: {:?}\n",
+                player.id, 
+                player.coord,
+                player.orientation,
+                player.level,
+                player.life,
+                player.ivt,
+                player.actions,
+            );
+            }
+        }
+
+        pub fn print_eggs_from_team(&self)
+        {
+            let mut i = 0;
+            for egg in &self.eggs
+            {
+                println!("egg #{} :\n\
+                coord: {:?}\n\
+                count: {}\n", 
+                i, 
+                egg.coord,
+                egg.count);
+                i += 1;
             }
         }
     }

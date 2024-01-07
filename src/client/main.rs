@@ -25,14 +25,14 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
 {
     for command in vec_string
     {
-        if *number_command_sent < 2
+        if *number_command_sent < vec_string.len() as u8
         {
             //println!("{}", command);
             //stream.write(command.as_bytes());
             let mut array = Vec::with_capacity(16);
             array.extend(command.chars());
             array.extend(std::iter::repeat('0').take(16 - command.len()));
-            //println!("our fucking array ------------> {}", array);
+            //println!("our fucking array ------------> {:?}", array);
             
             let mut result_array = [0u8; 16];
             for (i, &c) in array.iter().enumerate()
@@ -40,7 +40,6 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
                 result_array[i] = c as u8;
             }
             stream.write(&result_array);
-            
             // stream.write(b"]");
             // use std::thread::sleep as sleep;
             // use std::time::Duration as dudu;
@@ -96,7 +95,8 @@ fn main() {
                             "sendme" => 
                             {
                                 send_command(&mut stream, &vec_command, &mut number_command_send);
-                                // println!("{}", number_command_send);
+                                //number_command_send = 0;
+                                //println!("{}", number_command_send);
                                 // let text = from_utf8(&data).unwrap();
                             }
                             _ => 
