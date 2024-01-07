@@ -1,6 +1,2 @@
-droite
-droite
-avance
-prend food
-prend linemate
 fork
+avance

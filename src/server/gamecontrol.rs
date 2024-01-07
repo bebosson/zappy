@@ -92,18 +92,25 @@ pub mod game
 
         pub fn update_game_datas(& mut self)
         {
-            let tmp_team = self.teams.clone();
-            for team in & mut self.teams
+            let tmp_teams = self.teams.clone();
+            for mut team in & mut self.teams
             {
+                let tmp = &mut team.clone();
                 for player in & mut team.players
                 {
                     player.life -= 1;
-                    // remove player from team
-                    for action in & mut player.actions
+                    if player.life == 0
                     {
-                        action.count = action.count - 1;
+                        // remove player from team
+                        tmp.players.retain(|p| p.id != player.id);
                     }
+                    if player.actions.len() > 0
+                    {
+                        player.actions[0].count = player.actions[0].count - 1;
+                    }                    
                 }
+                let mut total_players = tmp_teams.iter().map(|team| team.players.len() as u16).sum::<u16>() + 1;
+                total_players += tmp_teams.iter().map(|team| team.eggs.len() as u16).sum::<u16>() + 1;
                 for egg in & mut team.eggs
                 {
                     egg.count = egg.count - 1;
@@ -112,8 +119,8 @@ pub mod game
                         let mut rng = thread_rng();
                         team.players.push(Player
                             {
-                                id: tmp_team.iter().map(|team| team.players.len() as u32).sum(),
-                                port: 42,
+                                id: total_players as u32,
+                                port: 42, // fill with stream port
                                 coord: egg.coord.clone(),
                                 ivt: Ressources::new(),
                                 life: 1260,
@@ -130,11 +137,15 @@ pub mod game
                             }
                         );
                         //remove egg
+                        //println!("tmp -----> {:?}", tmp);
+                        tmp.eggs.retain(|e| e.id != egg.id);
+                        //println!("tmp -----> {:?}", tmp);
+                        //tmp.eggs.retain(|e| e.id != egg.id);
                     }
                 }
+                team = &mut tmp.clone();
             }
         }
-
     }
 
 

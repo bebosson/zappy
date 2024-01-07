@@ -258,13 +258,17 @@ pub mod action
 
         pub fn fork(&self, player: &Player, teams: &mut Vec<Team>) -> bool
         {
+            let tmp_team = teams.clone();
+
             for team in teams
             {
                 for tmp_player in &team.players
                 {
                     if tmp_player.id == player.id
                     {
-                        team.eggs.push(Egg{count: 600, coord: player.coord.clone()});
+                        let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>() + 1;
+                        total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>() + 1;
+                        team.eggs.push(Egg{id: total_players, count: 600, coord: player.coord.clone()});
                     }
                 }
             }

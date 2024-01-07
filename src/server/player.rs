@@ -21,6 +21,7 @@ pub mod player
     #[derive(Debug, Clone)]
     pub struct Egg
     {
+        pub id: u16,
         pub count: u16,
         pub coord: Point,
     }
@@ -62,7 +63,7 @@ pub mod player
                 //    3 => Orientation::O,
                 //    _ => Orientation::N,
                 //},
-                orientation: Orientation::N,
+                orientation: Orientation::S,
                 level: 1,
                 actions: Vec::new(),
             }
