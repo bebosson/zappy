@@ -431,11 +431,11 @@ fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<Str
     all_packets
 }
 
-fn send_to_server_gfx(game_ctrl: &GameController)
+fn send_to_server_gfx(game_ctrl: &GameController, vec_gfx_pck_string: Vec<String>, stream_gfx: & mut TcpStream)
 {
     // println!("{:?}", string_map);
     let mut gfx_packet_to_send: [u8; 32];
-    let vec_gfx_pck_string: Vec<String> = get_initial_gfx_packets_from_game_ctrl(game_ctrl);
+   
     match TcpStream::connect("localhost:8080")
     {
         Ok(mut stream) =>
@@ -444,8 +444,9 @@ fn send_to_server_gfx(game_ctrl: &GameController)
             for gfx_pck_string in vec_gfx_pck_string
             {
                 gfx_packet_to_send = translate_string_to_buffer(gfx_pck_string);
-                stream.write(&gfx_packet_to_send);
+                stream_gfx.write(&gfx_packet_to_send);
             }
+            
             // stream.write(b"BIENVENUE");
         }
         Err(e) => 
@@ -455,10 +456,27 @@ fn send_to_server_gfx(game_ctrl: &GameController)
     } 
 }
 
+pub fn first_connection_gfx() -> Option<TcpStream>
+{
+    match TcpStream::connect("localhost:8080")
+    {
+        Ok(mut stream) =>
+        {
+            Some(stream)
+        }
+        Err(e) => 
+        {
+            println!("Failed to connect: {}", e);
+            None
+        }
+    } 
+}
+
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut vec_stream: Vec<TcpStream> = vec![];
-    let mut hashmap: HashMap<String, u8> = HashMap::new();
+    let mut gfx_stream: TcpStream;
+    let mut hashmap: HashMap<String, u8>= HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
 
@@ -503,7 +521,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
     
     /*****             Send init packets \n to server_gfx                  *****/
     /*****             need to get the gfx_stream back from this func                   *****/
-    send_to_server_gfx(&game_ctrl); 
+    gfx_stream = first_connection_gfx().unwrap();
+    send_to_server_gfx(&game_ctrl,  get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
     
     loop
     {
@@ -544,6 +563,11 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet_post_action(&ready_action, &action_result, &game_ctrl.teams);
                 //println!("gfx post action ---> {}", gfx_pkt.unwrap());
+                if let Some(packet) = gfx_pkt 
+                {
+                    send_to_server_gfx(&game_ctrl, vec![packet], &mut gfx_stream);
+                }
+                //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }

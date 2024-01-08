@@ -96,10 +96,15 @@ pub mod player
 
         }
 
-
-        pub fn packet_gfx_player(&self) -> String
+        pub fn packet_gfx_player_connexion(&self) -> String
         {
             format!("pnw {} {} {} {} {}", self.id, self.coord.x, self.coord.y, self.format_orientation(), self.level)
+        }
+
+        pub fn packet_gfx_player_position(&self) -> String
+        {
+            //"ppo #n X Y O\n"
+            format!("ppo {} {} {} {}\n", self.id, self.coord.x, self.coord.y, self.format_orientation())
         }
 
         pub fn format_orientation(&self) -> String
@@ -113,7 +118,7 @@ pub mod player
             }
         }
 
-        pub fn avance(& mut self, x_max: &u8, y_max: &u8) -> bool
+        pub fn avance(& mut self, x_max: &u8, y_max: &u8) -> String
         {
             match self.orientation
             {
@@ -138,7 +143,7 @@ pub mod player
                     else                        { self.coord.x = self.coord.x - 1; }
                 },
             }
-            true
+            self.packet_gfx_player_position()
         }
 
     }

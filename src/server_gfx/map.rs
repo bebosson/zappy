@@ -4,7 +4,7 @@ pub mod map{
     use bevy::{prelude::*, math::vec3, asset};
     use bevy_pancam::PanCam;
 
-    use crate::{MAP_WIDTH, TILES_WIDTH, TILES_HEIGHT, StreamEvent, StreamReceiver, MAP_HEIGHT, Ressource::Ressource::{spawn_resources, Ressource}, sprite_player::sprite_player::setup_sprite};
+    use crate::{MAP_WIDTH, TILES_WIDTH, TILES_HEIGHT, StreamEvent, StreamReceiver, MAP_HEIGHT, Ressource::Ressource::{spawn_resources, Ressource}, sprite_player::sprite_player::{setup_sprite, add_action, ActionPlayer, TypeAction}};
 
     #[derive(Component, Debug)]
     pub struct Position(Vec3);
@@ -17,11 +17,12 @@ pub mod map{
 
     
     
-    #[derive(Resource)]
+    #[derive(Resource, Debug)]
     pub struct RessCommandId{
-        x: u32,
-        y: u32,
-        pub Id_Ressource: Vec<Entity>,
+        pub x: u32,
+        pub y: u32,
+        pub id_Ressource: Vec<Entity>,
+        pub player_id: Vec<Entity>
     }
 
     impl RessCommandId{
@@ -39,6 +40,10 @@ pub mod map{
             // let x_rel: x_abs as i32
             
         }
+        pub fn get_player_id(&self, id_game: &u8) -> Entity
+        {
+            self.player_id[*id_game as usize]
+        }
     }
 
     pub struct TilesPlugin;
@@ -49,14 +54,15 @@ pub mod map{
             .add_event::<StreamEvent>()
             .add_systems(Startup, init)
             .add_systems(Update, read_stream)
-            .add_systems(Update, dispatch_event);
+            .add_systems(Update, dispatch_setup_event)
+            .add_systems(Update, dispatch_action_event);
             // .add_systems(Update, print_resources);
         }
     }
     
     fn init(mut commands: Commands)
     {
-        commands.insert_resource(RessCommandId{x: 2, y: 0, Id_Ressource: vec![]});
+        commands.insert_resource(RessCommandId{x: 0, y: 0, id_Ressource: vec![], player_id: vec![]});
         // let toto = world.query(Query<)
     }
 
@@ -122,35 +128,62 @@ pub mod map{
 
     
     
-    pub fn dispatch_event(mut commands: Commands, asset_server: Res<AssetServer>, mut reader: EventReader<StreamEvent>, query : Query<(&Position, With<Tile>)>, mut asset_map: ResMut<RessCommandId>,  mut texture_atlases: ResMut<Assets<TextureAtlas>>)
-    {
-        let mut vec_map_entity: Vec<Entity> = vec![];
-        for (_, event) in reader.read().enumerate() {
-            let x = &event.0;
-            match x
-            {
-                crate::Parse::Map(x, y) => {
-                    spawn_map(*x as u32, *y as u32, & mut commands, &asset_server, & mut asset_map);
+    pub fn dispatch_setup_event(
+            mut commands: Commands,
+            asset_server: Res<AssetServer>,
+            mut reader: EventReader<StreamEvent>,
+            mut asset_map: ResMut<RessCommandId>,
+            mut texture_atlases: ResMut<Assets<TextureAtlas>>
+        ){
+            let mut vec_map_entity: Vec<Entity> = vec![];
+            for (_, event) in reader.read().enumerate() {
+                let x = &event.0;
+                match x
+                {
+                    crate::Parse::Map(x, y) => {
+                        spawn_map(*x as u32, *y as u32, & mut commands, &asset_server, & mut asset_map);
+                    }
+                    crate::Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) => {
+                        let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
+                        let ressource = Ressource{ x: x_rel as i32, y: y_rel as i32, n: *n, l: *l, d: *d, s: *s, m: *m, ph: *ph, th: *th };
+                        println!("Ress {:?}", ressource);
+                        spawn_resources(& mut commands, &asset_server, ressource);
+                    }
+                    crate::Parse::ConnexionPlayer(id, x, y, O, L, N) => {
+                        println!("LOOOOL {} {}", x, y);
+                        let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
+                        setup_sprite(& mut commands, &asset_server, & mut texture_atlases, (x_rel, y_rel),(*x, *y), & mut asset_map);
+                    }
+                    _ => ()
                 }
-                crate::Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) => {
-                    let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
-                    let ressource = Ressource{ x: x_rel as i32, y: y_rel as i32, n: *n, l: *l, d: *d, s: *s, m: *m, ph: *ph, th: *th };
-                    println!("Ress {:?}", ressource);
-                    spawn_resources(& mut commands, &asset_server, ressource);
-                }
-                crate::Parse::ConnexionPlayer(id, x, y, O, L, N) => {
-                    println!("LOOOOL {} {}", x, y);
-                    let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
-                    setup_sprite(& mut commands, &asset_server, & mut texture_atlases, x_rel, y_rel);
-                }
-                _ => ()
             }
         }
-       
-        
-    }
+
+
    
-       
+        pub fn dispatch_action_event(
+            mut commands: Commands,
+            asset_server: Res<AssetServer>,
+            mut reader: EventReader<StreamEvent>,
+            mut asset_map: ResMut<RessCommandId>,
+            mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+            mut query_action_player: Query<& mut ActionPlayer>,
+        ){
+            let mut vec_map_entity: Vec<Entity> = vec![];
+            for (_, event) in reader.read().enumerate() {
+                let x = &event.0;
+                match x
+                {
+                    crate::Parse::MovementPlayer(id, x, y, o) =>{
+                        // println!("{:?}", asset_map);
+                        let id_back = *id - 1;
+                        let mov = TypeAction::Movement{0: *x, 1: *y, 2: *o};
+                        add_action(& mut query_action_player, &asset_map.get_player_id(&id_back), mov);
+                    }
+                    _ => ()
+                }
+            }
+        }
     
      
 }

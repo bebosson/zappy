@@ -69,7 +69,7 @@ pub mod team
             let mut vec_gfx_packet = vec![];
             for player in &self.players
             {
-                vec_gfx_packet.push(format!("{} {}\n", player.packet_gfx_player(), self.name));
+                vec_gfx_packet.push(format!("{} {}\n", player.packet_gfx_player_connexion(), self.name));
             }
             vec_gfx_packet
         }
