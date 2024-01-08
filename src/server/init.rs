@@ -19,10 +19,10 @@ pub mod init
     {
         let mut map : Vec<Vec<Cell>> = Vec::with_capacity(y as usize);
 
-        for _i in 0..y
+        for _i in 0..y // si y est nul on initialise jamais ? 
         {
             let mut line : Vec<Cell> = Vec::with_capacity(x as usize);
-            for _ in 0..x
+            for _ in 0..x // pareil pour x ...
             {
                 line.push(fill_map_cell());
             }
@@ -57,7 +57,7 @@ pub mod init
 
     impl std::fmt::Display for Ressources {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}, {}, {}, {}, {}, {}, {}", self.food, self.sibur, self.mendiane, self.linemate, self.deraumere, self.phiras, self.thystate)
+            write!(f, "{} {} {} {} {} {} {}", self.food, self.sibur, self.mendiane, self.linemate, self.deraumere, self.phiras, self.thystate)
         }
     }
 }

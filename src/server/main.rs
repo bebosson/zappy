@@ -421,6 +421,13 @@ fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<Str
     {
         all_packets.push(i);
     }
+    for team in game_ctrl.packet_gfx_all_teams()
+    {
+        for player in team
+        {
+            all_packets.push(player);
+        }
+    }
     all_packets
 }
 

@@ -1,7 +1,11 @@
 mod map;
 pub mod sprite_player;
+mod Ressource;
 
+use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy::window::{WindowTheme, PresentMode};
+use bevy_pancam::PanCamPlugin;
 use crossbeam_channel::bounded;
 use map::map::{spawn_map, TilesPlugin, Map};
 use rand::SeedableRng;
@@ -9,6 +13,7 @@ use rand::rngs::StdRng;
 use sprite_player::sprite_player::{sprite_movement, setup_sprite, animate_sprite};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::str::SplitAsciiWhitespace;
 use std::thread;
 
 use bevy::prelude::*;
@@ -17,10 +22,10 @@ use crossbeam_channel::{Receiver};
 use rand::{Rng};
 use std::time::{Duration, Instant};
 
-const MAP_WIDTH: f32 = 50. * 10.0;
+const MAP_WIDTH: f32 = 50.;
 const MAP_HEIGHT: f32 = 50.0;
-const TILES_WIDTH: f32 = 50.0;
-const TILES_HEIGHT: f32 = 50.0;
+const TILES_WIDTH: f32 = 100.0;
+const TILES_HEIGHT: f32 = 100.0;
 const BUF_SIZE: usize = 160;
 
 #[derive(Resource)]
@@ -32,13 +37,38 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:8080").expect("Failed to bind to address");
 
     App::new()
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        // .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, PanCamPlugin::default()))
+        // .add_plugins((
+            //     DefaultPlugins.set(WindowPlugin {
+                //         primary_window: Some(Window {
+                    //             title: "zappy_42".into(),
+                    //             resolution: (1920., 1080.).into(),
+                    //             // Tells wasm not to override default event handling, like F5, Ctrl+R etc.
+                    //             // prevent_default_event_handling: false,
+                    //             // window_theme: Some(WindowTheme::Dark),
+                    //             // enabled_buttons: bevy::window::EnabledButtons {
+                        //                 // maximize: false,
+                        //                 // ..Default::default()
+                        //             // },
+                        //             // This will spawn an invisible window
+                        //             // The window will be made visible in the make_visible() system after 3 frames.
+                        //             // This is useful when you want to avoid the white window that shows up before the GPU is ready to render the app.
+                        //             visible: true,
+                        //             ..default()
+                        //         }),
+                        //         ..default()
+                        //     }),
+                        //     LogDiagnosticsPlugin::default(),
+                        //     FrameTimeDiagnosticsPlugin,
+        // ))
         .add_systems(Startup, setup_handle_connections)
         .add_plugins(TilesPlugin)
-        .add_systems(Startup, setup_sprite)
-        .add_systems(Update, animate_sprite)
-        .add_systems(Update, sprite_movement)
+        .add_systems(Update, lolo_fn)
+        // .add_systems(Startup, setup_sprite)
+        // .add_systems(Update, animate_sprite)
+        // .add_systems(Update, sprite_movement)
 
         // .add_systems(Startup, spawn_map)
 
@@ -52,13 +82,19 @@ impl AppState {
     }
 }
 
-enum Parse{
+pub enum Parse{
     Map(i32, i32),
-    Content_case(i32, i32, u8, u8, u8, u8, u8, u8, u8)
+    RessourceCase(i32, i32, u8, u8, u8, u8, u8, u8, u8),
+    ConnexionPlayer(u8, u8, u8, u8, u8, String),
+    Donothing,
     // Movemement(i32, i32, i32)
 }
 
-
+pub fn lolo_fn(mut guizmo: Gizmos)
+{
+    guizmo.line_2d(Vec2::ZERO, Vec2::new(0.,150.), Color::RED);
+}
+   
 
 #[derive(Resource, Deref)]
 struct StreamReceiver(Receiver<Parse>);
@@ -75,12 +111,56 @@ fn copy_until_char(buffer: &[u8], char: u8) -> String
         .collect();
     string_dst
 }
+
+pub fn parse_into_integer(content: String) -> Vec<i32>
+{
+    let mut iter = content.split_ascii_whitespace().skip(1);
+    println!("{:?}", iter);
+    let vec : Vec<i32> =  iter.map(|x| x.parse::<i32>().ok().unwrap()).collect();
+    vec
+}
+
+
+pub fn parse_ressource(content: String) -> crate::Parse
+{
+    let mut iter = content.split_ascii_whitespace();
+    let vec_parsing = parse_into_integer(content);
+    
+    let res = Parse::RessourceCase(vec_parsing[0], 
+                        vec_parsing[1], 
+                        vec_parsing[2] as u8, 
+                        vec_parsing[3] as u8, 
+                        vec_parsing[4] as u8, 
+                        vec_parsing[5] as u8, 
+                        vec_parsing[6] as u8, 
+                        vec_parsing[7] as u8, 
+                        vec_parsing[8] as u8);
+    res 
+}
+
+pub fn parse_connexion_player(content: String) -> crate::Parse
+{
+    let mut vec_parsing_u8: Vec<u8> = vec![];
+    let mut team: String = format!("");
+    for i in content.split_ascii_whitespace().skip(1).enumerate()
+    {
+        if i.0 < 5
+        {
+            println!("{:?}", i.1);
+            vec_parsing_u8.push(i.1.parse::<u8>().ok().unwrap());
+        }
+        else {
+            team = i.1.to_string().clone();
+        }
+    }
+    Parse::ConnexionPlayer(vec_parsing_u8[0], vec_parsing_u8[1], vec_parsing_u8[2], vec_parsing_u8[3], vec_parsing_u8[4], team)
+}
 // dispatch what you parse 
 fn parser_server_packet(pkt_receive: String) -> Parse
 {
-    let mut iter = pkt_receive.split_ascii_whitespace();
-    let mut parse: Parse = Parse::Map{0:0, 1:0};
     println!("{}", pkt_receive);
+    let mut iter = pkt_receive.split_ascii_whitespace();
+    let mut parse: Parse = Parse::Donothing;
     match iter.nth(0)
     {
         Some(content) => {
@@ -89,13 +169,14 @@ fn parser_server_packet(pkt_receive: String) -> Parse
                     parse = take_dim_map(pkt_receive);
                 }
                 "bct" => {
-                    parse = Parse::Content_case(0, 0, 0, 0, 0, 0, 0, 0, 0);
+                    println!("bct");
+                    parse = parse_ressource(pkt_receive);
                 }
                 "tna" => {
                     todo!();
                 }
                 "pnw" => {
-                    todo!();
+                    parse = parse_connexion_player(pkt_receive);
                 }
                 "ppo" => {
                     todo!();
@@ -155,7 +236,7 @@ fn parser_server_packet(pkt_receive: String) -> Parse
                     todo!();
                 }
                 _ => {
-
+                    parse = Parse::Donothing;
                 }
             }
         },

@@ -182,6 +182,16 @@ pub mod game
             format!("msz {} {}\n", self.x, self.y)
         }
 
+        pub fn packet_gfx_all_teams(&self) -> Vec<Vec<String>>
+        {
+            let mut vec_gfx_packets_teams = vec![];
+            for team in &self.teams
+            {
+                vec_gfx_packets_teams.push(team.packet_gfx_add_teams());
+            }
+            vec_gfx_packets_teams
+        }
+
     }
 
 

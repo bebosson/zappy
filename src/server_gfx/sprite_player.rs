@@ -13,6 +13,7 @@ pub mod sprite_player{
     const MAP_HEIGHT: f32 = 50.0;
     const TILES_WIDTH: f32 = 50.0;
     const TILES_HEIGHT: f32 = 50.0;
+    use bevy_pancam::PanCam;
     
     
     
@@ -63,11 +64,13 @@ pub mod sprite_player{
     }
     
     pub fn setup_sprite(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-        mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+        mut commands: & mut Commands,
+        asset_server: &Res<AssetServer>,
+        mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>,
+        x: f32,
+        y: f32,
     ) {
-        commands.spawn(Camera2dBundle::default());
+        // commands.spawn(Camera2dBundle::default(),);
         let texture_handle = asset_server.load("yoshi_walking3.png");
         let texture_atlas =
             TextureAtlas::from_grid(texture_handle, Vec2::new(27.1, 32.0), 10, 1, None, None);
@@ -80,7 +83,7 @@ pub mod sprite_player{
             SpriteSheetBundle {
                 texture_atlas: texture_atlas_handle,
                 sprite: TextureAtlasSprite::new(animation_indices.first),
-                transform: Transform::from_xyz(40.,0.,15.),
+                transform: Transform::from_xyz(x,y,15.),
                 ..default()
             },
             animation_indices,

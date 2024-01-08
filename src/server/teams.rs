@@ -1,6 +1,6 @@
 pub mod team
 {
-    use crate::player::player::{Player, Egg};
+    use crate::player::{player::{Player, Egg}, self};
     
     #[derive(Debug, Clone)]
     pub struct Team
@@ -62,6 +62,16 @@ pub mod team
                 egg.count);
                 i += 1;
             }
+        }
+
+        pub fn packet_gfx_add_teams(&self) -> Vec<String>
+        {
+            let mut vec_gfx_packet = vec![];
+            for player in &self.players
+            {
+                vec_gfx_packet.push(format!("{} {}\n", player.packet_gfx_player(), self.name));
+            }
+            vec_gfx_packet
         }
     }
 
