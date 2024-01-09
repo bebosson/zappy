@@ -168,6 +168,12 @@ pub mod action
             let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
             for case_coord in cases_coord
             {
+                let mut x = HashMap::new();
+                let mut y = HashMap::new();
+                x.insert("x".to_string(), case_coord.x);
+                y.insert("y".to_string(), case_coord.y);
+                cases_content.push(x);
+                cases_content.push(y);
                 cases_content.push(get_case_content_from_position(case_coord, cells, &teams));
             }
             cases_content
@@ -266,7 +272,7 @@ pub mod action
                 {
                     if tmp_player.id == player.id
                     {
-                        let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>() + 1;
+                        let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
                         total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>() + 1;
                         team.eggs.push(Egg{id: total_players, count: 600, coord: player.coord.clone()});
                     }

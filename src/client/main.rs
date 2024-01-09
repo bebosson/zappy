@@ -25,6 +25,7 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
 {
     for command in vec_string
     {
+        println!("vec string {:?}", vec_string);
         if *number_command_sent < vec_string.len() as u8
         {
             //println!("{}", command);
@@ -60,7 +61,7 @@ fn main() {
         .expect("Should have been able to read the file");
     //println!("{:?}", contents);
     let vec_command = extract_lines(&contents);
-    //println!("{:?}", vec_command);
+    println!("vec command --> {:?}", vec_command);
     let mut number_command_send: u8 = 0;
     
     
@@ -77,6 +78,7 @@ fn main() {
                         //convert data(buffer) into string and flush (overkill)
                         let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
                         let string_buffer = string_buffer.trim_matches(char::from(0));  
+                        //println!("string buffer --> {:?}", string_buffer);
                         
                         match string_buffer
                         {

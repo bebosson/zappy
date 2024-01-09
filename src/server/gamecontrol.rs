@@ -15,7 +15,7 @@ pub mod game
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
 ***********************************************************************/
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct GameController
     {
         pub x: u8,
@@ -23,6 +23,7 @@ pub mod game
         pub cells: Vec<Vec<Cell>>,
         pub teams: Vec<Team>,
         pub timestamp: u32,
+        pub stream_gfx: Option<TcpStream>,
     }
 
     impl GameController
@@ -43,6 +44,7 @@ pub mod game
                 cells : init_map_cells(args.x, args.y),
                 teams: vec_teams,
                 timestamp: 0,
+                stream_gfx: None
             }
         }
 
@@ -109,8 +111,14 @@ pub mod game
                         player.actions[0].count = player.actions[0].count - 1;
                     }                    
                 }
-                let mut total_players = tmp_teams.iter().map(|team| team.players.len() as u16).sum::<u16>() + 1;
-                total_players += tmp_teams.iter().map(|team| team.eggs.len() as u16).sum::<u16>() + 1;
+                let mut total_players = tmp_teams
+                                                    .iter()
+                                                    .map(|team| team.players.len() as u16)
+                                                    .sum::<u16>() + 1;
+                total_players += tmp_teams
+                                        .iter()
+                                        .map(|team| team.eggs.len() as u16)
+                                        .sum::<u16>() + 1;
                 for egg in & mut team.eggs
                 {
                     egg.count = egg.count - 1;

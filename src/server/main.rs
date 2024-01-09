@@ -460,7 +460,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             if lala == true
             {
                 let _ = stream.write(b"sendme");
-                //lala = false;
+                lala = false;
                 //println!("sendme");
             }
             current_actions = receive_action(& mut stream, & mut game_ctrl);
