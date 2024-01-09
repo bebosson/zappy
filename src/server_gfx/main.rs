@@ -98,7 +98,7 @@ pub fn lolo_fn(mut guizmo: Gizmos)
 struct StreamReceiver(Receiver<Parse>);
 
 #[derive(Event)]
-struct StreamEvent(Parse);
+pub struct StreamEvent(Parse);
 
 
 

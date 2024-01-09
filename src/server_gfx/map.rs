@@ -134,30 +134,32 @@ pub mod map{
             mut reader: EventReader<StreamEvent>,
             mut asset_map: ResMut<RessCommandId>,
             mut texture_atlases: ResMut<Assets<TextureAtlas>>
-        ){
-            let mut vec_map_entity: Vec<Entity> = vec![];
-            for (_, event) in reader.read().enumerate() {
-                let x = &event.0;
-                match x
-                {
-                    crate::Parse::Map(x, y) => {
-                        spawn_map(*x as u32, *y as u32, & mut commands, &asset_server, & mut asset_map);
-                    }
-                    crate::Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) => {
-                        let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
-                        let ressource = Ressource{ x: x_rel as i32, y: y_rel as i32, n: *n, l: *l, d: *d, s: *s, m: *m, ph: *ph, th: *th };
-                        println!("Ress {:?}", ressource);
-                        spawn_resources(& mut commands, &asset_server, ressource);
-                    }
-                    crate::Parse::ConnexionPlayer(id, x, y, O, L, N) => {
-                        println!("LOOOOL {} {}", x, y);
-                        let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
-                        setup_sprite(& mut commands, &asset_server, & mut texture_atlases, (x_rel, y_rel),(*x, *y), & mut asset_map);
-                    }
-                    _ => ()
+        )
+    {
+        let mut vec_map_entity: Vec<Entity> = vec![];
+        for (_, event) in reader.read().enumerate()
+        {
+            let x = &event.0;
+            match x
+            {
+                crate::Parse::Map(x, y) => {
+                    spawn_map(*x as u32, *y as u32, & mut commands, &asset_server, & mut asset_map);
                 }
+                crate::Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) => {
+                    let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
+                    let ressource = Ressource{ x: x_rel as i32, y: y_rel as i32, n: *n, l: *l, d: *d, s: *s, m: *m, ph: *ph, th: *th };
+                    println!("Ress {:?}", ressource);
+                    spawn_resources(& mut commands, &asset_server, ressource);
+                }
+                crate::Parse::ConnexionPlayer(id, x, y, O, L, N) => {
+                    println!("LOOOOL {} {}", x, y);
+                    let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);
+                    setup_sprite(& mut commands, &asset_server, & mut texture_atlases, (x_rel, y_rel),(*x, *y), & mut asset_map);
+                }
+                _ => ()
             }
         }
+    }
 
 
    
@@ -168,7 +170,8 @@ pub mod map{
             mut asset_map: ResMut<RessCommandId>,
             mut texture_atlases: ResMut<Assets<TextureAtlas>>,
             mut query_action_player: Query<& mut ActionPlayer>,
-        ){
+        )
+        {
             let mut vec_map_entity: Vec<Entity> = vec![];
             for (_, event) in reader.read().enumerate() {
                 let x = &event.0;

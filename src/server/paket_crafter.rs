@@ -15,15 +15,11 @@ pub mod paquet_crafter
             Orientation::S => 3,
             Orientation::O => 4,
         };
-        let mut cmd = match ready_action.action.action_name.as_str()
+        let mut cmd: Option<String> = match ready_action.action.action_name.as_str()
         {
             "avance" | "droite" | "gauche" =>
             {
-                Some(format!("ppo {} {} {} {}",
-                            player.id,
-                            player.coord.x,
-                            player.coord.y,
-                            orientation))
+                Some(player.packet_gfx_player_position())
             },
             "voir" =>
             {
@@ -62,7 +58,7 @@ pub mod paquet_crafter
             _ => None,
         };
 
-        None
+        cmd
     }
 
     pub fn craft_gfx_packet_pre_action(action: &Action, teams: &Vec<Team>) -> Option<String>

@@ -436,24 +436,12 @@ fn send_to_server_gfx(game_ctrl: &GameController, vec_gfx_pck_string: Vec<String
     // println!("{:?}", string_map);
     let mut gfx_packet_to_send: [u8; 32];
    
-    match TcpStream::connect("localhost:8080")
+    for gfx_pck_string in vec_gfx_pck_string
     {
-        Ok(mut stream) =>
-        {
-            println!("Successfully connected to server in port server gfx");
-            for gfx_pck_string in vec_gfx_pck_string
-            {
-                gfx_packet_to_send = translate_string_to_buffer(gfx_pck_string);
-                stream_gfx.write(&gfx_packet_to_send);
-            }
-            
-            // stream.write(b"BIENVENUE");
-        }
-        Err(e) => 
-        {
-            println!("Failed to connect: {}", e);
-        }
-    } 
+        gfx_packet_to_send = translate_string_to_buffer(gfx_pck_string);
+        stream_gfx.write(&gfx_packet_to_send);
+    }
+        // stream.write(b"BIENVENUE");
 }
 
 pub fn first_connection_gfx() -> Option<TcpStream>
@@ -516,8 +504,9 @@ fn main() -> Result<(), Box<dyn GenericError>>
     //println!("{:?}", vec_stream);
 
     let start_time = SystemTime::now();
+    let mut current_actions: Vec<Action> = Vec::new();
     println!("start_time ---> {:?}", start_time);
-    let mut wait_for_answer: bool = false;
+    let mut wait_for_answer: bool = true;
     
     /*****             Send init packets \n to server_gfx                  *****/
     /*****             need to get the gfx_stream back from this func                   *****/
@@ -562,9 +551,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet_post_action(&ready_action, &action_result, &game_ctrl.teams);
-                //println!("gfx post action ---> {}", gfx_pkt.unwrap());
+                println!("gfx post action ---> {:?}", gfx_pkt);
                 if let Some(packet) = gfx_pkt 
                 {
+                    println!("toto");
                     send_to_server_gfx(&game_ctrl, vec![packet], &mut gfx_stream);
                 }
                 //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
