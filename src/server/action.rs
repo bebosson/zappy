@@ -47,14 +47,14 @@ pub mod action
 
     pub const COMMANDS: [ActionTemplate; 13] = [AVANCE, DROITE, GAUCHE, VOIR, INVENTAIRE, PREND, POSE, EXPULSE, BROADCAST, INCANTATION, FORK, CONNECT_NBR, NO_ACTION];
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub struct ReadyAction
     {
         pub id: u32, // player id
         pub action: Action,
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum ActionResult
     {
         ActionBool(bool),

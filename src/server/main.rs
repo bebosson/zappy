@@ -11,9 +11,8 @@ use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
-use paket_crafter::paquet_crafter::{craft_gfx_packet_post_action, craft_gfx_packet_pre_action};
+use crate::paket_crafter::paquet_crafter::craft_gfx_packet;
 
-use crate::gamecontrol::game;
 
 //add module in the crate root
 pub mod args;
@@ -303,23 +302,6 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 }
 */
 
-/*
-fn find_player_from_id<'a>(teams: &'a mut Vec<Team>, id: &'a u32) -> Option<&'a mut Player>
-{
-    for team in teams
-    {
-        for player in & mut team.players
-        {
-            if id == &player.id
-            {
-                return Some(player);
-            }
-        }
-    }
-    None
-}
-*/
-
 fn find_player_from_id(teams: Vec<Team>, id: &u32) -> Option<Player>
 {
     for team in teams
@@ -541,7 +523,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("current action list --> {:?}", current_actions);
             for current_action in &current_actions
             {
-                let gfx_pkt = craft_gfx_packet_pre_action(&current_action, &game_ctrl.teams);
+                //let gfx_pkt = pre_craft_gfx_packet(&current_action, &game_ctrl.teams);
                 //println!("gfx pre action ---> {}", gfx_pkt.unwrap());
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
@@ -550,12 +532,11 @@ fn main() -> Result<(), Box<dyn GenericError>>
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet_post_action(&ready_action, &action_result, &game_ctrl.teams);
-                println!("gfx post action ---> {:?}", gfx_pkt);
+                let gfx_pkt = craft_gfx_packet(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
+                println!("gfx pkt ready action ---> {:?}", gfx_pkt);
                 if let Some(packet) = gfx_pkt 
                 {
-                    println!("toto");
-                    send_to_server_gfx(&game_ctrl, vec![packet], &mut gfx_stream);
+                    send_to_server_gfx(&game_ctrl, packet, &mut gfx_stream);
                 }
                 //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
                 //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);

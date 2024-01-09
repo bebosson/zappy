@@ -96,56 +96,6 @@ pub mod player
 
         }
 
-        pub fn packet_gfx_player_connexion(&self) -> String
-        {
-            format!("pnw {} {} {} {} {}", self.id, self.coord.x, self.coord.y, self.format_orientation(), self.level)
-        }
-
-        pub fn packet_gfx_player_position(&self) -> String
-        {
-            //"ppo #n X Y O\n"
-            format!("ppo {} {} {} {}\n", self.id, self.coord.x, self.coord.y, self.format_orientation())
-        }
-
-        pub fn format_orientation(&self) -> String
-        {
-            match self.orientation
-            {
-                Orientation::N => format!("{}", 1),
-                Orientation::E => format!("{}", 2),
-                Orientation::S => format!("{}", 3),
-                Orientation::O => format!("{}", 4),
-            }
-        }
-
-        pub fn avance(& mut self, x_max: &u8, y_max: &u8) -> String
-        {
-            match self.orientation
-            {
-                Orientation::N =>
-                {
-                    if self.coord.y == 0    { self.coord.y = *y_max; }
-                    else                    { self.coord.y = self.coord.y - 1; }
-                },
-                Orientation::E =>
-                {
-                    if self.coord.x == 0    { self.coord.x = *x_max; }
-                    else                    { self.coord.x = self.coord.x + 1; }
-                },
-                Orientation::S =>
-                {
-                    if self.coord.y == *y_max    { self.coord.y = 0; }
-                    else                        { self.coord.y = self.coord.y + 1; }
-                },
-                Orientation::O =>
-                {
-                    if self.coord.x == *x_max    { self.coord.x = 0; }
-                    else                        { self.coord.x = self.coord.x - 1; }
-                },
-            }
-            self.packet_gfx_player_position()
-        }
-
     }
     
 }

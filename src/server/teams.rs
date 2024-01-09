@@ -1,6 +1,7 @@
 pub mod team
 {
-    use crate::player::{player::{Player, Egg}, self};
+    use crate::player::player::{Player, Egg};
+    use crate::paket_crafter::paquet_crafter::packet_gfx_player_connexion;
     
     #[derive(Debug, Clone)]
     pub struct Team
@@ -69,7 +70,7 @@ pub mod team
             let mut vec_gfx_packet = vec![];
             for player in &self.players
             {
-                vec_gfx_packet.push(format!("{} {}\n", player.packet_gfx_player_connexion(), self.name));
+                vec_gfx_packet.push(format!("{} {}\n", packet_gfx_player_connexion(player), self.name));
             }
             vec_gfx_packet
         }
