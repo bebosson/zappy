@@ -1,0 +1,11 @@
+--> Faire tous les sprites orientations 
+
+--> Vec<Vec<Sprites>> pour toutes les teams ?
+
+--> SpriteAnimation oeuf et mecanique eclosion ? 
+
+--> Animation Broadcast ?
+
+--> Mecanique expulsion, prend et pose objet mort 
+
+-->

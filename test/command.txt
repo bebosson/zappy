@@ -10,3 +10,14 @@ incantation
 fork
 connect_nbr
 broadcast coucou
+-----------------
+
+droite
+avance
+gauche
+gauche
+avance
+fork
+voir
+prend food
+pose food

@@ -2,16 +2,17 @@ mod map;
 pub mod sprite_player;
 mod Ressource;
 mod parser;
+pub mod dispatch;
 
 use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::{WindowTheme, PresentMode};
 use bevy_pancam::PanCamPlugin;
 use crossbeam_channel::bounded;
-use map::map::{spawn_map, TilesPlugin, Map};
+use dispatch::dispatch::Dispatch;
 use rand::SeedableRng;
 use rand::rngs::StdRng;
-use sprite_player::sprite_player::{sprite_movement, setup_sprite, animate_sprite, DoAction};
+use sprite_player::sprite_player::{setup_sprite, animate_sprite, DoAction};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::str::SplitAsciiWhitespace;
@@ -68,7 +69,7 @@ fn main() {
         // ))
         .insert_resource(AppState { listener })
         .add_systems(Startup, setup_handle_connections)
-        .add_plugins(TilesPlugin)
+        .add_plugins(Dispatch)
         .add_plugins(DoAction)
         .add_systems(Update, lolo_fn)
         // .add_systems(Startup, setup_sprite)
