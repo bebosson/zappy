@@ -178,11 +178,12 @@ pub mod sprite_player{
         }
     }
 
-    pub fn player_rotation(rotation: u8, asset_map: &ResMut<RessCommandId>,  handle_texture_atlas: &mut Handle<TextureAtlas>) 
+    pub fn player_rotation(rotation: u8, asset_map: &ResMut<RessCommandId>,  handle_texture_atlas: &mut Handle<TextureAtlas>, texture_atlas_sprite: &mut TextureAtlasSprite) 
     {
         println!("rotation?");
         let sprite_animation = asset_map.get_sprite(rotation as usize);
         *handle_texture_atlas = sprite_animation.texture_atlas_handle;
+        *texture_atlas_sprite = sprite_animation.texture_atlas_sprite;
         // set_texture_atlas_animation_indice(texture_handle, o);
         // set_sprite_animation(0, o, texture_atlases, asset_server)
 
@@ -191,13 +192,15 @@ pub mod sprite_player{
 
     pub fn exec_action(
         time: Res<Time>, 
-        mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, & mut Transform, &mut Handle<TextureAtlas>)>,
+        mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, & mut Transform, &mut Handle<TextureAtlas>, & mut TextureAtlasSprite)>,
         asset_map: ResMut<RessCommandId>)
     {
         for (mut action_player,
             mut movement,
             mut transform,
-            mut handle_texture_atlas) 
+            mut handle_texture_atlas,
+            mut texture_atlas_sprite
+        ) 
             in query_action_player.iter_mut()
         {
             let typeofmvmt = &movement.type_of_mvmt;
@@ -211,7 +214,11 @@ pub mod sprite_player{
                                 println!("translation ");
                                 player_translation(&time, & mut action_player, & mut movement, & mut transform);
                             }
-                            TypeofMovement::Rotation => {player_rotation(movement.orientation ,&asset_map, & mut handle_texture_atlas);},
+                            TypeofMovement::Rotation => {
+                                player_rotation(movement.orientation ,&asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite);
+                                action_player.state_action = StateAction::Idle;
+                                action_player.action_in_progress = TypeAction::Nothing;
+                            },
                             TypeofMovement::Nothing => panic!(),
                         }
                         
@@ -251,8 +258,8 @@ pub mod sprite_player{
                 (text_at, anim_i)
             },
             _ => {
-                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27.1, 32.0), 10, 1, None, None);
-                anim_i = AnimationIndices { first: 1, last: 9 };
+                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(21.9, 32.0), 5, 1, None, None);
+                anim_i = AnimationIndices { first: 1, last: 4 };
                 (text_at, anim_i)
             },
         }
