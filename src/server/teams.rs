@@ -11,6 +11,7 @@ pub mod team
         pub port_start_index: u16,
         pub players: Vec<Player>,
         pub eggs: Vec<Egg>,
+        pub nb_total_players: u16, // count dead and alive players and eggs
         // pub nb_players: u8,
     }
 
@@ -26,6 +27,7 @@ pub mod team
                 port_start_index: 0,
                 players: Vec::new(),
                 eggs: Vec::new(),
+                nb_total_players: 0,
             }
         }
 
@@ -52,16 +54,14 @@ pub mod team
 
         pub fn print_eggs_from_team(&self)
         {
-            let mut i = 0;
             for egg in &self.eggs
             {
                 println!("egg #{} :\n\
                 coord: {:?}\n\
                 count: {}\n", 
-                i, 
+                egg.id, 
                 egg.coord,
                 egg.count);
-                i += 1;
             }
         }
 

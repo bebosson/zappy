@@ -1,10 +1,2 @@
-avance
-droite
-avance
-gauche
-gauche
-avance
 fork
-voir
-prend food
-pose food
+avance

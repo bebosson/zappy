@@ -264,17 +264,18 @@ pub mod action
 
         pub fn fork(&self, player: &Player, teams: &mut Vec<Team>) -> bool
         {
-            let tmp_team = teams.clone();
-
-            for team in teams
+            for i in 0..teams.len()
             {
-                for tmp_player in &team.players
+                for tmp_player in teams[i].players.clone()
                 {
                     if tmp_player.id == player.id
                     {
-                        let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
-                        total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>() + 1;
-                        team.eggs.push(Egg{id: total_players, count: 600, coord: player.coord.clone()});
+                        //let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
+                        //total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>();
+                        teams[i].nb_total_players += 1;
+                        println!("team {} -> nb total players: {}", teams[i].name, teams[i].nb_total_players);
+                        let tmp = teams.clone();
+                        teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone() });
                     }
                 }
             }
@@ -364,6 +365,18 @@ pub mod action
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    pub fn get_nb_total_players(teams: &Vec<Team>) -> u16
+    {
+        let mut ret = 0;
+
+        for team in teams
+        {
+            ret += team.nb_total_players;
+        }
+        ret
+    }
 
     fn find_target_cell_from_coord(orientation: &Orientation, coord: &Point, width: usize, height: usize) -> Point
     {

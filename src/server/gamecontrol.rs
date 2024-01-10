@@ -11,6 +11,7 @@ pub mod game
     use crate::player::player::{Player, Orientation};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
+    use crate::action::action::get_nb_total_players;
 
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
@@ -72,6 +73,7 @@ pub mod game
             {
                 if team.name.eq(teamname) == true
                 {
+                    team.nb_total_players += 1;
                     team.players.push(Player::new(id, port, width, height));
                 }
             }
@@ -111,24 +113,19 @@ pub mod game
                         player.actions[0].count = player.actions[0].count - 1;
                     }                    
                 }
-                let mut total_players = tmp_teams
-                                                    .iter()
-                                                    .map(|team| team.players.len() as u16)
-                                                    .sum::<u16>() + 1;
-                total_players += tmp_teams
-                                        .iter()
-                                        .map(|team| team.eggs.len() as u16)
-                                        .sum::<u16>() + 1;
-                for egg in & mut team.eggs
+                for egg in &mut team.eggs
                 {
                     egg.count = egg.count - 1;
                     if egg.count == 0
                     {
                         let mut rng = thread_rng();
+                        team.nb_total_players += 1;
+                        let total_players = get_nb_total_players(&tmp_teams);
+                        println!("total players update game data {}", total_players);
                         team.players.push(Player
                             {
                                 id: total_players as u32,
-                                port: 42, // fill with stream port
+                                port: 42, // TODO : fill with stream port (or remove (depends on our implementation choice))
                                 coord: egg.coord.clone(),
                                 ivt: Ressources::new(),
                                 life: 1260,
@@ -145,13 +142,10 @@ pub mod game
                             }
                         );
                         //remove egg
-                        //println!("tmp -----> {:?}", tmp);
-                        tmp.eggs.retain(|e| e.id != egg.id);
-                        //println!("tmp -----> {:?}", tmp);
                         //tmp.eggs.retain(|e| e.id != egg.id);
+                        //team = tmp;
                     }
                 }
-                team = &mut tmp.clone();
             }
         }
 
