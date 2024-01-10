@@ -6,6 +6,7 @@ pub mod player
     use crate::get_obj_from_string;
     use crate::action::action::*;
 
+    use bevy::ui::update;
     use rand::{thread_rng, Rng};
 
 
@@ -24,6 +25,14 @@ pub mod player
         pub id: u16,
         pub count: u16,
         pub coord: Point,
+    }
+
+    impl Egg
+    {
+        pub fn update(&mut self)
+        {
+            self.count = self.count - 1;
+        }
     }
 
     #[derive(Debug, Clone)]
@@ -66,6 +75,15 @@ pub mod player
                 orientation: Orientation::S,
                 level: 1,
                 actions: Vec::new(),
+            }
+        }
+
+        pub fn update(& mut self)
+        {
+            self.life -= 1;
+            if self.actions.len() > 0
+            {
+                self.actions[0].count = self.actions[0].count - 1;
             }
         }
 

@@ -6,7 +6,7 @@ pub mod game
     use rand::{thread_rng, Rng};
 
     use crate::ressources::ressources::Ressources;
-    use crate::teams::team::Team;
+    use crate::teams::team::{Team, self};
     use crate::args::args::Args;
     use crate::player::player::{Player, Orientation};
     use crate::cell::cell::Cell;
@@ -96,7 +96,11 @@ pub mod game
 
         pub fn update_game_datas(& mut self)
         {
-            let tmp_teams = self.teams.clone();
+            for team in &self.teams {
+                team.update();
+            }
+            // self.teams.iter().map(|t| t.players.iter().map(|p| p.));
+            // let tmp_teams = self.teams.clone();
             for mut team in & mut self.teams
             {
                 let tmp = &mut team.clone();

@@ -1,5 +1,7 @@
 pub mod team
 {
+    use bevy::ui::update;
+
     use crate::player::player::{Player, Egg};
     use crate::paket_crafter::paquet_crafter::packet_gfx_player_connexion;
     
@@ -28,6 +30,17 @@ pub mod team
                 players: Vec::new(),
                 eggs: Vec::new(),
                 nb_total_players: 0,
+            }
+        }
+
+        pub fn update(& mut self)
+        {
+            for player in &self.players {
+                player.update();
+            }
+            self.players.retain(|p| p.life != 0);
+            for egg in &self.eggs {
+                egg.update();
             }
         }
 
