@@ -52,18 +52,28 @@ pub mod player
                 id: id_a,
                 port: port,
                 //coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
-                coord: Point::new(0, 0),
+                coord: Point::new(0, 0), // to remove for random
                 ivt: Ressources::new(),
                 life: 1260,
-                //orientation: match rng.gen_range(0..4)
-                //{
-                //    0 => Orientation::N,
-                //    1 => Orientation::E,
-                //    2 => Orientation::S,
-                //    3 => Orientation::O,
-                //    _ => Orientation::N,
-                //},
+                //orientation: get_random_orientation(),
                 orientation: Orientation::S,
+                level: 1,
+                actions: Vec::new(),
+            }
+        }
+
+        pub fn new_from_egg(id_a: u32, coord: Point) -> Self
+        {
+            Player
+            {
+                id: id_a,
+                port: 42,
+                //coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
+                coord: Point::new(coord.x, coord.y),
+                ivt: Ressources::new(),
+                life: 1260,
+                //orientation: get_random_orientation(),
+                orientation: get_random_orientation(),
                 level: 1,
                 actions: Vec::new(),
             }
@@ -96,6 +106,20 @@ pub mod player
 
         }
 
+    }
+
+    pub fn get_random_orientation() -> Orientation
+    {
+        let mut rng = thread_rng();
+
+        match rng.gen_range(0..4)
+        {
+            0 => Orientation::N,
+            1 => Orientation::E,
+            2 => Orientation::S,
+            3 => Orientation::O,
+            _ => Orientation::N,
+        }
     }
     
 }

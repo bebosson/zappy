@@ -551,7 +551,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             game_ctrl.print_all_players();
             println!("timestamp --> {}", game_ctrl.timestamp);
             game_ctrl.update_game_datas();
-            println!("--------------------------------------------------------------\n");
+            println!("--------------------------------------------------------------");
             println!("\n");
         }
 

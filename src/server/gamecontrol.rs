@@ -8,7 +8,7 @@ pub mod game
     use crate::ressources::ressources::Ressources;
     use crate::teams::team::Team;
     use crate::args::args::Args;
-    use crate::player::player::{Player, Orientation};
+    use crate::player::player::{Player, Orientation, Egg, get_random_orientation};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
     use crate::action::action::get_nb_total_players;
@@ -96,56 +96,36 @@ pub mod game
 
         pub fn update_game_datas(& mut self)
         {
-            let tmp_teams = self.teams.clone();
-            for mut team in & mut self.teams
+            let mut teams_clone: Vec<Team> = Vec::new();
+
+            for team in & mut self.teams
             {
                 let tmp = &mut team.clone();
-                for player in & mut team.players
+                for i in 0..team.players.len() as i16
                 {
-                    player.life -= 1;
-                    if player.life == 0
+                    team.players[i as usize].life -= 1;
+                    if i >= 0 && team.players[i as usize].actions.len() > 0
                     {
-                        // remove player from team
-                        tmp.players.retain(|p| p.id != player.id);
-                    }
-                    if player.actions.len() > 0
-                    {
-                        player.actions[0].count = player.actions[0].count - 1;
+                        team.players[i as usize].actions[0].count = team.players[i as usize].actions[0].count - 1;
                     }                    
                 }
+                team.players.retain(|p| p.life != 0);
                 for egg in &mut team.eggs
                 {
                     egg.count = egg.count - 1;
                     if egg.count == 0
                     {
-                        let mut rng = thread_rng();
-                        team.nb_total_players += 1;
-                        let total_players = get_nb_total_players(&tmp_teams);
-                        println!("total players update game data {}", total_players);
-                        team.players.push(Player
-                            {
-                                id: total_players as u32,
-                                port: 42, // TODO : fill with stream port (or remove (depends on our implementation choice))
-                                coord: egg.coord.clone(),
-                                ivt: Ressources::new(),
-                                life: 1260,
-                                orientation: match rng.gen_range(0..4)
-                                {
-                                    0 => Orientation::N,
-                                    1 => Orientation::E,
-                                    2 => Orientation::S,
-                                    3 => Orientation::O,
-                                    _ => Orientation::N,
-                                },
-                                level: 1,
-                                actions: Vec::new(),
-                            }
-                        );
                         //remove egg
-                        //tmp.eggs.retain(|e| e.id != egg.id);
-                        //team = tmp;
+                        tmp.eggs.retain(|e| e.id != egg.id);
+                        // add new player
+                        tmp.players.push(Player::new_from_egg(egg.id as u32, egg.coord.clone()));
+                        teams_clone.push(tmp.clone());
                     }
                 }
+            }
+            if teams_clone.len() > 0 // si je fais pas ca je copie le vector new()
+            {
+                self.teams = teams_clone;
             }
         }
 
