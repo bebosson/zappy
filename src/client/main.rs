@@ -1,3 +1,5 @@
+pub mod cell;
+
 use std::ops::Deref;
 use std::{env, fs};
 use std::net::{TcpStream};

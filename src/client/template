@@ -1,0 +1,13 @@
+
+
+broadcaster:
+			while players_on_cell < players_for_incantation {
+				send broadcast
+				wait(x T)
+			}
+
+broadcastee:
+			if life > critical {
+				find broadcaster
+			}
+			else { find food }
