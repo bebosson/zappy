@@ -1,4 +1,8 @@
+droite
 avance
 avance
 avance
-gauche
+avance
+avance
+avance
+avance

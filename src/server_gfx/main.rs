@@ -3,6 +3,7 @@ pub mod sprite_player;
 mod Ressource;
 mod parser;
 pub mod dispatch;
+pub mod do_action;
 
 use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
@@ -104,12 +105,10 @@ pub struct StreamEvent(Parse);
 
 
 fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
-    println!("toto1");
     for stream in state.listener.incoming() {
         match stream {
             Ok(mut stream) => {
                 // Spawn a new thread to handle each incoming connection
-                println!("toto1.5");
                 let (tx, rx) = bounded::<Parse>(1);
                 thread::spawn(move || {
                     let mut buffer = [0; 32];
@@ -124,7 +123,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                             Ok(n) => {
                                 // Process the received data
                                 let received_data = &buffer[..n];
-                                println!("Received data: {:?}", received_data);
+                                // println!("Received data: {:?}", received_data);
                                 let str = copy_until_char(received_data, b'\n');
                                 println!("str {:?}", str);
                                 let parse : Parse = parser_server_packet(str);

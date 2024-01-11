@@ -1,10 +1,10 @@
 pub mod map{
-    use std::{io::Empty, vec, process::exit};
+
 
     use bevy::{prelude::*, math::vec3, asset};
     use bevy_pancam::PanCam;
 
-    use crate::{MAP_WIDTH, TILES_WIDTH, TILES_HEIGHT, StreamEvent, StreamReceiver, MAP_HEIGHT, Ressource::Ressource::{spawn_resources, Ressource}, sprite_player::sprite_player::{setup_sprite, add_action, ActionPlayer, TypeAction}, dispatch::dispatch::RessCommandId};
+    use crate::{dispatch::dispatch::RessCommandId};
 
     #[derive(Component, Debug)]
     pub struct Position(Vec3);
