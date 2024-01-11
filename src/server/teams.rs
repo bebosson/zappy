@@ -1,9 +1,11 @@
 pub mod team
 {
     use bevy::ui::update;
+    use rand::{thread_rng, Rng};
 
-    use crate::player::player::{Player, Egg};
+    use crate::player::player::{Player, Egg, Orientation};
     use crate::paket_crafter::paquet_crafter::packet_gfx_player_connexion;
+    use crate::ressources::ressources::Ressources;
     
     #[derive(Debug, Clone)]
     pub struct Team
@@ -35,38 +37,75 @@ pub mod team
 
         pub fn update(& mut self)
         {
-            for player in &self.players {
-                player.update();
-            }
+            // for player in &self.players {
+            //     player.update();
+            // }
+            self.players.iter_mut().for_each(|p| p.update());
             self.players.retain(|p| p.life != 0);
-            for egg in &self.eggs {
-                egg.update();
-                if egg.count == 0
+            self.eggs.iter_mut().for_each(|e|
+            {
+                e.update();
+                if e.count == 0
                 {
+                    // e.hatch();
                     let mut rng = thread_rng();
-                    team.nb_total_players += 1;
-                    let total_players = get_nb_total_players(&self);
-                    println!("total players update game data {}", total_players);
+                    self.nb_total_players += 1;
+                    // let total_players = get_nb_total_players(&self);
+                    // println!("total players update game data {}", total_players);
                     self.players.push(Player
+                    {
+                        // id: total_players as u32,
+                        id: 55,
+                        port: 42, // TODO : fill with stream port (or remove (depends on our implementation choice))
+                        coord: e.coord.clone(),
+                        ivt: Ressources::new(),
+                        life: 1260,
+                        orientation: match rng.gen_range(0..4)
                         {
-                            id: total_players as u32,
-                            port: 42, // TODO : fill with stream port (or remove (depends on our implementation choice))
-                            coord: egg.coord.clone(),
-                            ivt: Ressources::new(),
-                            life: 1260,
-                            orientation: match rng.gen_range(0..4)
-                            {
-                                0 => Orientation::N,
-                                1 => Orientation::E,
-                                2 => Orientation::S,
-                                3 => Orientation::O,
-                                _ => Orientation::N,
-                            },
-                            level: 1,
-                            actions: Vec::new(),
-                        }
+                            0 => Orientation::N,
+                            1 => Orientation::E,
+                            2 => Orientation::S,
+                            3 => Orientation::O,
+                            _ => Orientation::N,
+                        },
+                        level: 1,
+                        actions: Vec::new(),
+                    });
+                    
                 }
-            }
+            });
+            self.eggs.retain(|egg| egg.count != 0);
+
+            // for egg in &self.eggs {
+            //     egg.update();
+            //     if egg.count == 0
+            //     {
+            //         let mut rng = thread_rng();
+            //         self.nb_total_players += 1;
+            //         // let total_players = get_nb_total_players(&self);
+            //         // println!("total players update game data {}", total_players);
+            //         self.players.push(Player
+            //             {
+            //                 // id: total_players as u32,
+            //                 id: 55,
+            //                 port: 42, // TODO : fill with stream port (or remove (depends on our implementation choice))
+            //                 coord: egg.coord.clone(),
+            //                 ivt: Ressources::new(),
+            //                 life: 1260,
+            //                 orientation: match rng.gen_range(0..4)
+            //                 {
+            //                     0 => Orientation::N,
+            //                     1 => Orientation::E,
+            //                     2 => Orientation::S,
+            //                     3 => Orientation::O,
+            //                     _ => Orientation::N,
+            //                 },
+            //                 level: 1,
+            //                 actions: Vec::new(),
+            //             }
+            //         )
+            //     }
+            // }
         }
 
         pub fn print_players_from_team(&self)

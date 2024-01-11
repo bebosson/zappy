@@ -98,9 +98,11 @@ pub mod game
 /*****************************************************************************/
         pub fn update_game_datas(& mut self)
         {
-            for team in &self.teams {
-                team.update();
-            }
+            // for team in &self.teams {
+            //     team.update();
+            // }
+            self.teams.iter_mut().for_each(|t| t.update());
+        }
 /*
             // self.teams.iter().map(|t| t.players.iter().map(|p| p.));
             // let tmp_teams = self.teams.clone();
