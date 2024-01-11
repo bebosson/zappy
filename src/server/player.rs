@@ -26,6 +26,15 @@ pub mod player
         pub coord: Point,
     }
 
+    impl Egg
+    {
+        pub fn update(&mut self)
+        {
+            self.count = self.count - 1;
+        }
+    }
+
+
     #[derive(Debug, Clone)]
     pub struct Player
     {
@@ -68,16 +77,24 @@ pub mod player
             {
                 id: id_a,
                 port: 42,
-                //coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
                 coord: Point::new(coord.x, coord.y),
                 ivt: Ressources::new(),
                 life: 1260,
-                //orientation: get_random_orientation(),
                 orientation: get_random_orientation(),
                 level: 1,
                 actions: Vec::new(),
             }
         }
+
+        pub fn update(& mut self)
+        {
+            self.life -= 1;
+            if self.actions.len() > 0
+            {
+                self.actions[0].count = self.actions[0].count - 1;
+            }
+        }
+
 
         pub fn action_push(& mut self, command_full: String)
         {

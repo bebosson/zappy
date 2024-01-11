@@ -96,37 +96,7 @@ pub mod game
 
         pub fn update_game_datas(& mut self)
         {
-            let mut teams_clone: Vec<Team> = Vec::new();
-
-            for team in & mut self.teams
-            {
-                let tmp = &mut team.clone();
-                for i in 0..team.players.len() as i16
-                {
-                    team.players[i as usize].life -= 1;
-                    if i >= 0 && team.players[i as usize].actions.len() > 0
-                    {
-                        team.players[i as usize].actions[0].count = team.players[i as usize].actions[0].count - 1;
-                    }                    
-                }
-                team.players.retain(|p| p.life != 0);
-                for egg in &mut team.eggs
-                {
-                    egg.count = egg.count - 1;
-                    if egg.count == 0
-                    {
-                        //remove egg
-                        tmp.eggs.retain(|e| e.id != egg.id);
-                        // add new player
-                        tmp.players.push(Player::new_from_egg(egg.id as u32, egg.coord.clone()));
-                        teams_clone.push(tmp.clone());
-                    }
-                }
-            }
-            if teams_clone.len() > 0 // si je fais pas ca je copie le vector new()
-            {
-                self.teams = teams_clone;
-            }
+            self.teams.iter_mut().for_each(|t| t.update());
         }
 
         pub fn packet_gfx_ressources_map(&self) -> Vec<String>
