@@ -94,11 +94,14 @@ pub mod game
             false
         }
 
+
+/*****************************************************************************/
         pub fn update_game_datas(& mut self)
         {
             for team in &self.teams {
                 team.update();
             }
+/*
             // self.teams.iter().map(|t| t.players.iter().map(|p| p.));
             // let tmp_teams = self.teams.clone();
             for mut team in & mut self.teams
@@ -152,6 +155,9 @@ pub mod game
                 }
             }
         }
+*/
+/*****************************************************************************/
+
 
         pub fn packet_gfx_ressources_map(&self) -> Vec<String>
         {
