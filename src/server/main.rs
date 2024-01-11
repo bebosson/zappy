@@ -561,7 +561,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 wait_for_answer = false;
             }
             current_actions = receive_action(& mut stream, & mut game_ctrl);
-            break ;
+            break ; // bizarre: break sans concditions dans un for
         }
 
         // when command finish to wait, execute action and send packet to client and gfx
