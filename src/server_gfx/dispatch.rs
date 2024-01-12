@@ -4,8 +4,8 @@ pub mod dispatch{
     use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{Ressource, spawn_resources}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action}};
 
     // const for teams folder name 
-    pub const SIZE_VECSPRITE: usize = 3;
-    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["zelda_up2.png", "zelda_east.png", "zelda_down.png"];
+    pub const SIZE_VECSPRITE: usize = 4;
+    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["zelda_up2.png", "zelda_east.png", "zelda_down.png", "zelda_west.png"];
 
     #[derive(Resource)]
     pub struct RessCommandId{

@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::process::{exit, ExitStatus};
 use std::str::from_utf8;
 
-const BUF_SIZE: usize = 160;
+const BUF_SIZE: usize = 320;
 
 fn flush(data: &mut [u8])
 {

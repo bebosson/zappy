@@ -113,7 +113,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                 thread::spawn(move || {
                     let mut buffer = [0; 32];
                     loop {
-                        println!("{:?}", stream);
+                        // println!("{:?}", stream);
                         match stream.read(&mut buffer) {
                             Ok(n) if n == 0 => {
                             

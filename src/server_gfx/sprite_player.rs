@@ -63,7 +63,7 @@ pub mod sprite_player{
     {
         let text_at;
         let anim_i;
-        println!("o {}", o);
+        // println!("o {}", o);
         match o
         {
 

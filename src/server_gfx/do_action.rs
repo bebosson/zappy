@@ -80,12 +80,46 @@ pub mod do_action{
 
 
     pub fn out_of_bound(transform: & mut Transform, asset_map:  &ResMut<RessCommandId>) {
-        // else if transform.translation.x < asset_map.pixel_x_min {transform.translation.x = asset_map.pixel_x_max}
         if transform.translation.y > asset_map.pixel_y_max {transform.translation.y = asset_map.pixel_y_min}
-        else if transform.translation.x > asset_map.pixel_x_max {transform.translation.x = asset_map.pixel_x_min}
-        // else if transform.translation.y < asset_map.pixel_y_min {transform.translation.y = asset_map.pixel_y_max}
+        if transform.translation.x > asset_map.pixel_x_max {transform.translation.x = asset_map.pixel_x_min}
+        if transform.translation.x < asset_map.pixel_x_min {transform.translation.x = asset_map.pixel_x_max}
+        if transform.translation.y < asset_map.pixel_y_min {transform.translation.y = asset_map.pixel_y_max}
+    }
 
-        
+    pub fn update_cell(movement : &Movementinprogress, cell: &mut Cell, asset_map:  &ResMut<RessCommandId>)
+    {
+        match movement.orientation
+        {
+            1 => {
+                if cell.1 == 0
+                {
+                    cell.1 = (asset_map.y - 1) as u8
+                }
+                else {cell.1 -= 1;} 
+            } // Nord 
+            2 => {
+                cell.0 += 1;
+                if cell.0 == asset_map.x as u8
+                {
+                    cell.0 = 0;
+                } 
+            } // Est
+            3 => {
+                cell.1 += 1;
+                if cell.1 == asset_map.y as u8
+                {
+                    cell.1 = 0;
+                }
+            } // Sud
+            4 => { 
+                if cell.0 == 0
+                {
+                    cell.0 = (asset_map.x - 1) as u8
+                }
+                else {cell.0 -= 1;}
+            }// Ouest
+            _ => { panic!()}
+        }
     }
         
 
@@ -106,22 +140,15 @@ pub mod do_action{
             _ => { panic!() }
         }
         // println!("transform.x = {} transform.y = {}", transform.translation.x, transform.translation.y);
-        println!("asset_map.x_max {} asset_map.y_max {}", asset_map.pixel_x_max, asset_map.pixel_y_max);
-        println!("asset_map.x_min {} asset_map.y_min {}", asset_map.pixel_x_min, asset_map.pixel_y_min);
+        // println!("asset_map.x_max {} asset_map.y_max {}", asset_map.pixel_x_max, asset_map.pixel_y_max);
+        // println!("asset_map.x_min {} asset_map.y_min {}", asset_map.pixel_x_min, asset_map.pixel_y_min);
         out_of_bound(transform, asset_map);
         movement.distance_restante -= distance_delta;
         if movement.distance_restante < 0.
         {
             action_player.state_action = StateAction::Idle;
             action_player.action_in_progress = TypeAction::Nothing;
-            match movement.orientation
-            {
-                1 => { cell.1 += 1 } // Nord 
-                2 => { cell.0 += 1 } // Est
-                3 => { cell.1 -= 1 } // Sud
-                4 => { cell.0 -= 1 }
-                _ => { panic!()}
-            }
+            update_cell(movement, cell, asset_map);
             return ;
         }
     }
