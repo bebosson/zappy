@@ -1,11 +1,15 @@
 pub mod cell;
+pub mod action;
 
-use std::ops::Deref;
+//use std::ops::Deref;
 use std::{env, fs};
-use std::net::{TcpStream};
+use std::net::TcpStream;
 use std::io::{Read, Write};
-use std::process::{exit, ExitStatus};
-use std::str::from_utf8;
+// use std::process::{exit, ExitStatus};
+use std::process::exit;
+
+use crate::action::Command::{Command, AVANCE};
+//use std::str::from_utf8;
 
 const BUF_SIZE: usize = 160;
 
@@ -65,6 +69,11 @@ fn main() {
     let vec_command = extract_lines(&contents);
     println!("vec command --> {:?}", vec_command);
     let mut number_command_send: u8 = 0;
+
+
+
+    let _ = Command::new(AVANCE);
+
     
     
     match TcpStream::connect("localhost:1312") 
@@ -121,7 +130,7 @@ fn main() {
         {
             println!("Failed to connect: {}", e);
         }
-    }
+    };
     println!("Terminated.");
 
 }
