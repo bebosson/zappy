@@ -11,7 +11,11 @@ use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
-use crate::paket_crafter::paquet_crafter::{craft_gfx_packet_pre, craft_gfx_packet_post};
+use crate::action::action::Die;
+use crate::paket_crafter::paquet_crafter::{ craft_gfx_packet_action_receive,
+                                            craft_gfx_packet_action_ready,
+                                            craft_gfx_packet_die,
+                                            craft_client_packet_action_receive, craft_client_packet_die};
 
 
 //add module in the crate root
@@ -486,6 +490,11 @@ fn send_to_server_gfx(gfx_pkts: Vec<String>, stream_gfx: & mut TcpStream)
     }
 }
 
+fn send_to_client(pkt: Vec<String>, stream: &Vec<TcpStream>)
+{
+
+}
+
 pub fn first_connection_gfx() -> Option<TcpStream>
 {
     match TcpStream::connect("localhost:8080")
@@ -497,6 +506,16 @@ pub fn first_connection_gfx() -> Option<TcpStream>
             None
         }
     } 
+}
+
+fn get_dead_people_list(before_id: Vec<(u32, Die)>, after_id: Vec<(u32, Die)>) -> Vec<(u32, Die)>
+{
+    before_id
+        .iter()
+        .filter(|&x| !after_id.contains(&x))
+        .chain(after_id.iter().filter(|&x| !before_id.contains(&x)))
+        .cloned()
+        .collect()
 }
 
 fn main() -> Result<(), Box<dyn GenericError>> 
@@ -571,15 +590,22 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("current action list --> {:?}", current_actions);
             for current_action in &current_actions
             {
-                let gfx_pkt = craft_gfx_packet_pre(&current_action, &game_ctrl.teams);
-                //println!("gfx pre action ---> {}", gfx_pkt.unwrap());
-                //let ret = send_pkt(gfx_pkt, None, GFX_SERVER_PORT, stream);
+                let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
+                if let Some(gfx_pkt_tmp) = gfx_pkt
+                {
+                    send_to_server_gfx(gfx_pkt_tmp, &mut gfx_stream);
+                }
+                let client_pkt = craft_client_packet_action_receive(&current_action, &game_ctrl.teams);
+                if let Some(client_pkt_tmp) = client_pkt
+                {
+                    send_to_client(client_pkt_tmp, &vec_stream);
+                }
             }
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
+                let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
                 println!("gfx pkt ready action ---> {:?}", gfx_pkt);
                 
                 // TODO :   soit on enleve c'est 3 lignes en dessous pour remplacer par send_pkt
@@ -600,7 +626,26 @@ fn main() -> Result<(), Box<dyn GenericError>>
         {
             game_ctrl.print_all_players();
             println!("timestamp --> {}", game_ctrl.timestamp);
+            
+            // get all id of eggs and players before updating timestamp
+            let before_id: Vec<(u32, Die)> = game_ctrl.get_players_eggs_id();
             game_ctrl.update_game_datas();
+            // get all id of eggs and players after updating timestamp
+            let after_id: Vec<(u32, Die)> = game_ctrl.get_players_eggs_id();
+
+            // remove after_id from prev_id
+            let dead_players: Vec<(u32, Die)> = get_dead_people_list(before_id, after_id);
+            let gfx_pkt_die = craft_gfx_packet_die(&dead_players);
+            if let Some(gfx_pkt_tmp) = gfx_pkt_die
+            {
+                send_to_server_gfx(gfx_pkt_tmp, &mut gfx_stream);
+            }
+            let client_pkt_die = craft_client_packet_die(&dead_players);
+            if let Some(client_pkt_tmp) = client_pkt_die
+            {
+                send_to_client(client_pkt_tmp, &vec_stream);
+            }
+
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
