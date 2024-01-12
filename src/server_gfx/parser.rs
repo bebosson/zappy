@@ -1,10 +1,11 @@
 pub mod parser{
 
 pub enum Parse{
-    Map(i32, i32),
-    RessourceCase(i32, i32, u8, u8, u8, u8, u8, u8, u8),
-    ConnexionPlayer(u8, u8, u8, u8, u8, String),
-    MovementPlayer(u8, u8, u8, u8),
+    Map(u32, u32), //"msz X Y\n"
+    RessourceCase(u32, u32, u8, u8, u8, u8, u8, u8, u8), //"bct X Y q q q q q q q\n" * nbr_cases
+    ConnexionPlayer(u8, u8, u8, u8, u8, String), //"pnw #n X Y O L N\n"
+    MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
+    NomEquipe(String),    //"tna N\n" * nbr_equipes
     Donothing,
     // Movemement(i32, i32, i32)
 }
@@ -28,13 +29,28 @@ pub fn parse_into_integer(content: String) -> Vec<i32>
     vec
 }
 
+pub fn parse_teams(content: String) -> Parse
+{
+    let nom_equipe: Vec<String> = content
+        .split_ascii_whitespace()
+        .skip(1)
+        .map(|str| str.to_string())
+        .collect();
+
+    if nom_equipe.len() > 1 {panic!("packet equip wrong");}
+    else {
+        return Parse::NomEquipe(nom_equipe[0].clone());
+    }
+
+}
+
 
 pub fn parse_ressource(content: String) -> Parse
 {
     let vec_parsing = parse_into_integer(content);
     
-    let res = Parse::RessourceCase(vec_parsing[0], 
-                        vec_parsing[1], 
+    let res = Parse::RessourceCase(vec_parsing[0] as u32, 
+                        vec_parsing[1] as u32, 
                         vec_parsing[2] as u8, 
                         vec_parsing[3] as u8, 
                         vec_parsing[4] as u8, 
@@ -87,7 +103,7 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                     parse = parse_ressource(pkt_receive);
                 }
                 "tna" => {
-                    todo!();
+                    parse = parse_teams(pkt_receive);
                 }
                 "pnw" => {
                     parse = parse_connexion_player(pkt_receive);
@@ -163,12 +179,12 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
 fn take_dim_map(string_map: String) -> Parse
 {
     let iter = string_map.split_ascii_whitespace().skip(1);
-    let mut vec_map: Vec<i32> = vec![];
+    let mut vec_map: Vec<u32> = vec![];
     for i in iter
     {
         let string = i;
         // println!("STRING MAP = {:?}", string);
-        vec_map.push(string.parse::<i32>().ok().unwrap());
+        vec_map.push(string.parse::<u32>().ok().unwrap());
     }
     // let x = vec_map[0].parse::<u32>;
     Parse::Map {0:vec_map[0],1:vec_map[1]}
