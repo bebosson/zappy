@@ -555,11 +555,11 @@ fn main() -> Result<(), Box<dyn GenericError>>
         for mut stream in & mut vec_stream
         {
             if check_winner(&game_ctrl.teams) { break; }
-            if wait_for_answer == true
-            {
-                let _ = stream.write(b"sendme");
-                wait_for_answer = false;
-            }
+            // if wait_for_answer == true
+            // {
+            //     let _ = stream.write(b"sendme");
+            //     wait_for_answer = false;
+            // }
             current_actions = receive_action(& mut stream, & mut game_ctrl);
             break ; // bizarre: break sans concditions dans un for
         }

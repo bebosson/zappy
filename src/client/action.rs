@@ -44,16 +44,17 @@ pub mod Command
             }
         }
 
-        pub fn send(&self)//, stream: &mut TcpStream/* , vec_string: &Vec<String>, number_command_sent: &mut u8 */)
+        pub fn send(&self, stream: & mut TcpStream/* , vec_string: &Vec<String>, number_command_sent: &mut u8 */)
         {
             let i = 0 as usize;
-            let mut send_buf = [0u8; 16];
+            let mut send_buf = [48u8; 16];
             for (i, c) in self.name.chars().enumerate()
             {
                 send_buf[i] = c as u8;
             }
-            println!("{:?}", send_buf);
+            println!("send_buf: [{:?}]", send_buf);
             println!("i = {}", i);
+            stream.write(&send_buf);
     
    /*
             for command in vec_string

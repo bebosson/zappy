@@ -8,6 +8,8 @@ use std::io::{Read, Write};
 // use std::process::{exit, ExitStatus};
 use std::process::exit;
 
+use bevy::transform::commands;
+
 use crate::action::Command::{Command, AVANCE};
 //use std::str::from_utf8;
 
@@ -60,6 +62,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
+    let stream = TcpStream::connect("localhost:1312");
     let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
     //println!("{:?}", args);
 
@@ -71,11 +74,9 @@ fn main() {
     let mut number_command_send: u8 = 0;
 
 
-
-    let _ = Command::new(AVANCE);
-
     
     
+/*
     match TcpStream::connect("localhost:1312") 
     {
         Ok(mut stream) =>
@@ -107,7 +108,11 @@ fn main() {
                             }
                             "sendme" => 
                             {
-                                send_command(&mut stream, &vec_command, &mut number_command_send);
+                                //send_command(&mut stream, &vec_command, &mut number_command_send);
+                                println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                                let command = Command::new(AVANCE);
+                                command.send(& mut stream);
+                                println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
                                 //number_command_send = 0;
                                 //println!("{}", number_command_send);
                                 // let text = from_utf8(&data).unwrap();
@@ -132,5 +137,6 @@ fn main() {
         }
     };
     println!("Terminated.");
+*/
 
 }
