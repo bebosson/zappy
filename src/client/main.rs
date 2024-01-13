@@ -78,7 +78,7 @@ fn main() {
                         //convert data(buffer) into string and flush (overkill)
                         let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
                         let string_buffer = string_buffer.trim_matches(char::from(0));  
-                        //println!("string buffer --> {:?}", string_buffer);
+                        println!("string buffer --> {:?}", string_buffer);
                         
                         match string_buffer
                         {

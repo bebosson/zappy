@@ -26,6 +26,8 @@ pub mod game
         pub stream_gfx: Option<TcpStream>,
     }
 
+   
+
     impl GameController
     {
         pub fn new(args: &Args) -> Self
@@ -44,7 +46,7 @@ pub mod game
                 cells : init_map_cells(args.x, args.y),
                 teams: vec_teams,
                 timestamp: 0,
-                stream_gfx: None
+                stream_gfx: None,
             }
         }
 

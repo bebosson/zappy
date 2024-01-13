@@ -3,6 +3,7 @@ use std::env;
 use std::error::Error as GenericError;
 use std::io::{Write, Read};
 use std::net::{TcpListener, TcpStream};
+use std::process::exit;
 use std::time::Duration;
 use std::time::SystemTime;
 
@@ -13,6 +14,22 @@ use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
 use crate::paket_crafter::paquet_crafter::craft_gfx_packet;
 
+
+#[derive(Debug)]
+pub struct Ourstream{
+    pub stream: TcpStream,
+    pub wait_for_answer: bool,
+}
+
+impl Ourstream{
+    pub fn new_from_stream(stream: TcpStream) -> Self
+    {
+        Ourstream{
+            stream,
+            wait_for_answer: true,
+        }
+    }
+}
 
 //add module in the crate root
 pub mod args;
@@ -448,12 +465,12 @@ pub fn first_connection_gfx() -> Option<TcpStream>
 
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
-    let mut vec_stream: Vec<TcpStream> = vec![];
+    let mut vec_our_stream: Vec<Ourstream> = vec![];
     let mut gfx_stream: TcpStream;
     let mut hashmap: HashMap<String, u8>= HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
-
+    
     // parsing
     let mut vec_args = parsing()?;
 
@@ -479,7 +496,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
         let _ = stream.write(b"Bienvenue");
         create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
         let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
-        vec_stream.push(stream);
+        vec_our_stream.push(Ourstream::new_from_stream(stream));
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap)
         {
            break ;
@@ -498,26 +515,32 @@ fn main() -> Result<(), Box<dyn GenericError>>
     /*****             need to get the gfx_stream back from this func                   *****/
     gfx_stream = first_connection_gfx().unwrap();
     send_to_server_gfx(&game_ctrl,  get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
-    
+    for ourstream in & mut vec_our_stream
+    {
+        println!("{:?}", ourstream);
+    }
+    let mut var_tmp: u8 = 0;
     loop
     {
-        for mut stream in & mut vec_stream
+        for ourstream in & mut vec_our_stream
         {
             // println!("sendme");
             if check_winner(&game_ctrl.teams)
             {
                 break;
             }
-            if wait_for_answer == true
+            if ourstream.wait_for_answer == true
             {
-                let _ = stream.write(b"sendme");
-                wait_for_answer = false;
+                let _ = ourstream.stream.write(b"sendme");
+                ourstream.wait_for_answer = false;
+                var_tmp += 1;
                 //println!("sendme");
             }
-            current_actions = receive_action(& mut stream, & mut game_ctrl);
-            break ;
+            current_actions = receive_action(& mut ourstream.stream, & mut game_ctrl);
+            if var_tmp == 2 {break;}
+            // break ;
         }
-        
+        println!("{:?}", current_actions);
         //println!("end of tcpStream listener");
 
         // when command finish to wait, execute action and send packet to client and gfx
@@ -525,6 +548,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
         if ready_action_list.len() > 0 || current_actions.len() > 0
         {
             println!("current action list --> {:?}", current_actions);
+
             for current_action in &current_actions
             {
                 //let gfx_pkt = pre_craft_gfx_packet(&current_action, &game_ctrl.teams);
@@ -533,6 +557,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
             println!("ready action list --> {:?}", ready_action_list);
+            // exit(1); 
+
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
