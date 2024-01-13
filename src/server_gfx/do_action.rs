@@ -1,6 +1,6 @@
 pub mod do_action{
     use std::collections::VecDeque;
-    use crate::sprite_player::sprite_player::{Cell, AnimationIndices};
+    use crate::sprite_player::sprite_player::{Cell, AnimationIndices, Player};
     use bevy::{ecs::{component::Component, system::{Res, Query, ResMut}, entity::Entity}, time::Time, asset::Handle, sprite::{TextureAtlas, TextureAtlasSprite}, transform::components::Transform};
 
     use crate::{TILES_WIDTH, dispatch::dispatch::RessCommandId};
@@ -200,9 +200,17 @@ pub mod do_action{
         }
     }
 
-    pub fn player_rotation(rotation: u8, asset_map: &ResMut<RessCommandId>,  handle_texture_atlas: &mut Handle<TextureAtlas>, texture_atlas_sprite: &mut TextureAtlasSprite, animation_indice: &mut AnimationIndices) 
+    pub fn player_rotation(
+        rotation: u8,
+        asset_map: &ResMut<RessCommandId>,
+        handle_texture_atlas: &mut Handle<TextureAtlas>,
+        texture_atlas_sprite: &mut TextureAtlasSprite,
+        animation_indice: &mut AnimationIndices,
+        team_num: usize,
+    ) 
     {
-        let sprite_animation = asset_map.get_sprite((rotation - 1) as usize);
+        
+        let sprite_animation = asset_map.get_sprite((rotation - 1) as usize, team_num);
 
         *handle_texture_atlas = sprite_animation.texture_atlas_handle;
         *texture_atlas_sprite = sprite_animation.texture_atlas_sprite;
@@ -215,7 +223,7 @@ pub mod do_action{
 
     pub fn exec_action(
         time: Res<Time>, 
-        mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, & mut Transform, &mut Handle<TextureAtlas>, & mut TextureAtlasSprite, & mut AnimationIndices, &mut Cell)>,
+        mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, & mut Transform, &mut Handle<TextureAtlas>, & mut TextureAtlasSprite, & mut AnimationIndices, &mut Cell, &Player)>,
         asset_map: ResMut<RessCommandId>)
     {
         for (mut action_player,
@@ -224,7 +232,8 @@ pub mod do_action{
             mut handle_texture_atlas,
             mut texture_atlas_sprite,
             mut animation_indices,
-            mut cell
+            mut cell,
+            player,
         ) 
             in query_action_player.iter_mut()
         {
@@ -240,7 +249,8 @@ pub mod do_action{
                                 // new_coor = asset_map.get_my_coor(trans.x, translat)
                             }
                             TypeofMovement::Rotation => {
-                                player_rotation(movement.orientation ,&asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices);
+                                println!("team_num {:?}", player.0 as usize);
+                                player_rotation(movement.orientation ,&asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices, player.0 as usize);
                                 cell.2 = movement.orientation;
                                 action_player.state_action = StateAction::Idle;
                                 action_player.action_in_progress = TypeAction::Nothing;

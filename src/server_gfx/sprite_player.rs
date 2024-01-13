@@ -10,7 +10,7 @@ pub mod sprite_player{
 
     use bevy::prelude::*;
     // use map::map::spawn_map;
-    use crate::{dispatch::dispatch::{RessCommandId, VECSPRITE}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress}};
+    use crate::{dispatch::dispatch::{RessCommandId, VECSPRITE, VECTEAM}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress}};
 
     
     
@@ -87,7 +87,9 @@ pub mod sprite_player{
 
     pub fn set_sprite_animation(team: usize, o: u8, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>) -> SpriteAnimation
     {
-        let texture_handle = asset_server.load(VECSPRITE[o as usize]);
+        let path = format!("{}/{}", VECTEAM[team], VECSPRITE[o as usize]);
+        println!("{}", path);
+        let texture_handle = asset_server.load(path);
         let texture_atlas_and_anim = set_texture_atlas_animation_indice(texture_handle, o + 1); // on doit regler cette confusion entre orientation et indice 
             // TextureAtlas::from_grid(texture_handle, Vec2::new(27.1, 32.0), 10, 1, None, None);
         let texture_atlas_handle = texture_atlases.add(texture_atlas_and_anim.0);
@@ -98,7 +100,7 @@ pub mod sprite_player{
     }
 
     #[derive(Component)]
-    pub struct Player;
+    pub struct Player(pub u8);
     
     
     #[derive(Component, Clone)]
@@ -145,22 +147,22 @@ pub mod sprite_player{
     pub fn setup_sprite(
         mut commands: & mut Commands,
         asset_server: &Res<AssetServer>,
-        mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, // ????
         coord_pixel: (f32, f32),
         coord_cell: (u8, u8, u8),
         asset_map: &mut ResMut<RessCommandId>,
         sprite_animation: SpriteAnimation,
-    ) {
+        team_num: u8,
+    ) -> Entity {
         let sprite_component = animation_to_sprite_component(sprite_animation, &coord_pixel.0, &coord_pixel.1);
         
-        asset_map.player_id.push(commands.spawn((
+        commands.spawn((
             sprite_component,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
             ActionPlayer::new(),
-            Player,
+            Player(team_num),
             Cell(coord_cell.0, coord_cell.1, coord_cell.2), // manque orientation 
             Movementinprogress::new(),
-        )).id());
+        )).id()
     }
 
     

@@ -65,14 +65,19 @@ pub mod team
             }
         }
 
-        pub fn packet_gfx_add_teams(&self) -> Vec<String>
+        pub fn packet_gfx_add_team(&self) -> String
         {
-            let mut vec_gfx_packet = vec![];
+            format!("tna {}\n", self.name)
+        }
+
+        pub fn packet_gfx_add_all_players_team(&self) -> Vec<String>
+        {
+            let mut vec_gfx_packet_all_players = vec![];
             for player in &self.players
             {
-                vec_gfx_packet.push(format!("{} {}\n", packet_gfx_player_connexion(player), self.name));
+                vec_gfx_packet_all_players.push(format!("{} {}\n", packet_gfx_player_connexion(player), self.name));
             }
-            vec_gfx_packet
+            vec_gfx_packet_all_players
         }
     }
 

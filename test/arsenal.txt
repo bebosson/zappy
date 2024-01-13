@@ -1,0 +1,9 @@
+gauche
+avance
+droite
+avance
+gauche
+gauche
+avance
+avance
+droite
