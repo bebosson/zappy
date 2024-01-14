@@ -230,7 +230,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
     let mut action_receive = [0 as u8; BUF_SIZE];
     let mut actions : Vec<Action> = Vec::new();
 
-    // println!("receive action from : {:?}", stream);
+    println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
     {
         for team in & mut game_ctrl.teams
@@ -257,6 +257,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
                             {
                                 actions.push(Action::new_from_string(string_command.clone()));
                                 player.action_push(string_command);
+                               
                             }
                         }
                     }
@@ -537,7 +538,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 //println!("sendme");
             }
             current_actions = receive_action(& mut ourstream.stream, & mut game_ctrl);
-            if var_tmp == 2 {break;}
+            if var_tmp == 3 { break;}
             // break ;
         }
         println!("{:?}", current_actions);
@@ -557,10 +558,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
             println!("ready action list --> {:?}", ready_action_list);
-            // exit(1); 
-
+            
             for ready_action in ready_action_list
             {
+                // if ready_action.id == 2 { exit(1); }
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
                 println!("gfx pkt ready action ---> {:?}", gfx_pkt);

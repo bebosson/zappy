@@ -82,7 +82,7 @@ pub mod player
                     break ;
                 }
             }
-            // println!("Action {:?}", action);
+            println!("id = {} Action {:?}", self.id, action);
             self.actions.push(action.clone());
         }
 
