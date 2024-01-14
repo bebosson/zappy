@@ -16,13 +16,7 @@ pub mod action
         Wait,
         Action,
     }
-
-    #[derive(Debug, PartialEq, Clone)]
-    pub enum Die
-    {
-        PlayerDie,
-        EggDie,
-    }
+    
 
     /***********************************************************************
      * the 3 params of this struct is :

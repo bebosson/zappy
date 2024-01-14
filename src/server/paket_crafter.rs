@@ -5,8 +5,8 @@ pub mod paquet_crafter
     use crate::gamecontrol::game::{GameController};
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::{Point, Cell};
-    use crate::player::player::{Orientation, Player};
-    use crate::action::action::{ActionResult, ReadyAction, Action, Die};
+    use crate::player::player::{Orientation, Player, PlayerType};
+    use crate::action::action::{ActionResult, ReadyAction, Action};
 
 
     /*
@@ -23,7 +23,24 @@ pub mod paquet_crafter
     */
     pub fn craft_gfx_packet_action_receive(action: &Action, teams: &Vec<Team>) -> Option<Vec<String>>
     {
-        // TODO: implement
+        // TODO : attention ici pour gfx il faut crafter 2 types de paquets 
+        // pic pour debu incantation et pfk pour debut de fork
+        // mais je dois récupérer l'id des joueurs et la il y a un petit probleme
+        // il faudra peut etre renvoyer un tuple (vec<string>, id) dans receive_action au lieu d'un simple vec<string>
+
+        let mut pkt: Vec<String> = Vec::new();
+        //let player = get_player_from_new_action();
+        match action.action_name.as_str()
+        {
+            //"incantation" => pkt.push(get_incantation_players_id(id, teams)),
+            //"fork" => pkt.push(get_player_id_from_action()),
+            _ => (),
+        }
+        Some(Vec::new())
+    }
+
+    pub fn craft_client_packet_action_ready(ready_action_ref: &ReadyAction, action_result_ref: &Option<ActionResult>, game_ctrl: &GameController) -> Option<Vec<String>>
+    {
         Some(Vec::new())
     }
 
@@ -109,7 +126,7 @@ pub mod paquet_crafter
         Some(cmd)
     }
 
-    pub fn craft_gfx_packet_die(ids: &Vec<(u32, Die)>) -> Option<Vec<String>>
+    pub fn craft_gfx_packet_die(ids: &Vec<(u32, PlayerType)>) -> Option<Vec<String>>
     {
         let mut gfx_pkt: Vec<String> = Vec::new();
         let mut break_bool: bool = false;
@@ -118,18 +135,23 @@ pub mod paquet_crafter
         {
             match id.1
             {
-                Die::PlayerDie => { gfx_pkt.push(packet_gfx_player_die(id.0)); },
-                Die::EggDie => { gfx_pkt.push(packet_gfx_egg_die(id.0)); },
+                PlayerType::Player => { gfx_pkt.push(packet_gfx_player_die(id.0)); },
+                PlayerType::Egg => { gfx_pkt.push(packet_gfx_egg_die(id.0)); },
             };
         }
         if gfx_pkt.len() == 0 { return None; }
         Some(gfx_pkt)
     }
 
-    pub fn craft_client_packet_die(dead_players: &Vec<(u32, Die)>) -> Option<Vec<String>>
+    pub fn craft_client_packet_die(dead_players: &Vec<(u32, PlayerType)>) -> Option<Vec<String>>
     {
-
-        Some(Vec::new())
+        let mut pkts: Vec<String> = Vec::new();
+        for dead_player in dead_players
+        {
+            pkts.push(format!("mort\n"));
+        }
+        if pkts.len() == 0 { return None; }
+        Some(pkts)
     }
 
 

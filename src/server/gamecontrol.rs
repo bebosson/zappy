@@ -4,12 +4,12 @@ pub mod game
     use std::net::TcpStream;
     use std::time::SystemTime;
 
-    use crate::action::action::Die;
     use crate::teams::team::Team;
     use crate::args::args::Args;
-    use crate::player::player::{Player, Egg};
+    use crate::player::player::{Player, PlayerType};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
+    use crate::game_utils::game_utils::get_dead_people_list;
 
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
@@ -80,14 +80,19 @@ pub mod game
         }
 
         /*
-        **  update life, action counter and egg counter
+        **  update life, action counter, egg counter and return a vector of dead players.
+        **  this vector is a tuple of player id and player type (Egg or Player)
         **/
-        pub fn update_game_datas(& mut self)
+        pub fn update_game_datas(& mut self) -> Vec<(u32, PlayerType)>
         {
+            // get all id of eggs and players before updating timestamp
+            let before_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
             self.teams.iter_mut().for_each(|t| t.update());
-            
-            // TODO : il faut récupérer les datas modifiées pour créer 
-            // les packets gfx résultant de l'update --> les mort
+            // get all id of eggs and players after updating timestamp
+            let after_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
+            // remove after_id from before_id
+            let dead_players: Vec<(u32, PlayerType)> = get_dead_people_list(before_id, after_id);
+            dead_players
         }
 
         pub fn packet_gfx_ressources_map(&self) -> Vec<String>
@@ -132,26 +137,25 @@ pub mod game
 /////////////////////////////////////////////////// Utils ////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        pub fn get_players_eggs_id(&self) -> Vec<(u32, Die)>
+        pub fn get_players_eggs_id(&self) -> Vec<(u32, PlayerType)>
         {
             let mut players_id = Vec::new();
 
             for team in self.teams.clone()
             {
-                let mut tmp: Vec<(u32, Die)> = team
+                let mut tmp: Vec<(u32, PlayerType)> = team
                     .eggs
                     .iter()
-                    .map(|e| (e.id as u32, Die::EggDie))
+                    .map(|e| (e.id as u32, PlayerType::Egg))
                     .collect();
                 players_id.append(&mut tmp);
-                let mut tmp: Vec<(u32, Die)> = team
+                let mut tmp: Vec<(u32, PlayerType)> = team
                     .players
                     .iter()
-                    .map(|p| (p.id, Die::PlayerDie))
+                    .map(|p| (p.id, PlayerType::Player))
                     .collect();
                 players_id.append(&mut tmp);
             }
-            println!("-----------------> players id2 {:?}", players_id);
             players_id
         }
 
@@ -163,11 +167,11 @@ pub mod game
         {
             for team in & self.teams
             {
-                println!("- - - - - - - team {} - - - - - - - - -", team.name);
+                println!("- - - - - - - - - - - - - - - - - - team {} - - - - - - - - - - - - - - - - - -", team.name);
                 team.print_players_from_team();
-                println!("-------------------------------");
+                println!("---------------------------------------------------------------------------------");
                 team.print_eggs_from_team();
-                println!(" - - - - - - - - - - - - - - - - - - - - - - - -");
+                println!("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
             }
             println!("\n\n");
         }

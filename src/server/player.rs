@@ -18,6 +18,13 @@ pub mod player
         O
     }
 
+    #[derive(Debug, PartialEq, Clone)]
+    pub enum PlayerType
+    {
+        Player,
+        Egg,
+    }
+
     #[derive(Debug, Clone)]
     pub struct Egg
     {

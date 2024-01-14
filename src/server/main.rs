@@ -10,12 +10,15 @@ use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
+use stream_utils::stream_utils::send_pkt_to_stream;
+use utils::utils::copy_until_char;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
-use crate::action::action::Die;
 use crate::paket_crafter::paquet_crafter::{ craft_gfx_packet_action_receive,
                                             craft_gfx_packet_action_ready,
                                             craft_gfx_packet_die,
-                                            craft_client_packet_action_receive, craft_client_packet_die};
+                                            craft_client_packet_action_receive, craft_client_packet_die, craft_client_packet_action_ready};
+use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl};
+use crate::game_utils::game_utils::{find_player_from_id, find_index_action};
 
 
 //add module in the crate root
@@ -25,10 +28,12 @@ pub mod gamecontrol;
 pub mod player;
 pub mod ressources;
 pub mod teams;
-pub mod zappy;
 pub mod action;
 pub mod init;
 pub mod paket_crafter;
+pub mod utils;
+pub mod game_utils;
+pub mod stream_utils;
 
 static GFX_SERVER_PORT: u16 = 1312;
 const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
@@ -54,28 +59,6 @@ fn check_winner(teams: &Vec<Team>) -> bool
     }
     false
 }
-
-
- /***********************************************************************************
- * Simple implementation of cpy_from_slice use for translate the buffer receive 
- * in the stream to the teamname
- * 
- * params:
- *      buffer: [u8; 32]
- * 
- * return:
- *       String
-*********************************************************************************/
-fn copy_until_char(buffer: &[u8], char: u8) -> String
-{
-    let string_dst = buffer
-        .iter() // into_iter 
-        .take_while(|&x| *x != char)
-        .map(|x| *x as char)
-        .collect();
-    string_dst
-}
-
 
  /***********************************************************************************
  * Check if the packet contains the correct teamname, then proceed our handshake.
@@ -349,53 +332,6 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 */
 
 /*
-**  retreive player from it's id
-**  params:
-**      teams: all teams
-**      id: player id to find into `teams`
-**  return:
-**      Option<Player>: found player, None instead
-**/
-fn find_player_from_id(teams: Vec<Team>, id: &u32) -> Option<Player>
-{
-    for team in teams
-    {
-        for player in team.players
-        {
-            if id == &player.id
-            {
-                return Some(player);
-            }
-        }
-    }
-    None
-}
-
-/*
-**  find the ready action in the player actions list
-**  params:
-**      ready_action: ready action
-**      player: player concerned by this ready action
-**  return:
-**      usize: index of the action to find into player actions list
-**/
-fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
-{
-    let mut i: usize = 0;
-
-    for action in &player.actions
-    {
-        if ready_action.action.action_name == action.action_name
-            && action.count == 0
-        {
-            return i;
-        }
-        i = i + 1;
-    }
-    i
-}
-
-/*
 **  execute action from a ReadyAction 
 **/
 fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> Option<ActionResult>
@@ -444,85 +380,10 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     Some(ret)
 }
 
-fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 32]
-{
-    let mut array = Vec::with_capacity(32);
-    array.extend(gfx_pck_string.chars());
-    array.extend(std::iter::repeat('0').take(32 - gfx_pck_string.len()));
-    
-    let mut result_array = [0u8; 32];
-    for (i, &c) in array.iter().enumerate()
-    {
-        result_array[i] = c as u8;
-    }
-    //println!("result array --> {:?}", result_array);
-    result_array
-}
-
-fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<String>
-{
-    let mut all_packets : Vec<String> = vec![];
-    all_packets.push(game_ctrl.packet_gfx_map_size());
-    // all_packets.push(game_ctrl.packet_gfx_timestamp());
-    for i in game_ctrl.packet_gfx_ressources_map()
-    {
-        all_packets.push(i);
-    }
-    for team in game_ctrl.packet_gfx_all_teams()
-    {
-        for player in team
-        {
-            all_packets.push(player);
-        }
-    }
-    all_packets
-}
-
-fn send_to_server_gfx(gfx_pkts: Vec<String>, stream_gfx: & mut TcpStream)
-{
-    //println!("packet gfx to send -> {:?}", gfx_pkts);
-    let mut buf: [u8; 32];
-   
-    for gfx_pkt in gfx_pkts
-    {
-        buf = translate_string_to_buffer(gfx_pkt);
-        let _ = stream_gfx.write(&buf);
-    }
-}
-
-fn send_to_client(pkt: Vec<String>, stream: &Vec<TcpStream>)
-{
-
-}
-
-pub fn first_connection_gfx() -> Option<TcpStream>
-{
-    match TcpStream::connect("localhost:8080")
-    {
-        Ok(stream) => Some(stream),
-        Err(e) => 
-        {
-            println!("Failed to connect: {}", e);
-            None
-        }
-    } 
-}
-
-fn get_dead_people_list(before_id: Vec<(u32, Die)>, after_id: Vec<(u32, Die)>) -> Vec<(u32, Die)>
-{
-    before_id
-        .iter()
-        .filter(|&x| !after_id.contains(&x))
-        .chain(after_id.iter().filter(|&x| !before_id.contains(&x)))
-        .cloned()
-        .collect()
-}
-
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut gfx_stream: TcpStream;
     // use to trigger the execution
-    // TODO : remplacer plus tard par un autre mechanisme ou on a pas besoin de ca
     let mut wait_for_answer: bool = true;
     let mut vec_stream: Vec<TcpStream> = Vec::new();
     let mut current_actions: Vec<Action> = Vec::new();
@@ -559,16 +420,16 @@ fn main() -> Result<(), Box<dyn GenericError>>
     
     println!("Everybody is connected, let's start the game");
     //println!("vec stream -> {:?}", vec_stream);
-
-    // take initial timestamp
-    let start_time = SystemTime::now();
-    //println!("start_time ---> {:?}", start_time);
     
     // connect to GFX server
     gfx_stream = first_connection_gfx().unwrap();
     // connexion handshake with the GFX server
-    send_to_server_gfx(get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
+    send_pkt_to_stream(get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
     
+    // take initial timestamp
+    let start_time = SystemTime::now();
+    //println!("start_time ---> {:?}", start_time);
+
     loop
     {
         for mut stream in & mut vec_stream
@@ -593,30 +454,29 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
                 if let Some(gfx_pkt_tmp) = gfx_pkt
                 {
-                    send_to_server_gfx(gfx_pkt_tmp, &mut gfx_stream);
+                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
                 }
                 let client_pkt = craft_client_packet_action_receive(&current_action, &game_ctrl.teams);
                 if let Some(client_pkt_tmp) = client_pkt
                 {
-                    send_to_client(client_pkt_tmp, &vec_stream);
+                    //send_pkt_to_stream(client_pkt_tmp, &vec_stream);
                 }
             }
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
+                let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 println!("gfx pkt ready action ---> {:?}", gfx_pkt);
-                
-                // TODO :   soit on enleve c'est 3 lignes en dessous pour remplacer par send_pkt
-                //          soit on fait le meme mechansime qu'en dessous pour le client
                 if let Some(packet) = gfx_pkt 
                 {
-                    send_to_server_gfx(packet, &mut gfx_stream);
+                    send_pkt_to_stream(packet, &mut gfx_stream);
                 }
-                //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
-                //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
-                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
+                let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
+                if let Some(packet) = client_pkt 
+                {
+                    //send_pkt_to_stream(packet, &mut vec_stream);
+                }
             }
         }
 
@@ -627,23 +487,18 @@ fn main() -> Result<(), Box<dyn GenericError>>
             game_ctrl.print_all_players();
             println!("timestamp --> {}", game_ctrl.timestamp);
             
-            // get all id of eggs and players before updating timestamp
-            let before_id: Vec<(u32, Die)> = game_ctrl.get_players_eggs_id();
-            game_ctrl.update_game_datas();
-            // get all id of eggs and players after updating timestamp
-            let after_id: Vec<(u32, Die)> = game_ctrl.get_players_eggs_id();
+            // update game datas (life, counter etc) and retrieve dead players list
+            let dead_players = game_ctrl.update_game_datas();
 
-            // remove after_id from prev_id
-            let dead_players: Vec<(u32, Die)> = get_dead_people_list(before_id, after_id);
-            let gfx_pkt_die = craft_gfx_packet_die(&dead_players);
-            if let Some(gfx_pkt_tmp) = gfx_pkt_die
+            let mut pkts = craft_gfx_packet_die(&dead_players);
+            if let Some(gfx_pkt_tmp) = pkts
             {
-                send_to_server_gfx(gfx_pkt_tmp, &mut gfx_stream);
+                send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
             }
-            let client_pkt_die = craft_client_packet_die(&dead_players);
-            if let Some(client_pkt_tmp) = client_pkt_die
+            pkts = craft_client_packet_die(&dead_players);
+            if let Some(client_pkt_tmp) = pkts
             {
-                send_to_client(client_pkt_tmp, &vec_stream);
+                //send_pkt_to_stream(client_pkt_tmp, &vec_stream);
             }
 
             println!("------------------------------------------------------------------------------");

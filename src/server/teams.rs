@@ -63,19 +63,30 @@ pub mod team
             for player in &self.players
             {
                 println!("player #{} :\n\
-                coord: {:?}\n\
-                orient: {:?}\n\
+                coord     : ({}, {}) -> {:?}\n\
                 level/life: {} / {}\n\
-                ivt: {:?}\n\
-                actions: {:?}\n",
+                ivt       : food {}, linemate {}, deraumere {}, sibur {}, phiras {}, mendiane {}, thystate {}",
                 player.id, 
-                player.coord,
+                player.coord.x,
+                player.coord.y,
                 player.orientation,
                 player.level,
                 player.life,
-                player.ivt,
-                player.actions,
-            );
+                player.ivt.food,
+                player.ivt.linemate,
+                player.ivt.deraumere,
+                player.ivt.sibur,
+                player.ivt.phiras,
+                player.ivt.mendiane,
+                player.ivt.thystate);
+                println!("actions   :");
+                for action in &player.actions
+                {
+                    println!("            (name: {}, count: {}, arg: {:?})",
+                        action.action_name,
+                        action.count,
+                        action.arg);
+                }
             }
         }
 
@@ -83,11 +94,11 @@ pub mod team
         {
             for egg in &self.eggs
             {
-                println!("egg #{} :\n\
-                coord: {:?}\n\
-                count: {}\n", 
+                println!("egg #{}    :\n\
+                coord     : ({}, {}) --- count: {}\n", 
                 egg.id, 
-                egg.coord,
+                egg.coord.x,
+                egg.coord.y,
                 egg.count);
             }
         }
