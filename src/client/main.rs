@@ -1,6 +1,7 @@
 pub mod cell;
 pub mod action;
 
+use std::time::Duration;
 //use std::ops::Deref;
 use std::{env, fs};
 use std::net::TcpStream;
@@ -62,7 +63,10 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
-    let stream = TcpStream::connect("localhost:1312");
+    let mut stream = TcpStream::connect("localhost:1312")
+                                        .expect("Couldn't connect to the server...");
+    stream.set_read_timeout(Some(Duration::new(1, 0))).expect("set_read_timeout call failed");
+    // let stream = TcpStream::connect("localhost:1312");
     let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
     //println!("{:?}", args);
 
@@ -73,70 +77,89 @@ fn main() {
     println!("vec command --> {:?}", vec_command);
     let mut number_command_send: u8 = 0;
 
-
-    
-    
-/*
-    match TcpStream::connect("localhost:1312") 
+    loop 
     {
-        Ok(mut stream) =>
+        if let Ok(_) = stream.read(& mut data)
         {
-            println!("Successfully connected to server in port 1312");
+            let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
+            let string_buffer = string_buffer.trim_matches(char::from(0));
+            if let string_buffer = "Bienvenue"
+            {
+                println!("Reply is ok! Send back teamname = {:?}", teamname);
+                stream.write(teamname.as_bytes()); // on envoie le teamname
+                flush(& mut data);
+                break;
+            }
+        }       
+    }
+    
+   
+    // match TcpStream::connect("localhost:1312") 
+    // {
+    //     Ok(mut stream) =>
+    //     {
+    //         println!("Successfully connected to server in port 1312");
+    let mut cnt = 0;
             loop
             {
-                match stream.read(&mut data) 
+                println!("rentre dans la boucle");
+                if let Ok(_) = stream.read(&mut data)
                 {
-                    Ok(_) => {
-                        //convert data(buffer) into string and flush (overkill)
-                        let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
-                        let string_buffer = string_buffer.trim_matches(char::from(0));  
-                        //println!("string buffer --> {:?}", string_buffer);
-                        
-                        match string_buffer
-                        {
-                            "Bienvenue" => 
-                            {
-                                println!("Reply is ok! Send back teamname = {:?}", teamname);
-                                // data.;
-                                // stream.write(teamname.as_bytes()).unwrap();
-                                stream.write(teamname.as_bytes()); // on envoie le teamname
-                                flush(& mut data);
-                            }
-                            "Endconnection" =>
-                            {
-                                exit(0);
-                            }
-                            "sendme" => 
-                            {
-                                //send_command(&mut stream, &vec_command, &mut number_command_send);
-                                println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                                let command = Command::new(AVANCE);
-                                command.send(& mut stream);
-                                println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                                //number_command_send = 0;
-                                //println!("{}", number_command_send);
-                                // let text = from_utf8(&data).unwrap();
-                            }
-                            _ => 
-                            {
-                                println!("{:?}", stream);
-                                println!("id = {}", string_buffer);
-                            }   
-                        } 
-                    },
-                    Err(e) => 
+                    //convert data(buffer) into string and flush (overkill)
+                    let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
+                    let string_buffer = string_buffer.trim_matches(char::from(0));  
+                    //println!("string buffer --> {:?}", string_buffer);
+                    
+                    match string_buffer
                     {
-                        println!("Failed to receive data: {}", e);
-                    }
+                        // "Bienvenue" => 
+                        // {
+                        //     println!("Reply is ok! Send back teamname = {:?}", teamname);
+                        //     // data.;
+                        //     // stream.write(teamname.as_bytes()).unwrap();
+                        //     stream.write(teamname.as_bytes()); // on envoie le teamname
+                        //     flush(& mut data);
+                        // }
+                        "Endconnection" =>
+                        {
+                            exit(0);
+                        },
+                        "ok" =>
+                        {
+                            cnt -= 1;
+                            println!("ACTION EXECUTE");
+                        },
+                        _ => 
+                        {
+                            ;
+                            // println!("{:?}", stream);
+                            // println!("id = {}", string_buffer);
+                        },
+                    } 
                 }
+                if cnt < 10
+                {
+                    //send_command(&mut stream, &vec_command, &mut number_command_send);
+                    println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                    let command = Command::new(AVANCE);
+                    command.send(& mut stream);
+                    println!("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+                    cnt += 1;
+                    //number_command_send = 0;
+                    //println!("{}", number_command_send);
+                    // let text = from_utf8(&data).unwrap();
+                }
+                // {
+                //     println!("Failed to receive data: {}", e);
+                // }
+                print!("cnt = {}", cnt);
             }
-        },
-        Err(e) => 
-        {
-            println!("Failed to connect: {}", e);
-        }
-    };
+        // },
+        // Err(e) => 
+        // {
+        //     println!("Failed to connect: {}", e);
+        // }
+    // };
     println!("Terminated.");
-*/
 
 }

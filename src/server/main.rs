@@ -236,7 +236,7 @@ fn get_obj_from_string(command: &String) -> Option<String>
 **  return:
 **      Vec<Action>: list of all new cmd receive from stream
 **/
-fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<Action>
+fn receive_actions(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<Action>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
     let mut actions : Vec<Action> = Vec::new();
@@ -560,8 +560,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
             //     let _ = stream.write(b"sendme");
             //     wait_for_answer = false;
             // }
-            current_actions = receive_action(& mut stream, & mut game_ctrl);
-            break ; // bizarre: break sans concditions dans un for
+            current_actions = receive_actions(& mut stream, & mut game_ctrl);
+            // break ; // bizarre: break sans concditions dans un for
         }
 
         // when command finish to wait, execute action and send packet to client and gfx
