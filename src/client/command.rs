@@ -29,7 +29,7 @@ pub mod Command
     {
         pub name    : &'static str,
         pub arg     : Option<&'static str>,
-        pub count   : u16,
+        pub count   : u16, // 1 Command.count = 7 server count
     }
 
     impl Command

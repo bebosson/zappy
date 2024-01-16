@@ -17,7 +17,7 @@ pub mod player
         map             : Vec<Vec<Cell>>,
         coord           : Point,
         orientation     : Orientation,
-        actions         :Vec<String>,
+        actions         :Vec<Command>,
     }
 
     impl Player
