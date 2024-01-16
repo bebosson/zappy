@@ -120,62 +120,62 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                 "ppo" => {
                     parse = parse_player_movement(pkt_receive);
                 }
-                "plv" => {
-                    // Niveau d’un joueur. "plv #n L\n" 
-                    todo!();
-                }
-                "pin" => {
-                    // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
-                    todo!();
-                }
-                "pex" => {
-                    todo!();
-                }
-                "pic" => {
-                    todo!();
-                }
-                "pie" => {
-                    todo!();
-                }
-                "pfk" => {
-                    todo!();
-                }
-                "pdr" => {
-                    todo!();
-                }
-                "pgt" => {
-                    todo!();
-                }
-                "pdi" => {
-                    todo!();
-                }
-                "enw" => {
-                    todo!();
-                }
-                "eht" => {
-                    todo!();
-                }
-                "ebo" => {
-                    todo!();
-                }
-                "edi" => {
-                    todo!();
-                }
+                // "plv" => {
+                //     // Niveau d’un joueur. "plv #n L\n" 
+                //     todo!();
+                // }
+                // "pin" => {
+                //     // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
+                //     todo!();
+                // }
+                // "pex" => {
+                //     todo!();
+                // }
+                // "pic" => {
+                //     todo!();
+                // }
+                // "pie" => {
+                //     todo!();
+                // }
+                // "pfk" => {
+                //     todo!();
+                // }
+                // "pdr" => {
+                //     todo!();
+                // }
+                // "pgt" => {
+                //     todo!();
+                // }
+                // "pdi" => {
+                //     todo!();
+                // }
+                // "enw" => {
+                //     todo!();
+                // }
+                // "eht" => {
+                //     todo!();
+                // }
+                // "ebo" => {
+                //     todo!();
+                // }
+                // "edi" => {
+                //     todo!();
+                // }
                 "sgt" => {
                     parse = parse_time(pkt_receive);
                 }
-                "seg" => {
-                    todo!();
-                }
-                "smg" => {
-                    todo!();
-                }
-                "suc" => {
-                    todo!();
-                }
-                "sbp" => {
-                    todo!();
-                }
+                // "seg" => {
+                //     todo!();
+                // }
+                // "smg" => {
+                //     todo!();
+                // }
+                // "suc" => {
+                //     todo!();
+                // }
+                // "sbp" => {
+                //     todo!();
+                // }
                 _ => {
                     parse = Parse::Donothing;
                 }

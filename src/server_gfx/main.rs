@@ -34,6 +34,11 @@ const TILES_HEIGHT: f32 = 100.0;
 const BUF_SIZE: usize = 160;
 
 #[derive(Resource)]
+struct Waitforcommand{
+    pub nbr_command: u8,
+}
+
+#[derive(Resource)]
 struct AppState {
     listener: TcpListener,
 }
@@ -69,6 +74,7 @@ fn main() {
                         //     FrameTimeDiagnosticsPlugin,
         // ))
         .insert_resource(AppState { listener })
+        .insert_resource(Waitforcommand { nbr_command: 1 })
         .add_systems(Startup, setup_handle_connections)
         .add_plugins(Dispatch)
         .add_plugins(DoAction)
@@ -113,6 +119,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                 thread::spawn(move || {
                     let mut buffer = [0; 32];
                     loop {
+                        // if (tx)
                         // println!("{:?}", stream);
                         match stream.read(&mut buffer) {
                             Ok(n) if n == 0 => {

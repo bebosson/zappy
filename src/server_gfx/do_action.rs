@@ -130,11 +130,11 @@ pub mod do_action{
     {
         
         let t_prime: f32 = asset_map.time  as f32 / 7.0;
-        println!("asset_map.time = {:?}", asset_map.time);
+        // println!("asset_map.time = {:?}", asset_map.time);
 
         let mut distance_delta = TILES_WIDTH * time.delta_seconds() * t_prime as f32; // time
         // println!("{:?}", time.delta_seconds());
-        println!("distance_delta = {:?}", distance_delta);
+        // println!("distance_delta = {:?}", distance_delta);
         if distance_delta > movement.distance_restante {distance_delta = movement.distance_restante;}
         
         match movement.orientation
