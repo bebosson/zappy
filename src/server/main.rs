@@ -124,7 +124,6 @@ fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String,
                     // display arsenal/chelsea est full
                     // send the Endconnection to kill the client
                     // kick the player
-                    println!("team {:?} is full", string_teamname_buffer);
                     let _ = stream.write("Endconnection".to_string().as_bytes());
                     drop(stream)
                 }
@@ -230,7 +229,6 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
     let mut action_receive = [0 as u8; BUF_SIZE];
     let mut actions : Vec<Action> = Vec::new();
 
-    println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
     {
         for team in & mut game_ctrl.teams
@@ -416,7 +414,7 @@ fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<Str
 {
     let mut all_packets : Vec<String> = vec![];
     all_packets.push(game_ctrl.packet_gfx_map_size());
-    // all_packets.push(game_ctrl.packet_gfx_timestamp());
+    all_packets.push(game_ctrl.packet_gfx_timestamp());
     for i in game_ctrl.packet_gfx_ressources_map()
     {
         all_packets.push(i);
@@ -541,7 +539,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             if var_tmp == 3 { break;}
             // break ;
         }
-        println!("{:?}", current_actions);
+        // println!("{:?}", current_actions);
         //println!("end of tcpStream listener");
 
         // when command finish to wait, execute action and send packet to client and gfx

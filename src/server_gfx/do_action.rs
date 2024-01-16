@@ -127,8 +127,8 @@ pub mod do_action{
 
     pub fn player_translation(time: &Res<Time>, action_player: & mut ActionPlayer, movement : &mut Movementinprogress, transform: & mut Transform, cell: &mut Cell, asset_map:  &ResMut<RessCommandId>)
     {
-        let distance_delta = TILES_WIDTH / 2. * time.delta_seconds();
-        // println!("{:?}", 1./time.delta_seconds());
+        let distance_delta = TILES_WIDTH / 2. * time.delta_seconds(); // time
+        println!("{:?}", time.delta_seconds());
         // println!("{:?}", movement);
         
         match movement.orientation

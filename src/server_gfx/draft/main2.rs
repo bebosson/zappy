@@ -94,7 +94,7 @@ fn sprite_movement(time: Res<Time>, mut sprite_position: Query<(&mut Direction, 
     for (mut logo, mut transform) in &mut sprite_position {
         match *logo {
             Direction::Right => transform.translation.x += 30. * time.delta_seconds(),
-            Direction::Left => transform.translation.x -= 30. * time.delta_seconds(),
+            Direction::Left => transform.translation.x -= 30. * time.delta_seconds(), // Pos_1 <=====> pos2
         }
 
         if transform.translation.x > 200. {

@@ -5,7 +5,7 @@ pub enum Parse{
     RessourceCase(u32, u32, u8, u8, u8, u8, u8, u8, u8), //"bct X Y q q q q q q q\n" * nbr_cases
     ConnexionPlayer(u8, u8, u8, u8, u8, String), //"pnw #n X Y O L N\n"
     MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
-    NomEquipe(String),    //"tna N\n" * nbr_equipes
+    NomEquipe(String),
     Donothing,
     // Movemement(i32, i32, i32)
 }
@@ -112,9 +112,11 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                     parse = parse_player_movement(pkt_receive);
                 }
                 "plv" => {
+                    // Niveau d’un joueur. "plv #n L\n" 
                     todo!();
                 }
                 "pin" => {
+                    // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
                     todo!();
                 }
                 "pex" => {
