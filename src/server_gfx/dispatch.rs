@@ -51,6 +51,7 @@ pub mod dispatch{
         pub pixel_y_max: f32,
         pub pixel_x_min: f32,
         pub pixel_y_min: f32,
+        pub time: u32,
         pub nbr_equipe: u8,
         pub name_equipe: Vec<String>, 
         pub id_Ressource: Vec<Vec<HashMap<usize, ContentCase>>>, //vec<vec<hashmap<id, vec<entity>>>>
@@ -193,7 +194,21 @@ pub mod dispatch{
     
     fn init(mut commands: Commands)
     {
-        commands.insert_resource(RessCommandId{x: 0, y: 0, pixel_x_max: 0., pixel_y_max: 0., pixel_x_min: 0., pixel_y_min: 0., id_Ressource: vec![], player_id: HashMap::new(), vec_sprite_player: vec![], nbr_equipe: 0, name_equipe: vec![] });
+        commands.insert_resource(
+            RessCommandId{
+            x: 0,
+            y: 0,
+            pixel_x_max: 0.,
+            pixel_y_max: 0.,
+            pixel_x_min: 0., 
+            pixel_y_min: 0., 
+            time: 0,
+            id_Ressource: vec![], 
+            player_id: HashMap::new(), 
+            vec_sprite_player: vec![], 
+            nbr_equipe: 0, 
+            name_equipe: vec![] 
+        });
         // let toto = world.query(Query<)
     }
 
@@ -221,6 +236,9 @@ pub mod dispatch{
                 spawn_map(*x, *y, & mut commands, &asset_server, & mut asset_map);
                 asset_map.set_x_y_pixel(*x, *y);
                 asset_map.set_hashmap_ressource(*x, *y);
+            }
+            crate::Parse::Time(t) => {
+                asset_map.time = *t;
             }
             crate::Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) => {
                 let (x_rel, y_rel) = asset_map.center_map_new_system(*x as f32, *y as f32);

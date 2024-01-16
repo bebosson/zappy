@@ -410,11 +410,13 @@ fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 32]
     result_array
 }
 
-fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<String>
+
+
+fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController, t: u16) -> Vec<String>
 {
     let mut all_packets : Vec<String> = vec![];
     all_packets.push(game_ctrl.packet_gfx_map_size());
-    all_packets.push(game_ctrl.packet_gfx_timestamp());
+    all_packets.push(format!("sgt {}\n", t));
     for i in game_ctrl.packet_gfx_ressources_map()
     {
         all_packets.push(i);
@@ -513,7 +515,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
     /*****             Send init packets \n to server_gfx                  *****/
     /*****             need to get the gfx_stream back from this func                   *****/
     gfx_stream = first_connection_gfx().unwrap();
-    send_to_server_gfx(&game_ctrl,  get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
+    send_to_server_gfx(&game_ctrl,  get_initial_gfx_packets_from_game_ctrl(&game_ctrl, vec_args.t), &mut gfx_stream); 
     for ourstream in & mut vec_our_stream
     {
         println!("{:?}", ourstream);

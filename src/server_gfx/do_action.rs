@@ -22,6 +22,7 @@ pub mod do_action{
         distance_restante: f32,
         orientation: u8,
         type_of_mvmt: TypeofMovement,
+
         cell_x_origin: u8,
         cell_y_origin: u8,
     }
@@ -127,9 +128,14 @@ pub mod do_action{
 
     pub fn player_translation(time: &Res<Time>, action_player: & mut ActionPlayer, movement : &mut Movementinprogress, transform: & mut Transform, cell: &mut Cell, asset_map:  &ResMut<RessCommandId>)
     {
-        let distance_delta = TILES_WIDTH / 2. * time.delta_seconds(); // time
-        println!("{:?}", time.delta_seconds());
-        // println!("{:?}", movement);
+        
+        let t_prime: f32 = asset_map.time  as f32 / 7.0;
+        println!("asset_map.time = {:?}", asset_map.time);
+
+        let mut distance_delta = TILES_WIDTH * time.delta_seconds() * t_prime as f32; // time
+        // println!("{:?}", time.delta_seconds());
+        println!("distance_delta = {:?}", distance_delta);
+        if distance_delta > movement.distance_restante {distance_delta = movement.distance_restante;}
         
         match movement.orientation
         {
@@ -144,11 +150,15 @@ pub mod do_action{
         // println!("asset_map.x_min {} asset_map.y_min {}", asset_map.pixel_x_min, asset_map.pixel_y_min);
         out_of_bound(transform, asset_map);
         movement.distance_restante -= distance_delta;
-        if movement.distance_restante < 0.
+        if movement.distance_restante == 0.
         {
+            println!("{:?}", movement.distance_restante);
             action_player.state_action = StateAction::Idle;
             action_player.action_in_progress = TypeAction::Nothing;
             update_cell(movement, cell, asset_map);
+            // let pos = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
+            // transform.translation.x = pos.0;
+            // transform.translation.y = pos.1;            
             return ;
         }
     }

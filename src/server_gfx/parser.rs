@@ -3,6 +3,7 @@ pub mod parser{
 pub enum Parse{
     Map(u32, u32), //"msz X Y\n"
     RessourceCase(u32, u32, u8, u8, u8, u8, u8, u8, u8), //"bct X Y q q q q q q q\n" * nbr_cases
+    Time(u32),
     ConnexionPlayer(u8, u8, u8, u8, u8, String), //"pnw #n X Y O L N\n"
     MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
     NomEquipe(String),
@@ -85,6 +86,14 @@ pub fn parse_connexion_player(content: String) -> Parse
     }
     Parse::ConnexionPlayer(vec_parsing_u8[0], vec_parsing_u8[1], vec_parsing_u8[2], vec_parsing_u8[3], vec_parsing_u8[4], team)
 }
+pub fn parse_time(content: String) -> Parse
+{
+    let iter = content.split_ascii_whitespace().skip(1);
+    let time = iter.map(|str| str.parse::<u32>()).next().unwrap().unwrap();
+
+    Parse::Time(time)
+}
+
 // dispatch what you parse 
 pub fn parser_server_packet(pkt_receive: String) -> Parse
 {
@@ -153,7 +162,7 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                     todo!();
                 }
                 "sgt" => {
-                    todo!();
+                    parse = parse_time(pkt_receive);
                 }
                 "seg" => {
                     todo!();

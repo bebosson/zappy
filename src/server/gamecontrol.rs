@@ -79,7 +79,7 @@ pub mod game
             }
         }
 
-        pub fn pdate_timestamp(& mut self, start_time: &SystemTime, t: u16) -> bool
+        pub fn update_timestamp(& mut self, start_time: &SystemTime, t: u16) -> bool
         {
             let now = start_time.elapsed();
             let millis = now.unwrap().as_millis();
@@ -174,10 +174,7 @@ pub mod game
             vec_packet
         }
 
-        pub fn packet_gfx_timestamp(&self) -> String
-        {
-            format!("sgt {}\n", self.timestamp)
-        }
+        
 
         pub fn packet_gfx_map_size(&self) -> String
         {
