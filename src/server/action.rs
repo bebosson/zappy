@@ -104,263 +104,257 @@ pub mod action
             action
         }
 
-        pub fn avance(&self, height: &u8, width: &u8, player: &mut Player) -> bool
-        {
-            let mut x: i8 = player.coord.x as i8;
-            let mut y: i8 = player.coord.y as i8;
 
-            //println!("player coord X {}", player.coord.x);
-            //println!("player coord Y {}", player.coord.y);
-            match player.orientation
+    }
+
+
+    pub fn avance(height: u8, width: u8, player: &mut Player) -> bool
+    {
+        match player.orientation
+        {
+            Orientation::N =>
             {
-                Orientation::N =>
+                if player.coord.y == 0 { player.coord.y = height - 1; }
+                else { player.coord.y -= 1; }
+            },
+            Orientation::E => 
+            {
+                if player.coord.x == width - 1 { player.coord.x = 0; }
+                else { player.coord.x += 1; }
+            },
+            Orientation::S => {
+                if player.coord.y == height - 1 { player.coord.y = 0; }
+                else { player.coord.y += 1; }
+            },
+            Orientation::O =>
+            {
+                if player.coord.x == 0 { player.coord.x = width - 1; }
+                else { player.coord.x -= 1; }
+            }
+        }
+        true
+    }
+
+    pub fn droite(player: &mut Player) -> bool
+    {
+        match player.orientation
+        {
+            Orientation::N => player.orientation = Orientation::E,
+            Orientation::E => player.orientation = Orientation::S,
+            Orientation::S => player.orientation = Orientation::O,
+            Orientation::O => player.orientation = Orientation::N,
+        }
+        true
+    }
+
+    pub fn gauche(player: &mut Player) -> bool
+    {
+        match player.orientation
+        {
+            Orientation::N => player.orientation = Orientation::O,
+            Orientation::E => player.orientation = Orientation::N,
+            Orientation::S => player.orientation = Orientation::E,
+            Orientation::O => player.orientation = Orientation::S,
+        }
+        true
+    }
+
+    pub fn voir(player: &Player, cells: &Vec<Vec<Cell>>, teams: Vec<Team>) -> Vec<HashMap<String, u8>>
+    {
+        let mut cases_content: Vec<HashMap<String, u8>> = Vec::new();
+        let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
+        for case_coord in cases_coord
+        {
+            let mut x = HashMap::new();
+            let mut y = HashMap::new();
+            x.insert("x".to_string(), case_coord.x);
+            y.insert("y".to_string(), case_coord.y);
+            cases_content.push(x);
+            cases_content.push(y);
+            cases_content.push(get_case_content_from_position(case_coord, cells, &teams));
+        }
+        cases_content
+    }
+
+    pub fn inventaire(player: &Player) -> HashMap<String, u8>
+    {
+        let mut hashmap = HashMap::new();
+        
+        hashmap.insert("food".to_string(), player.ivt.food);
+        hashmap.insert("sibur".to_string(), player.ivt.sibur);
+        hashmap.insert("mendiane".to_string(), player.ivt.mendiane);
+        hashmap.insert("linemate".to_string(), player.ivt.linemate);
+        hashmap.insert("deraumere".to_string(), player.ivt.deraumere);
+        hashmap.insert("phiras".to_string(), player.ivt.phiras);
+        hashmap.insert("thystate".to_string(), player.ivt.thystate);
+        hashmap
+    }
+
+    pub fn prend(cell: & mut Cell, player: &mut Player, obj: String) -> bool
+    {
+        //println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
+        if check_obj_is_present_on_cell(obj.to_string(), cell) == false { return false; }
+
+        match obj.as_str()
+        {
+            "food" => {
+                if player.life > 1260 - 126 { player.ivt.food += 1; }
+                else { player.life += 126; }
+                cell.ressources.food -= 1;
+            },
+            "sibur" => {player.ivt.sibur += 1; cell.ressources.sibur -= 1;},
+            "mendiane" => {player.ivt.mendiane += 1; cell.ressources.mendiane -= 1;},
+            "linemate" => {player.ivt.linemate += 1; cell.ressources.linemate -= 1;},
+            "deraumere" => {player.ivt.deraumere += 1; cell.ressources.deraumere -= 1;},
+            "phiras" => {player.ivt.phiras += 1; cell.ressources.phiras -= 1;},
+            "thystate" => {player.ivt.thystate += 1; cell.ressources.thystate -= 1;},
+            _ => {()},
+        }
+        //println!("after 'prend', cell content -> {:?}", cell);
+        true
+    }
+
+    pub fn pose(cell: & mut Cell, player: &mut Player, obj: String) -> bool
+    {
+        //println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
+        if check_obj_is_present_on_player(obj.to_string(), player) == false { return false; }
+
+        match obj.as_str()
+        {
+            "food" => {player.ivt.food -= 1; cell.ressources.food += 1;},
+            "sibur" => {player.ivt.sibur -= 1; cell.ressources.sibur += 1;},
+            "mendiane" => {player.ivt.mendiane -= 1; cell.ressources.mendiane += 1;},
+            "linemate" => {player.ivt.linemate -= 1; cell.ressources.linemate += 1;},
+            "deraumere" => {player.ivt.deraumere -= 1; cell.ressources.deraumere += 1;},
+            "phiras" => {player.ivt.phiras -= 1; cell.ressources.phiras += 1;},
+            "thystate" => {player.ivt.thystate -= 1; cell.ressources.thystate += 1;},
+            _ => {()},
+        }
+        //println!("after 'prend', cell content -> {:?}", cell);
+        true
+    }
+
+    pub fn expulse(teams: & mut Vec<Team>, player: & Player, width: &u8, height: &u8) -> bool
+    {
+        let mut nb_kick_player = 0;
+        let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
+
+        println!("target cell for player {} --> {:?}", player.id, target_cell);
+        for team in teams
+        {
+            for tmp_player in &mut team.players
+            {
+                if player.coord.x == tmp_player.coord.x
                 {
-                    if y == 0 {y = *height as i8}
-                    y -= 1 % *height as i8;
-                },
-                Orientation::E => 
-                {
-                    if x == *width as i8 - 1 {x = -1}
-                    x += 1 % *width as i8
-                }
-                Orientation::S => {
-                    if y == *height as i8 - 1 {y = -1}
-                    y += 1 % *height as i8
-                },
-                Orientation::O =>
-                {
-                    if x == 0 {x = *width as i8}
-                    x -= 1 % *width as i8
-                }
-            }
-            player.coord.x = x as u8;
-            player.coord.y = y as u8;
-            true
-        }
-
-        pub fn droite(&self, player: &mut Player) -> bool
-        {
-            match player.orientation
-            {
-                Orientation::N => player.orientation = Orientation::E,
-                Orientation::E => player.orientation = Orientation::S,
-                Orientation::S => player.orientation = Orientation::O,
-                Orientation::O => player.orientation = Orientation::N,
-            }
-            true
-        }
-
-        pub fn gauche(&self, player: &mut Player) -> bool
-        {
-            match player.orientation
-            {
-                Orientation::N => player.orientation = Orientation::O,
-                Orientation::E => player.orientation = Orientation::N,
-                Orientation::S => player.orientation = Orientation::E,
-                Orientation::O => player.orientation = Orientation::S,
-            }
-            true
-        }
-
-        pub fn voir(&self, player: &Player, cells: &Vec<Vec<Cell>>, teams: Vec<Team>) -> Vec<HashMap<String, u8>>
-        {
-            let mut cases_content: Vec<HashMap<String, u8>> = Vec::new();
-            let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
-            for case_coord in cases_coord
-            {
-                let mut x = HashMap::new();
-                let mut y = HashMap::new();
-                x.insert("x".to_string(), case_coord.x);
-                y.insert("y".to_string(), case_coord.y);
-                cases_content.push(x);
-                cases_content.push(y);
-                cases_content.push(get_case_content_from_position(case_coord, cells, &teams));
-            }
-            cases_content
-        }
-
-        pub fn inventaire(&self, player: &Player) -> HashMap<String, u8>
-        {
-            let mut hashmap = HashMap::new();
-            
-            hashmap.insert("food".to_string(), player.ivt.food);
-            hashmap.insert("sibur".to_string(), player.ivt.sibur);
-            hashmap.insert("mendiane".to_string(), player.ivt.mendiane);
-            hashmap.insert("linemate".to_string(), player.ivt.linemate);
-            hashmap.insert("deraumere".to_string(), player.ivt.deraumere);
-            hashmap.insert("phiras".to_string(), player.ivt.phiras);
-            hashmap.insert("thystate".to_string(), player.ivt.thystate);
-            hashmap
-        }
-
-        pub fn prend(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
-        {
-            //println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
-            if check_obj_is_present_on_cell(obj.to_string(), cell) == false { return false; }
-
-            match obj.as_str()
-            {
-                "food" => {
-                    if player.life > 1260 - 126 { player.ivt.food += 1; }
-                    else { player.life += 126; }
-                    cell.ressources.food -= 1;
-                },
-                "sibur" => {player.ivt.sibur += 1; cell.ressources.sibur -= 1;},
-                "mendiane" => {player.ivt.mendiane += 1; cell.ressources.mendiane -= 1;},
-                "linemate" => {player.ivt.linemate += 1; cell.ressources.linemate -= 1;},
-                "deraumere" => {player.ivt.deraumere += 1; cell.ressources.deraumere -= 1;},
-                "phiras" => {player.ivt.phiras += 1; cell.ressources.phiras -= 1;},
-                "thystate" => {player.ivt.thystate += 1; cell.ressources.thystate -= 1;},
-                _ => {()},
-            }
-            //println!("after 'prend', cell content -> {:?}", cell);
-            true
-        }
-
-        pub fn pose(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
-        {
-            //println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
-            if check_obj_is_present_on_player(obj.to_string(), player) == false { return false; }
-
-            match obj.as_str()
-            {
-                "food" => {player.ivt.food -= 1; cell.ressources.food += 1;},
-                "sibur" => {player.ivt.sibur -= 1; cell.ressources.sibur += 1;},
-                "mendiane" => {player.ivt.mendiane -= 1; cell.ressources.mendiane += 1;},
-                "linemate" => {player.ivt.linemate -= 1; cell.ressources.linemate += 1;},
-                "deraumere" => {player.ivt.deraumere -= 1; cell.ressources.deraumere += 1;},
-                "phiras" => {player.ivt.phiras -= 1; cell.ressources.phiras += 1;},
-                "thystate" => {player.ivt.thystate -= 1; cell.ressources.thystate += 1;},
-                _ => {()},
-            }
-            //println!("after 'prend', cell content -> {:?}", cell);
-            true
-        }
-
-        pub fn expulse(&self, teams: & mut Vec<Team>, player: & Player, width: &u8, height: &u8) -> bool
-        {
-            let mut nb_kick_player = 0;
-            let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
-
-            println!("target cell for player {} --> {:?}", player.id, target_cell);
-            for team in teams
-            {
-                for tmp_player in &mut team.players
-                {
-                    if player.coord.x == tmp_player.coord.x
-                    {
-                        tmp_player.coord.x = target_cell.x;
-                        tmp_player.coord.y = target_cell.y;
-                        nb_kick_player += 1;
-                    }
+                    tmp_player.coord.x = target_cell.x;
+                    tmp_player.coord.y = target_cell.y;
+                    nb_kick_player += 1;
                 }
             }
-            if nb_kick_player == 0
-            {
-                return false;
-            }
-            true
         }
-
-        pub fn fork(&self, player: &Player, teams: &mut Vec<Team>) -> bool
+        if nb_kick_player == 0
         {
-            for i in 0..teams.len()
-            {
-                for tmp_player in teams[i].players.clone()
-                {
-                    if tmp_player.id == player.id
-                    {
-                        //let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
-                        //total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>();
-                        teams[i].nb_total_players += 1;
-                        println!("team {} -> nb total players: {}", teams[i].name, teams[i].nb_total_players);
-                        let tmp = teams.clone();
-                        teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone() });
-                    }
-                }
-            }
-            true
+            return false;
         }
+        true
+    }
 
-        pub fn connect_nbr(&self, player: &Player, teams: &Vec<Team>) -> u8
+    pub fn fork(player: &Player, teams: &mut Vec<Team>) -> bool
+    {
+        for i in 0..teams.len()
         {
-            for team in teams
+            for tmp_player in teams[i].players.clone()
             {
-                for tmp_player in &team.players
+                if tmp_player.id == player.id
                 {
-                    if tmp_player.id == player.id
-                    {
-                        return team.connect_nbr;
-                    }
+                    //let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
+                    //total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>();
+                    teams[i].nb_total_players += 1;
+                    println!("team {} -> nb total players: {}", teams[i].name, teams[i].nb_total_players);
+                    let tmp = teams.clone();
+                    teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone() });
                 }
             }
-            0
         }
+        true
+    }
 
-        pub fn incantation(&self, player: &Player, teams: &Vec<Team>) -> String
+    pub fn connect_nbr(player: &Player, teams: &Vec<Team>) -> u8
+    {
+        for team in teams
         {
-            let mut nb_players = 0;
-            let mut is_enough_players_on_coord = false;
-            let mut is_enough_ressources_for_player = true;
-            let level_requirement = get_level_requirement();
-
-            let elems = vec!
-            [
-                (level_requirement[player.level as usize].get(&"linemate".to_string()), player.ivt.linemate),
-                (level_requirement[player.level as usize].get(&"deraumere".to_string()), player.ivt.deraumere),
-                (level_requirement[player.level as usize].get(&"sibur".to_string()), player.ivt.sibur),
-                (level_requirement[player.level as usize].get(&"mendiane".to_string()), player.ivt.mendiane),
-                (level_requirement[player.level as usize].get(&"phiras".to_string()), player.ivt.phiras),
-                (level_requirement[player.level as usize].get(&"thystate".to_string()), player.ivt.thystate),
-            ];
-
-            for team in teams
+            for tmp_player in &team.players
             {
-                for tmp_player in &team.players
+                if tmp_player.id == player.id
                 {
-                    if tmp_player.coord.x == player.coord.x && tmp_player.coord.y == player.coord.y
-                    {
-                        nb_players += 1;
-                    }
+                    return team.connect_nbr;
                 }
             }
-            if nb_players == *level_requirement[player.level as usize].get(&"nb_players".to_string()).unwrap()
-            {
-                is_enough_players_on_coord = true;
-            }
-            for elem in elems
-            {
-                if elem.0 != Some(&elem.1)
-                {
-                    is_enough_ressources_for_player = false;
-                }
-            }
-            if is_enough_players_on_coord == true && is_enough_ressources_for_player == true
-            {
-                return "Elevation en cours".to_string();
-            }
-            // qu'est ce qu'on envoie en cas d'erreur ???
-            "".to_string()
         }
+        0
+    }
 
-        pub fn broadcast(&self, player: &Player, teams: &Vec<Team>) -> bool
+    pub fn incantation(player: &Player, teams: &Vec<Team>) -> String
+    {
+        let mut nb_players = 0;
+        let mut is_enough_players_on_coord = false;
+        let mut is_enough_ressources_for_player = true;
+        let level_requirement = get_level_requirement();
+
+        let elems = vec!
+        [
+            (level_requirement[player.level as usize].get(&"linemate".to_string()), player.ivt.linemate),
+            (level_requirement[player.level as usize].get(&"deraumere".to_string()), player.ivt.deraumere),
+            (level_requirement[player.level as usize].get(&"sibur".to_string()), player.ivt.sibur),
+            (level_requirement[player.level as usize].get(&"mendiane".to_string()), player.ivt.mendiane),
+            (level_requirement[player.level as usize].get(&"phiras".to_string()), player.ivt.phiras),
+            (level_requirement[player.level as usize].get(&"thystate".to_string()), player.ivt.thystate),
+        ];
+
+        for team in teams
         {
-            for team in teams
+            for tmp_player in &team.players
             {
-                for tmp_player in &team.players
+                if tmp_player.coord.x == player.coord.x && tmp_player.coord.y == player.coord.y
                 {
-                    let x1 = tmp_player.coord.x;
-                    let y1 = tmp_player.coord.y;
-                    let x2 = player.coord.x;
-                    let y2 = player.coord.y;
-                    let coeff: f32 = (y2 - y1) as f32 / (x2 - x1) as f32;
-                    
+                    nb_players += 1;
                 }
             }
-            true
         }
+        if nb_players == *level_requirement[player.level as usize].get(&"nb_players".to_string()).unwrap()
+        {
+            is_enough_players_on_coord = true;
+        }
+        for elem in elems
+        {
+            if elem.0 != Some(&elem.1)
+            {
+                is_enough_ressources_for_player = false;
+            }
+        }
+        if is_enough_players_on_coord == true && is_enough_ressources_for_player == true
+        {
+            return "Elevation en cours".to_string();
+        }
+        // qu'est ce qu'on envoie en cas d'erreur ???
+        "".to_string()
+    }
 
-
+    pub fn broadcast(player: &Player, teams: &Vec<Team>) -> bool
+    {
+        for team in teams
+        {
+            for tmp_player in &team.players
+            {
+                let x1 = tmp_player.coord.x;
+                let y1 = tmp_player.coord.y;
+                let x2 = player.coord.x;
+                let y2 = player.coord.y;
+                let coeff: f32 = (y2 - y1) as f32 / (x2 - x1) as f32;
+                
+            }
+        }
+        true
     }
 
 

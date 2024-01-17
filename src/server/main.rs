@@ -10,7 +10,7 @@ use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
 use player::player::Player;
-use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
+use action::action::{ReadyAction, Action, ActionResult, NO_ACTION, avance, droite, gauche, voir, inventaire, prend, pose, expulse, broadcast, incantation, fork, connect_nbr};
 use crate::paket_crafter::paquet_crafter::{craft_gfx_packet_pre, craft_gfx_packet_post};
 
 
@@ -400,21 +400,21 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     let mut player = tmp_player.unwrap();
     // TODO:    checher une autre facon plus propre de faire executer mes actions
     //          ou alors changer les method par des methodes statics 
-    let action = Action::new(NO_ACTION);
+    // let action = Action::new(NO_ACTION);
     let ret = match ready_action.action.action_name.as_str()
     {
-        "avance" => ActionResult::ActionBool(action.avance(&game_ctrl.x, &game_ctrl.y, &mut player)),
-        "droite" => ActionResult::ActionBool(action.droite(&mut player)),
-        "gauche" => ActionResult::ActionBool(action.gauche(&mut player)),
-        "voir" => ActionResult::ActionVecHashMap(action.voir(&mut player, &game_ctrl.cells, game_ctrl.teams.clone())),
-        "inventaire" => ActionResult::ActionHashMap(action.inventaire(&mut player)),
-        "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
-        "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
-        "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &player, &game_ctrl.x, &game_ctrl.y)),
-        "broadcast" => ActionResult::ActionBool(action.broadcast(&player, &game_ctrl.teams)),
-        "incantation" => ActionResult::ActionString(action.incantation(&player, &game_ctrl.teams)),
-        "fork" => ActionResult::ActionBool(action.fork(&player, &mut game_ctrl.teams)),
-        "connect_nbr" => ActionResult::ActionInt(action.connect_nbr(&player, &game_ctrl.teams)),
+        "avance" => ActionResult::ActionBool(avance(game_ctrl.x, game_ctrl.y, &mut player)),
+        "droite" => ActionResult::ActionBool(droite(&mut player)),
+        "gauche" => ActionResult::ActionBool(gauche(&mut player)),
+        "voir" => ActionResult::ActionVecHashMap(voir(&mut player, &game_ctrl.cells, game_ctrl.teams.clone())),
+        "inventaire" => ActionResult::ActionHashMap(inventaire(&mut player)),
+        "prend" => ActionResult::ActionBool(prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
+        "pose" => ActionResult::ActionBool(pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
+        "expulse" => ActionResult::ActionBool(expulse(&mut game_ctrl.teams, &player, &game_ctrl.x, &game_ctrl.y)),
+        "broadcast" => ActionResult::ActionBool(broadcast(&player, &game_ctrl.teams)),
+        "incantation" => ActionResult::ActionString(incantation(&player, &game_ctrl.teams)),
+        "fork" => ActionResult::ActionBool(fork(&player, &mut game_ctrl.teams)),
+        "connect_nbr" => ActionResult::ActionInt(connect_nbr(&player, &game_ctrl.teams)),
         _ => return None,
     };
     // find the index of the executed actions
