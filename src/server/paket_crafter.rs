@@ -47,7 +47,7 @@ pub mod paquet_crafter
         let mut cmd: Vec<String> = Vec::new();
         let teams = game_ctrl.teams.clone();
         let cells = game_ctrl.cells.clone();
-        let player = find_player_from_id(teams.clone(), &ready_action.id).unwrap();
+        let player = find_player_from_id(&teams.clone(), ready_action.id).unwrap();
         match ready_action.action.action_name.as_str()
         {
             "voir" => { return None; },

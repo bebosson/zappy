@@ -159,7 +159,7 @@ pub mod action
         true
     }
 
-    pub fn voir(player: &Player, cells: &Vec<Vec<Cell>>, teams: Vec<Team>) -> Vec<HashMap<String, u8>>
+    pub fn voir(player: &Player, cells: &Vec<Vec<Cell>>, teams: &Vec<Team>) -> Vec<HashMap<String, u8>>
     {
         let mut cases_content: Vec<HashMap<String, u8>> = Vec::new();
         let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
@@ -190,7 +190,7 @@ pub mod action
         hashmap
     }
 
-    pub fn prend(cell: & mut Cell, player: &mut Player, obj: String) -> bool
+    pub fn prend(cell: & mut Cell, player: &mut Player, obj: &String) -> bool
     {
         //println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
         if check_obj_is_present_on_cell(obj.to_string(), cell) == false { return false; }
@@ -214,7 +214,7 @@ pub mod action
         true
     }
 
-    pub fn pose(cell: & mut Cell, player: &mut Player, obj: String) -> bool
+    pub fn pose(cell: & mut Cell, player: &mut Player, obj: &String) -> bool
     {
         //println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
         if check_obj_is_present_on_player(obj.to_string(), player) == false { return false; }
@@ -234,10 +234,10 @@ pub mod action
         true
     }
 
-    pub fn expulse(teams: & mut Vec<Team>, player: & Player, width: &u8, height: &u8) -> bool
+    pub fn expulse(teams: & mut Vec<Team>, player: & Player, width: u8, height: u8) -> bool
     {
         let mut nb_kick_player = 0;
-        let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
+        let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, width as usize, height as usize);
 
         println!("target cell for player {} --> {:?}", player.id, target_cell);
         for team in teams
