@@ -33,10 +33,6 @@ const TILES_WIDTH: f32 = 100.0;
 const TILES_HEIGHT: f32 = 100.0;
 const BUF_SIZE: usize = 160;
 
-#[derive(Resource)]
-struct Waitforcommand{
-    pub nbr_command: u8,
-}
 
 #[derive(Resource)]
 struct AppState {
@@ -74,7 +70,6 @@ fn main() {
                         //     FrameTimeDiagnosticsPlugin,
         // ))
         .insert_resource(AppState { listener })
-        .insert_resource(Waitforcommand { nbr_command: 1 })
         .add_systems(Startup, setup_handle_connections)
         .add_plugins(Dispatch)
         .add_plugins(DoAction)

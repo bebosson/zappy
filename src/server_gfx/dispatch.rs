@@ -1,15 +1,16 @@
 pub mod dispatch{
     use std::collections::HashMap;
 
-    use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventWriter, EventReader}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default};
+    use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventWriter, EventReader}, schedule::{States, IntoSystemConfigs, common_conditions::in_state, NextState}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default};
 
-    use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{Ressource, spawn_resources, ContentCase}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action}};
+    use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{Ressource, spawn_resources, ContentCase}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action, get_nbr_player_cell}, parser::parser::Parse};
 
     // const for teams folder name 
     pub const SIZE_VECSPRITE: usize = 4;
     pub const SIZE_VECTEAM: usize = 2;
-    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["zelda_up2.png", "zelda_east.png", "zelda_down.png", "zelda_west.png"];
+    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["expulse_up.png", "expulse_east.png", "expulse_down.png", "zelda_west.png"];
     pub const VECTEAM: [&'static str; SIZE_VECTEAM] = ["zelda_1", "zelda_2"];
+    
     
     #[derive(Debug)]
     enum Playable{
@@ -180,14 +181,35 @@ pub mod dispatch{
 
     pub struct Dispatch;
 
+    #[derive(Debug, Clone, Eq, PartialEq, Hash, States, Default)]
+    pub enum StateCommand {
+        #[default]
+        Simple_Command,
+        Stacking_Command,
+        Complexe_Command,
+    }
+    #[derive(Resource)]
+    pub struct Complexcommand{
+        pub nbr_command: u8,
+        pub first_command: Parse,
+        pub vec_command: Vec<Parse>,
+    }
+
     impl Plugin for Dispatch{
         fn build(&self, app: &mut App) {
             app
+            .add_state::<StateCommand>()
             .add_event::<StreamEvent>()
+            .insert_resource(Complexcommand { nbr_command: 1, first_command: Parse::Donothing, vec_command: vec![] })
+
             .add_systems(Startup, init)
             .add_systems(Update, read_stream)
-            .add_systems(Update, dispatch_setup_event)
-            .add_systems(Update, dispatch_action_event);
+            .add_systems(Update, (dispatch_init_complex_event, dispatch_setup_event,dispatch_action_event).run_if(in_state(StateCommand::Simple_Command)))
+            .add_systems(Update,  dispatch_stacking_command.run_if(in_state(StateCommand::Stacking_Command)))
+            .add_systems(Update, dispatch_handle_complex_command.run_if(in_state(StateCommand::Complexe_Command)));
+            // .add_systems(Update, dispatch_action_event.run_if(in_state(StateCommand::Simple_Command)));
+            /*.init_state::<AppState>()
+        ) */
             // .add_systems(Update, print_resources);
         }
     }
@@ -217,6 +239,8 @@ pub mod dispatch{
             events.send(StreamEvent(parse));
         }
     }
+
+    
 
 
     pub fn dispatch_setup_event(
@@ -289,8 +313,79 @@ pub mod dispatch{
 
                     add_action(& mut query_action_player, &asset_map.get_player_id(id), mov);
                 }
+               
                 _ => ()
             }
         }
     }
+
+    pub fn dispatch_init_complex_event(
+        mut reader: EventReader<StreamEvent>,
+        mut asset_map: ResMut<RessCommandId>,
+        mut query_player_cell: Query<(Entity, &Cell)>,
+        mut complexcommand: ResMut<Complexcommand>,
+        mut statecommand: ResMut<NextState<StateCommand>>,
+    )
+    {
+        for (_, event) in reader.read().enumerate() {
+            let x = &event.0;
+            match x
+            {
+                Parse::Expulse(id) => {
+                    let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(id));
+                    println!("{:?}", nbr_mov_command_waited);
+                    complexcommand.first_command = (event.0).clone();
+                    complexcommand.nbr_command = nbr_mov_command_waited;
+                    statecommand.set(StateCommand::Stacking_Command);
+                }
+               
+                _ => ()
+            }
+        }
+    }
+
+    pub fn dispatch_stacking_command(
+        mut reader: EventReader<StreamEvent>,
+        mut asset_map: ResMut<RessCommandId>,
+        mut query_player_cell: Query<(Entity, &Cell)>,
+        mut complexcommand: ResMut<Complexcommand>,
+        mut statecommand: ResMut<NextState<StateCommand>>,
+    )
+    {
+        if complexcommand.nbr_command as usize > complexcommand.vec_command.len()
+        {
+            for event in reader.read(){
+                let x = &event.0;
+                complexcommand.vec_command.push(x.clone())
+            }
+        }
+        else if complexcommand.nbr_command as usize == complexcommand.vec_command.len()
+        {
+            statecommand.set(StateCommand::Complexe_Command);
+        }
+        else {
+            panic!("ERROR in changing state command: we should not be here")
+        }
+    }
+
+    pub fn dispatch_handle_complex_command(
+        mut asset_map: ResMut<RessCommandId>,
+        mut complexcommand: ResMut<Complexcommand>,
+        mut statecommand: ResMut<NextState<StateCommand>>,
+    )
+    {
+        match complexcommand.first_command{
+            Parse::Expulse(_) => {
+                for check_mov in &complexcommand.vec_command
+                {
+                    println!("good save ? {:?}", check_mov);
+                }
+                //need to set complexcommand back to normal 
+            } 
+            _ => ()
+        }
+        statecommand.set(StateCommand::Simple_Command);
+    }
+
+   
 }

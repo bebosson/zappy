@@ -1,5 +1,5 @@
 pub mod parser{
-
+#[derive(Clone, Debug)]
 pub enum Parse{
     Map(u32, u32), //"msz X Y\n"
     RessourceCase(u32, u32, u8, u8, u8, u8, u8, u8, u8), //"bct X Y q q q q q q q\n" * nbr_cases
@@ -7,6 +7,7 @@ pub enum Parse{
     ConnexionPlayer(u8, u8, u8, u8, u8, String), //"pnw #n X Y O L N\n"
     MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
     NomEquipe(String),
+    Expulse(u8),
     Donothing,
     // Movemement(i32, i32, i32)
 }
@@ -94,6 +95,16 @@ pub fn parse_time(content: String) -> Parse
     Parse::Time(time)
 }
 
+pub fn parse_expulse(content: String) -> Parse
+{
+    let iter = content.split_ascii_whitespace().skip(1);
+    let id = iter.map(|str| str.parse::<u8>()).next().unwrap().unwrap();
+
+    Parse::Expulse(id)
+    
+}
+
+
 // dispatch what you parse 
 pub fn parser_server_packet(pkt_receive: String) -> Parse
 {
@@ -128,9 +139,10 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                 //     // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
                 //     todo!();
                 // }
-                // "pex" => {
-                //     todo!();
-                // }
+                "pex" => {
+                    parse = parse_expulse(pkt_receive);
+                }
+                    
                 // "pic" => {
                 //     todo!();
                 // }

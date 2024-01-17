@@ -230,6 +230,7 @@ pub mod do_action{
         // set_sprite_animation(0, o, texture_atlases, asset_server)
 
     }
+    
 
     pub fn exec_action(
         time: Res<Time>, 
@@ -273,6 +274,22 @@ pub mod do_action{
                 }
             }
         }
+    }
+
+    pub fn get_nbr_player_cell(mut query_player_cell: & mut Query<(Entity, &Cell)>, player_entity: Entity) -> u8
+    {
+        let mut nbr_player: u8 = 0;
+        let mut cell_ref = Cell(0,0,0);
+        if let Ok((entity, cell)) = query_player_cell.get_mut(player_entity) {
+            cell_ref = Cell(cell.0, cell.1, cell.2);
+        }
+        for (entity, cell) in query_player_cell.iter(){
+            if (cell.0 == cell_ref.0) && (cell.1 == cell_ref.1) && entity != player_entity
+            {
+                nbr_player += 1;
+            }
+        }
+        nbr_player
     }
 
 }

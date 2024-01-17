@@ -73,7 +73,7 @@ pub mod sprite_player{
                 (text_at, anim_i)
             },
             3 => {
-                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(25., 32.0), 9, 1, None, None);
+                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27., 32.0), 9, 1, None, None);
                 anim_i = AnimationIndices { first: 1, last: 8 };
                 (text_at, anim_i)
             },

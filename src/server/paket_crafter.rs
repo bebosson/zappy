@@ -48,6 +48,7 @@ pub mod paquet_crafter
                 cmd.push(packet_gfx_expulse(player.id));
                 // attention ici on push toutes les positions des joueurs
                 // TODO : ne push que les joueurs concerne par l'expulse
+                // bebo to lyes: heuresement que tu precises 
                 for team in teams
                 {
                     for tmp_player in team.players
@@ -121,7 +122,7 @@ pub mod paquet_crafter
 
     fn packet_gfx_expulse(id: u32) -> String
     {
-        format!("pex {}", id)
+        format!("pex {}\n", id) // add \n otherwise panic in server_gfx
     }
 
     fn packet_gfx_broadcast(id: u32, msg: String) -> String
