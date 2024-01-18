@@ -81,19 +81,19 @@ fn copy_until_char(buffer: &[u8], char: u8) -> String
  * 
  * params:
  *      mut stream: TcpStream
- *      hashmap: & mut HashMap<String, u8>
- *      args: & mut Args
- *      id: & mut u32, 
- *      game_ctrl: & mut GameController
+ *      hashmap: &mut HashMap<String, u8>
+ *      args: &mut Args
+ *      id: &mut u32, 
+ *      game_ctrl: &mut GameController
  * 
  * return:
  *       ()
 *********************************************************************************/
-fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String, u8>, args: & mut Args, id: & mut u32, game_ctrl: & mut GameController)
+fn create_player_or_kick(mut stream: TcpStream, hashmap: &mut HashMap<String, u8>, args: &mut Args, id: &mut u32, game_ctrl: &mut GameController)
 {
     let mut teamname_buffer = [0 as u8; BUF_SIZE];
     let string_teamname_buffer: String;
-    if let  Ok(_) = stream.read(& mut teamname_buffer)  
+    if let  Ok(_) = stream.read(&mut teamname_buffer)  
     {
         string_teamname_buffer = copy_until_char(&teamname_buffer, b'\0');
         match args.n.contains(&string_teamname_buffer)
@@ -106,7 +106,7 @@ fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String,
                     .or_insert(0);
 
                 // compare the teamnames received with the teamnames parsed
-                if nbr_player_in_current_team >= & mut args.c
+                if nbr_player_in_current_team >= &mut args.c
                 {
                     // send the Endconnection to kill the client
                     // kick the player
@@ -123,7 +123,8 @@ fn create_player_or_kick(stream: & mut TcpStream, hashmap: & mut HashMap<String,
                     *nbr_player_in_current_team += 1;
                     *id += 1;
                     let _ = stream.write(&id.to_string().as_bytes());
-                    game_ctrl.get_team_and_push(&string_teamname_buffer, *id, &stream, args.x, args.y);
+                    let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
+                    game_ctrl.get_team_and_push(&string_teamname_buffer, *id, stream, args.x, args.y);
                     //println!("{:#?}", game_ctrl);
                 }
             }
@@ -236,23 +237,23 @@ fn get_obj_from_string(command: &String) -> Option<String>
 **  return:
 **      Vec<Action>: list of all new cmd receive from stream
 **/
-fn receive_actions(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<Action>
+fn receive_actions(game_ctrl: &mut GameController) -> Vec<Action>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
     let mut actions : Vec<Action> = Vec::new();
 
     // println!("receive action from : {:?}", stream);
-    if let  Ok(_) = stream.read(& mut action_receive)  
+    for team in &mut game_ctrl.teams
     {
-        for team in & mut game_ctrl.teams
+        for player in &mut team.players
         {
-            for player in & mut team.players
+            if /* player.port == stream
+                                .peer_addr()
+                                .unwrap()
+                                .port()
+                && */player.actions.len() < 11
             {
-                if player.port == stream
-                                    .peer_addr()
-                                    .unwrap()
-                                    .port()
-                    && player.actions.len() < 11
+                if let  Ok(_) = player.stream.as_ref().unwrap().read(&mut action_receive)
                 {
                     // TODO : attention ici au mecanisme des 10 commandes
                     // si l'une echoue, les suivantes ne seront peut etre plus
@@ -276,9 +277,11 @@ fn receive_actions(stream: & mut TcpStream, game_ctrl: & mut GameController) -> 
                             }
                         }
                     }
-                }
-                //player.print_player_actions();
+                    
+                }  
+
             }
+            //player.print_player_actions();
         }
     }
     //println!("new actions receive -> {:?}", actions);
@@ -356,7 +359,7 @@ fn find_player_from_id(teams: &Vec<Team>, id: u32) -> Option<Player>
 {
     for team in teams
     {
-        for player in & *team.players
+        for player in &team.players
         {
             if id == player.id
             {
@@ -394,32 +397,32 @@ fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
 /*
 **  execute action from a ReadyAction 
 **/
-fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> Option<ActionResult>
+fn exec_action(ready_action: &ReadyAction, game_ctrl: &mut GameController, player: &mut Player) -> Option<ActionResult>
 {
-    let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
+    // let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
     // TODO:    checher une autre facon plus propre de faire executer mes actions
     //          ou alors changer les method par des methodes statics 
     // let action = Action::new(NO_ACTION);
     let ret = match ready_action.action.action_name.as_str()
     {
-        "avance" => ActionResult::ActionBool(avance(game_ctrl.x, game_ctrl.y, &mut player)),
-        "droite" => ActionResult::ActionBool(droite(&mut player)),
-        "gauche" => ActionResult::ActionBool(gauche(&mut player)),
-        "voir" => ActionResult::ActionVecHashMap(voir(&mut player, &game_ctrl.cells, &game_ctrl.teams)),
-        "inventaire" => ActionResult::ActionHashMap(inventaire(&mut player)),
-        "prend" => ActionResult::ActionBool(prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.as_ref().unwrap())),
-        "pose" => ActionResult::ActionBool(pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.as_ref().unwrap())),
-        "expulse" => ActionResult::ActionBool(expulse(&mut game_ctrl.teams, &player, game_ctrl.x, game_ctrl.y)),
-        "broadcast" => ActionResult::ActionBool(broadcast(&player, &game_ctrl.teams)),
-        "incantation" => ActionResult::ActionString(incantation(&player, &game_ctrl.teams)),
-        "fork" => ActionResult::ActionBool(fork(&player, &mut game_ctrl.teams)),
-        "connect_nbr" => ActionResult::ActionInt(connect_nbr(&player, &game_ctrl.teams)),
+        "avance" => ActionResult::ActionBool(avance(game_ctrl.x, game_ctrl.y, player)),
+        "droite" => ActionResult::ActionBool(droite(player)),
+        "gauche" => ActionResult::ActionBool(gauche(player)),
+        "voir" => ActionResult::ActionVecHashMap(voir(player, &game_ctrl.cells, &game_ctrl.teams)),
+        "inventaire" => ActionResult::ActionHashMap(inventaire(player)),
+        "prend" => ActionResult::ActionBool(prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
+        "pose" => ActionResult::ActionBool(pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
+        "expulse" => ActionResult::ActionBool(expulse(&mut game_ctrl.teams, player, game_ctrl.x, game_ctrl.y)),
+        "broadcast" => ActionResult::ActionBool(broadcast(player, &game_ctrl.teams)),
+        "incantation" => ActionResult::ActionString(incantation(player, &game_ctrl.teams)),
+        "fork" => ActionResult::ActionBool(fork(player, &mut game_ctrl.teams)),
+        "connect_nbr" => ActionResult::ActionInt(connect_nbr(player, &game_ctrl.teams)),
         _ => return None,
     };
     // find the index of the executed actions
     // TODO:    normally the ready action is on top of the
     //          player action list, so the index is always 0
-    let index_action = find_index_action(&ready_action, &player);
+    let index_action = find_index_action(&ready_action, player);
     // remove action from player action list
     player.actions.remove(index_action);
     
@@ -431,7 +434,13 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
         {
             if player.id == team_player.id
             {
-                team_player.clone_from(&player);
+                //un peu degueu -> TODO: implementer une methode
+                team_player.coord = player.coord;
+                team_player.ivt = player.ivt;
+                team_player.life = player.life;
+                team_player.orientation = player.orientation;
+                team_player.level = player.level;
+                team_player.actions.clone_from(&player.actions);
             }
         }
     }
@@ -473,7 +482,7 @@ fn get_initial_gfx_packets_from_game_ctrl(game_ctrl: &GameController) -> Vec<Str
     all_packets
 }
 
-fn send_to_server_gfx(gfx_pkts: Vec<String>, stream_gfx: & mut TcpStream)
+fn send_to_server_gfx(gfx_pkts: Vec<String>, stream_gfx: &mut TcpStream)
 {
     //println!("packet gfx to send -> {:?}", gfx_pkts);
     let mut buf: [u8; 32];
@@ -503,9 +512,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let mut gfx_stream: TcpStream;
     // use to trigger the execution
     // TODO : remplacer plus tard par un autre mechanisme ou on a pas besoin de ca
-    let mut wait_for_answer: bool = true;
-    let mut vec_stream: Vec<TcpStream> = Vec::new();
-    let mut current_actions: Vec<Action> = Vec::new();
+    // let mut vec_stream: Vec<TcpStream> = Vec::new();
+    // let mut current_actions: Vec<Action> = Vec::new();
     let mut hashmap: HashMap<String, u8> = HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
@@ -530,11 +538,11 @@ fn main() -> Result<(), Box<dyn GenericError>>
         
         let _ = stream.write(b"Bienvenue");
         // register the new client
-        create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+        create_player_or_kick(stream, &mut hashmap, &mut vec_args, &mut id, &mut game_ctrl);
         // set timeout
-        let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
-        vec_stream.push(stream);
-        if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) { break ; }
+        
+        // vec_stream.push(stream);
+        if client_all_connect(vec_args.c, vec_args.n.len(), &mut hashmap) { break ; }
     }
     
     println!("Everybody is connected, let's start the game");
@@ -551,34 +559,30 @@ fn main() -> Result<(), Box<dyn GenericError>>
     
     loop
     {
-        for mut stream in & mut vec_stream
-        {
-            if check_winner(&game_ctrl.teams) { break; }
-            // if wait_for_answer == true
-            // {
-            //     let _ = stream.write(b"sendme");
-            //     wait_for_answer = false;
-            // }
-            current_actions = receive_actions(& mut stream, & mut game_ctrl);
-            // break ; // bizarre: break sans concditions dans un for
-        }
+        if check_winner(&game_ctrl.teams) { return Ok(()); } // un peu bizarre ?
+        let current_actions = receive_actions(&mut game_ctrl);
+                // break ; // bizarre: break sans concditions dans un for
+                
 
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
         if ready_action_list.len() > 0 || current_actions.len() > 0
         {
             println!("current action list --> {:?}", current_actions);
-            for current_action in &current_actions
-            {
-                let gfx_pkt = craft_gfx_packet_pre(&current_action, &game_ctrl.teams);
-                //println!("gfx pre action ---> {}", gfx_pkt.unwrap());
-                //let ret = send_pkt(gfx_pkt, None, GFX_SERVER_PORT, stream);
-            }
+            // for current_action in &current_actions
+            // {
+            //     let gfx_pkt = craft_gfx_packet_pre(&current_action, &game_ctrl.teams);
+            //     //println!("gfx pre action ---> {}", gfx_pkt.unwrap());
+            //     //let ret = send_pkt(gfx_pkt, None, GFX_SERVER_PORT, stream);
+            // }
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
-                let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl); // need to be a option<vec<string>>
+                let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
+
+                let action_result = exec_action(&ready_action, &mut game_ctrl, &mut player).unwrap();
+                // stream.write(b"ok"); // on a a nouveau le meme probleme qu'avant dans exec_action pour trouver le player vu qu'on a pas le stream du player
+                let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl, &player); // need to be a option<vec<string>>
                 println!("gfx pkt ready action ---> {:?}", gfx_pkt);
                 
                 // TODO :   soit on enleve c'est 3 lignes en dessous pour remplacer par send_pkt
@@ -588,7 +592,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                     send_to_server_gfx(packet, &mut gfx_stream);
                 }
                 //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
-                //let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
+                // let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
                 //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
             }
         }

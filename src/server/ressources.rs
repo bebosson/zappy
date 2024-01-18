@@ -2,7 +2,7 @@ pub mod ressources{
     use std::collections::HashMap;
 
     
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Ressources{
         pub food: u8,
         pub sibur: u8,

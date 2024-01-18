@@ -62,7 +62,7 @@ pub mod game
             println!("\n\n");
         }
 
-        pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream, width: u8, height: u8)
+        pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: TcpStream, width: u8, height: u8)
         {
             let port = stream
                                 .peer_addr()
@@ -74,7 +74,8 @@ pub mod game
                 if team.name.eq(teamname) == true
                 {
                     team.nb_total_players += 1;
-                    team.players.push(Player::new(id, port, width, height));
+                    team.players.push(Player::new(stream, id, port, width, height));
+                    return ;
                 }
             }
         }

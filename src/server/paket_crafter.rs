@@ -40,37 +40,32 @@ pub mod paquet_crafter
     **      None if the execution fail or if the cmd doesn't need to send gfx pkt
     **  
     */
-    pub fn craft_gfx_packet_post(ready_action_ref: &ReadyAction, action_result_ref: &Option<ActionResult>, game_ctrl: &GameController) -> Option<Vec<String>>
+    pub fn craft_gfx_packet_post(ready_action: &ReadyAction, action_result: &ActionResult, game_ctrl: &GameController, player: &Player) -> Option<Vec<String>>
     {
-        let ready_action: ReadyAction = ready_action_ref.clone();
-        let action_result = action_result_ref.as_ref().clone().unwrap();
         let mut cmd: Vec<String> = Vec::new();
-        let teams = game_ctrl.teams.clone();
-        let cells = game_ctrl.cells.clone();
-        let player = find_player_from_id(&teams.clone(), ready_action.id).unwrap();
         match ready_action.action.action_name.as_str()
         {
             "voir" => { return None; },
             "inventaire" => { return None; },
             "connect_nbr" => { return None; },
             "fork" => { cmd.push(packet_gfx_fork(player.id)); },
-            "broadcast" => { cmd.push(packet_gfx_broadcast(player.id, ready_action.action.arg.unwrap())); },
-            "avance" | "droite" | "gauche" => { cmd.push(packet_gfx_player_position(player.id, player.coord, player.orientation)); },
+            "broadcast" => { cmd.push(packet_gfx_broadcast(player.id, ready_action.action.arg.as_ref().unwrap())); },
+            "avance" | "droite" | "gauche" => { cmd.push(packet_gfx_player_position(player.id, &player.coord, &player.orientation)); },
             "prend" =>
             {
-                let coord = player.coord.clone();
+                let coord = player.coord;
                 if *action_result == ActionResult::ActionBool(false) { return None; }
-                cmd.push(packet_gfx_prend(player.id, ready_action.action.arg.unwrap()));
-                cmd.push(packet_gfx_inventaire(player.id, player.coord, player.ivt));
-                cmd.push(packet_gfx_case_content(coord.clone(), cells[coord.y as usize][coord.x as usize].clone()));
+                cmd.push(packet_gfx_prend(player.id, &ready_action.action.arg.as_ref().unwrap()));
+                cmd.push(packet_gfx_inventaire(player.id, &player.coord, &player.ivt));
+                cmd.push(packet_gfx_case_content(coord.clone(), game_ctrl.cells[coord.y as usize][coord.x as usize].clone()));
             },
             "pose" =>
             {
-                let coord = player.coord.clone();
+                let coord = player.coord;
                 if *action_result == ActionResult::ActionBool(false) { return None; }
-                cmd.push(packet_gfx_pose(player.id, ready_action.action.arg.unwrap()));
-                cmd.push(packet_gfx_inventaire(player.id, player.coord, player.ivt));
-                cmd.push(packet_gfx_case_content(coord.clone(), cells[coord.y as usize][coord.x as usize].clone()));
+                cmd.push(packet_gfx_pose(player.id, &ready_action.action.arg.as_ref().unwrap()));
+                cmd.push(packet_gfx_inventaire(player.id, &player.coord, &player.ivt));
+                cmd.push(packet_gfx_case_content(coord.clone(), game_ctrl.cells[coord.y as usize][coord.x as usize].clone()));
             },
             "expulse" =>
             {
@@ -78,11 +73,11 @@ pub mod paquet_crafter
                 cmd.push(packet_gfx_expulse(player.id));
                 // attention ici on push toutes les positions des joueurs
                 // TODO : ne push que les joueurs concerne par l'expulse
-                for team in teams
+                for team in &game_ctrl.teams
                 {
-                    for tmp_player in team.players
+                    for tmp_player in &team.players
                     {
-                       cmd.push(packet_gfx_player_position(tmp_player.id, tmp_player.coord, tmp_player.orientation));
+                       cmd.push(packet_gfx_player_position(tmp_player.id, &tmp_player.coord, &tmp_player.orientation));
                     }
                 }
             },
@@ -93,9 +88,9 @@ pub mod paquet_crafter
                 //          + creer le paquet de debut d'incantation
                 if *action_result == ActionResult::ActionBool(false) { return None; }
                 cmd.push(packet_gfx_incantation(player.coord.clone()));
-                for team in teams
+                for team in &game_ctrl.teams
                 {
-                    for tmp_player in team.players
+                    for tmp_player in &team.players
                     {
                         if incantation_is_finish(&player, &tmp_player)
                         {
@@ -123,14 +118,14 @@ pub mod paquet_crafter
                 player.id,
                 player.coord.x,
                 player.coord.y,
-                format_orientation(player.orientation.clone()),
+                format_orientation(&player.orientation),
                 player.level)
     }
 
     /*
     **  generate pkt for player position
     */
-    fn packet_gfx_player_position(id: u32, coord: Point, orientation: Orientation) -> String
+    fn packet_gfx_player_position(id: u32, coord: &Point, orientation: &Orientation) -> String
     {
         format!("ppo {} {} {} {}\n",
                 id,
@@ -142,7 +137,7 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `pose` command
     */
-    fn packet_gfx_pose(id: u32, arg: String) -> String
+    fn packet_gfx_pose(id: u32, arg: &String) -> String
     {
         format!("pdr {} {}\n", id, get_ressource_index_by_name(arg))
     }
@@ -150,7 +145,7 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `prend` command
     */
-    fn packet_gfx_prend(id: u32, arg: String) -> String
+    fn packet_gfx_prend(id: u32, arg: &String) -> String
     {
         format!("pgt {} {}\n", id, get_ressource_index_by_name(arg))
     }
@@ -166,7 +161,7 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `broadcast` command
     */
-    fn packet_gfx_broadcast(id: u32, msg: String) -> String
+    fn packet_gfx_broadcast(id: u32, msg: &String) -> String
     {
         format!("pbc {} {}\n", id, msg)
     }
@@ -174,7 +169,7 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `inventaire` command
     */
-    fn packet_gfx_inventaire(id: u32, coord: Point, ivt: Ressources) -> String
+    fn packet_gfx_inventaire(id: u32, coord: &Point, ivt: &Ressources) -> String
     {
         format!("pin {} {} {} {} {} {} {} {} {} {}\n",
                 id,
@@ -239,7 +234,7 @@ pub mod paquet_crafter
     /*
     **  convert ressource string into ressource index
     */
-    fn get_ressource_index_by_name(ressource: String) -> u8
+    fn get_ressource_index_by_name(ressource: &String) -> u8
     {
         match ressource.as_str()
         {
@@ -259,7 +254,7 @@ pub mod paquet_crafter
     **
     **  TODO: peut etre remplacer le retour par un integer ?
     */
-    fn format_orientation(orientation: Orientation) -> String
+    fn format_orientation(orientation: &Orientation) -> String
     {
         match orientation
         {

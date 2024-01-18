@@ -245,6 +245,7 @@ pub mod action
             for tmp_player in &mut team.players
             {
                 if player.coord.x == tmp_player.coord.x
+                    && player.coord.y == tmp_player.coord.y
                 {
                     tmp_player.coord.x = target_cell.x;
                     tmp_player.coord.y = target_cell.y;

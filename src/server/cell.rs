@@ -6,7 +6,7 @@ pub mod cell
 /**********************************************************************
  * Struct Point
 ***********************************************************************/
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Point
     {
         pub x: u8,

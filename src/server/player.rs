@@ -1,5 +1,7 @@
 pub mod player
 {
+    use std::net::TcpStream;
+
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::Point;
     use crate::action::action::{Action, ActionTemplate};
@@ -9,7 +11,7 @@ pub mod player
     use rand::{thread_rng, Rng};
 
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub enum Orientation
     {
         N,
@@ -35,12 +37,12 @@ pub mod player
     }
 
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct Player
     {
+        pub stream: Option<TcpStream>, // pas sur
         pub id: u32,
-        //pub stream: TcpStream, // pas sur
-        pub port: u16,
+        // pub port: u16,
         pub coord: Point,
         pub ivt: Ressources,
         pub life: u16,
@@ -48,35 +50,52 @@ pub mod player
         pub level: u8,
         pub actions: Vec<Action>,
     }
+   
 
+    impl Clone for Player {
+        fn clone(&self) -> Self {
+            Player {
+                stream: None,
+                id: self.id,
+                coord: self.coord,
+                ivt: self.ivt,
+                life: self.life,
+                orientation: self.orientation,
+                level: self.level,
+                actions: self.actions.clone(),// a modifier
+            }
+        }
+    }
     
     impl Player
     {
-        pub fn new(id_a: u32, port: u16, width: u8, height: u8) -> Self
+        pub fn new(stream: TcpStream, id: u32, port: u16, width: u8, height: u8) -> Self
         {
             let mut rng = thread_rng();
 
             Player
             {
-                id: id_a,
-                port: port,
+                stream: Some(stream),
+                id,
+                // port: port,
                 //coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
                 coord: Point::new(0, 0), // to remove for random
                 ivt: Ressources::new(),
                 life: 1260,
                 //orientation: get_random_orientation(),
-                orientation: Orientation::S,
+                orientation: Orientation::S, // to remove for random
                 level: 1,
                 actions: Vec::new(),
             }
         }
 
-        pub fn new_from_egg(id_a: u32, coord: Point) -> Self
+        pub fn new_from_egg(id: u32, coord: Point) -> Self
         {
             Player
             {
-                id: id_a,
-                port: 42,
+                stream: None,
+                id,
+                // port: 42,
                 coord: Point::new(coord.x, coord.y),
                 ivt: Ressources::new(),
                 life: 1260,
