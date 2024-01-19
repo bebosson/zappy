@@ -89,7 +89,7 @@ impl AppState {
     }
 }
 
-
+// 
 
 pub fn lolo_fn(mut guizmo: Gizmos)
 {
@@ -110,7 +110,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
         match stream {
             Ok(mut stream) => {
                 // Spawn a new thread to handle each incoming connection
-                let (tx, rx) = bounded::<Parse>(1);
+                let (tx, rx) = bounded::<Parse>(0);
                 thread::spawn(move || {
                     let mut buffer = [0; 32];
                     loop {
@@ -129,7 +129,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                                 let str = copy_until_char(received_data, b'\n');
                                 println!("str {:?}", str);
                                 let parse : Parse = parser_server_packet(str);
-                                tx.send(parse).unwrap();
+                                tx.send(parse).unwrap(); // => run_stream
                                 // Optionally, send a response back to the client
                             }
                             Err(e) => {

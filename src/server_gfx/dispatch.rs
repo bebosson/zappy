@@ -1,16 +1,16 @@
 pub mod dispatch{
     use std::collections::HashMap;
 
-    use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventWriter, EventReader}, schedule::{States, IntoSystemConfigs, common_conditions::in_state, NextState}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default};
+    use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventWriter, EventReader}, schedule::{States, IntoSystemConfigs, common_conditions::in_state, NextState, State}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default};
 
     use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{Ressource, spawn_resources, ContentCase}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action, get_nbr_player_cell}, parser::parser::Parse};
 
     // const for teams folder name 
     pub const SIZE_VECSPRITE: usize = 4;
     pub const SIZE_VECTEAM: usize = 2;
-    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["expulse_up.png", "expulse_east.png", "expulse_down.png", "zelda_west.png"];
+    pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["zelda_up2.png", "zelda_east.png", "zelda_down.png", "zelda_west.png"];
+    pub const VECEXPULSION: [&'static str; SIZE_VECSPRITE] = ["expulse_up.png", "expulse_east.png", "expulse_down.png", "zelda_west.png"]; // miss expulse west
     pub const VECTEAM: [&'static str; SIZE_VECTEAM] = ["zelda_1", "zelda_2"];
-    
     
     #[derive(Debug)]
     enum Playable{
@@ -58,7 +58,8 @@ pub mod dispatch{
         pub id_Ressource: Vec<Vec<HashMap<usize, ContentCase>>>, //vec<vec<hashmap<id, vec<entity>>>>
         // pub player_id: Vec<Entity>,
         pub player_id: HashMap<u8, Playable>, // hashmap<id, playable>
-        pub vec_sprite_player: Vec<Vec<SpriteAnimation>>, // vec<vec<sprite>>> ?
+        pub vec_sprite_player_mvmt: Vec<Vec<SpriteAnimation>>, // vec<vec<sprite>>> ?
+        pub vec_sprite_player_expulsion: Vec<Vec<SpriteAnimation>>, // vec<vec<sprite>>> ?
     }
 
     impl RessCommandId{
@@ -135,6 +136,23 @@ pub mod dispatch{
             entity
         }
 
+        pub fn get_player_num_team(&self, id_game: &u8) -> u8
+        {
+            let playable_opt = self.player_id.get(&id_game);
+            println!("{:?}", playable_opt);
+            let num_team;
+            if let Some(playable) = playable_opt{
+                num_team = match playable{
+                    Playable::Player(player) => player.num_team,
+                    Playable::Egg(_) => panic!(), // for now
+                }
+            }
+            else{
+                panic!();
+            }
+            num_team
+        }
+
         pub fn get_num_team(&self, name_team: &String) -> Option<u8>
         {
             let iter = self.name_equipe.iter().enumerate(); 
@@ -153,20 +171,30 @@ pub mod dispatch{
             // }
         }
 
-        pub fn set_sprites_team(& mut self, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_team: &String) //(nbr_teams)
+        pub fn set_sprites_mvmt(& mut self, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_team: &String) //(nbr_teams)
         {
             let num_team = self.get_num_team(name_team).unwrap() as usize;
             for i in 0..SIZE_VECSPRITE
             {
-                self.vec_sprite_player[num_team].push(set_sprite_animation(num_team, i as u8, texture_atlases, asset_server))
+                self.vec_sprite_player_mvmt[num_team].push(set_sprite_animation(num_team, i as u8, texture_atlases, asset_server, VECSPRITE))
             }
-            println!("{:?}", self.vec_sprite_player[num_team].len());
+            for i in 0..SIZE_VECSPRITE
+            {
+                self.vec_sprite_player_expulsion[num_team].push(set_sprite_animation(num_team, i as u8, texture_atlases, asset_server, VECEXPULSION))
+            }
+            // println!("{:?}", self.vec_sprite_player_mvmt[num_team].len());
         }
 
         pub fn get_sprite(&self, indice: usize, num_team: usize) -> SpriteAnimation// (team, orientation)
         {
             println!("num_team {} indice {}", num_team, indice); //num_team 1 
-            self.vec_sprite_player[num_team][indice].clone()
+            self.vec_sprite_player_mvmt[num_team][indice].clone()
+        }
+
+        pub fn get_sprite_expulsion(&self, indice: usize, num_team: usize) -> SpriteAnimation// (team, orientation)
+        {
+            println!("num_team {} indice {}", num_team, indice); //num_team 1 
+            self.vec_sprite_player_expulsion[num_team][indice].clone()
         }
 
         pub fn set_new_entry_hashmap_player(&mut self, id: &u8, level: &u8, team: String, entity: Entity)
@@ -203,8 +231,10 @@ pub mod dispatch{
             .insert_resource(Complexcommand { nbr_command: 1, first_command: Parse::Donothing, vec_command: vec![] })
 
             .add_systems(Startup, init)
-            .add_systems(Update, read_stream)
-            .add_systems(Update, (dispatch_init_complex_event, dispatch_setup_event,dispatch_action_event).run_if(in_state(StateCommand::Simple_Command)))
+            .add_systems(Update, read_stream.run_if(in_state(StateCommand::Simple_Command)))
+            // .add_systems(Update, dispatch_init_complex_event.run_if(in_state(StateCommand::Simple_Command)))
+            .add_systems(Update, dispatch_setup_event.run_if(in_state(StateCommand::Simple_Command)))
+            .add_systems(Update, dispatch_action_event.run_if(in_state(StateCommand::Simple_Command)))
             .add_systems(Update,  dispatch_stacking_command.run_if(in_state(StateCommand::Stacking_Command)))
             .add_systems(Update, dispatch_handle_complex_command.run_if(in_state(StateCommand::Complexe_Command)));
             // .add_systems(Update, dispatch_action_event.run_if(in_state(StateCommand::Simple_Command)));
@@ -227,17 +257,20 @@ pub mod dispatch{
             time: 0,
             id_Ressource: vec![], 
             player_id: HashMap::new(), 
-            vec_sprite_player: vec![], 
+            vec_sprite_player_mvmt: vec![], 
+            vec_sprite_player_expulsion: vec![], 
             nbr_equipe: 0, 
             name_equipe: vec![] 
         });
         // let toto = world.query(Query<)
     }
 
-    fn read_stream(receiver: Res<StreamReceiver>, mut events: EventWriter<StreamEvent>) {
+    fn read_stream(receiver: Res<StreamReceiver>, mut events: EventWriter<StreamEvent>, state: Res<State<StateCommand>>) {
         for parse in receiver.try_iter() {
+            println!("state {:?}", state.get());
             events.send(StreamEvent(parse));
         }
+        // events.send(StreamEvent(receiver.iter().next().unwrap()));
     }
 
     
@@ -272,8 +305,9 @@ pub mod dispatch{
             crate::Parse::NomEquipe(n) => {
                 asset_map.name_equipe.push((*n.clone()).to_string());
                 asset_map.nbr_equipe += 1;
-                asset_map.vec_sprite_player.push(vec![]);
-                asset_map.set_sprites_team(&mut texture_atlases, &asset_server, n); // doit dependre de la team 
+                asset_map.vec_sprite_player_mvmt.push(vec![]);
+                asset_map.vec_sprite_player_expulsion.push(vec![]);
+                asset_map.set_sprites_mvmt(&mut texture_atlases, &asset_server, n); // doit dependre de la team 
             }
             crate::Parse::ConnexionPlayer(id, x, y, o, l, n) => {
                 // std::process::exit(1);
@@ -299,50 +333,68 @@ pub mod dispatch{
         mut asset_map: ResMut<RessCommandId>,
         mut texture_atlases: ResMut<Assets<TextureAtlas>>,
         mut query_action_player: Query<& mut ActionPlayer>,
+        mut complexcommand: ResMut<Complexcommand>,
+        mut query_player_cell: Query<(Entity, &Cell)>,
+        mut statecommand: ResMut<NextState<StateCommand>>,
+        mut state: Res<State<StateCommand>>,
     )
     {
         let mut vec_map_entity: Vec<Entity> = vec![];
-        for (_, event) in reader.read().enumerate() {
+        for (index, event) in reader.read().enumerate() {
             let x = &event.0;
-            match x
+            if let StateCommand::Simple_Command = state.get()
             {
-                crate::Parse::MovementPlayer(id, x, y, o) =>{
-                    // println!("{:?}", asset_map);
-                    // let id_back = *id - 1; //method to get the id is wrong because if a player died the index of vector won't be reliable anymore (like arsenal_id [1, 2] chelsea_id [3, 4] => arsenal_id [1, 2] chelsea_id [3], => arsenal_id [1, 2, 5(egg)] chelsea_id [3])
-                    let mut mov = TypeAction::Movement{0: *x, 1: *y, 2: *o};
-
-                    add_action(& mut query_action_player, &asset_map.get_player_id(id), mov);
+                match x
+                {
+                    Parse::Expulse(id) => {
+                        let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(id));
+                        println!("EXPULSE {:?}", statecommand);
+                        complexcommand.first_command = (event.0).clone();
+                        complexcommand.nbr_command = nbr_mov_command_waited;
+                        statecommand.set(StateCommand::Stacking_Command);
+                        println!("EXPULSE {:?}", statecommand);
+                        break ;
+                    }
+    
+                    crate::Parse::MovementPlayer(id, x, y, o) =>{
+                        println!("MOVEMENT ? STATE {:?}, INDEX {}", state.get(), index);
+                        // let id_back = *id - 1; //method to get the id is wrong because if a player died the index of vector won't be reliable anymore (like arsenal_id [1, 2] chelsea_id [3, 4] => arsenal_id [1, 2] chelsea_id [3], => arsenal_id [1, 2, 5(egg)] chelsea_id [3])
+                        let mut mov = TypeAction::Movement{0: *x, 1: *y, 2: *o};
+    
+                        add_action(& mut query_action_player, &asset_map.get_player_id(id), mov);
+                    }
+                   
+                    _ => ()
                 }
-               
-                _ => ()
+
             }
         }
     }
 
-    pub fn dispatch_init_complex_event(
-        mut reader: EventReader<StreamEvent>,
-        mut asset_map: ResMut<RessCommandId>,
-        mut query_player_cell: Query<(Entity, &Cell)>,
-        mut complexcommand: ResMut<Complexcommand>,
-        mut statecommand: ResMut<NextState<StateCommand>>,
-    )
-    {
-        for (_, event) in reader.read().enumerate() {
-            let x = &event.0;
-            match x
-            {
-                Parse::Expulse(id) => {
-                    let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(id));
-                    println!("{:?}", nbr_mov_command_waited);
-                    complexcommand.first_command = (event.0).clone();
-                    complexcommand.nbr_command = nbr_mov_command_waited;
-                    statecommand.set(StateCommand::Stacking_Command);
-                }
+    // pub fn dispatch_init_complex_event(
+    //     mut reader: EventReader<StreamEvent>,
+    //     mut asset_map: ResMut<RessCommandId>,
+    //     mut query_player_cell: Query<(Entity, &Cell)>,
+    //     mut complexcommand: ResMut<Complexcommand>,
+    //     mut statecommand: ResMut<NextState<StateCommand>>,
+    // )
+    // {
+    //     for (_, event) in reader.read().enumerate() {
+    //         let x = &event.0;
+    //         match x
+    //         {
+    //             Parse::Expulse(id) => {
+    //                 let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(id));
+    //                 println!("EXPULSE {:?}", statecommand);
+    //                 complexcommand.first_command = (event.0).clone();
+    //                 complexcommand.nbr_command = nbr_mov_command_waited;
+    //                 statecommand.set(StateCommand::Stacking_Command);
+    //             }
                
-                _ => ()
-            }
-        }
-    }
+    //             _ => ()
+    //         }
+    //     }
+    // }
 
     pub fn dispatch_stacking_command(
         mut reader: EventReader<StreamEvent>,
@@ -358,33 +410,57 @@ pub mod dispatch{
                 let x = &event.0;
                 complexcommand.vec_command.push(x.clone())
             }
+            statecommand.set(StateCommand::Stacking_Command);
         }
-        else if complexcommand.nbr_command as usize == complexcommand.vec_command.len()
+        else
         {
             statecommand.set(StateCommand::Complexe_Command);
         }
-        else {
-            panic!("ERROR in changing state command: we should not be here")
-        }
+        // CECI EST LA VERSION FINAL, COMME LA FONCTION DEVRAIT S IMPLEMENTER A LA FIN
+        // AU DESSUS C EST JUSTE UNE VERSION POUR TESTER LE CHANGEMENT DE SPRITE
+        // MAIS COMME EXPULSE EST MAL IMPLEMENTE DANS SERVER ON S ADAPTE
+        // else if complexcommand.nbr_command as usize == complexcommand.vec_command.len()
+        // {
+        //     statecommand.set(StateCommand::Complexe_Command);
+        // }
+        // else {
+        //     panic!("ERROR in changing state command: we should not be here")
+        // } 
     }
 
     pub fn dispatch_handle_complex_command(
         mut asset_map: ResMut<RessCommandId>,
         mut complexcommand: ResMut<Complexcommand>,
         mut statecommand: ResMut<NextState<StateCommand>>,
+        mut query_action_player: Query<& mut ActionPlayer>,
     )
     {
         match complexcommand.first_command{
-            Parse::Expulse(_) => {
-                for check_mov in &complexcommand.vec_command
+            Parse::Expulse(id_1) => {
+                for mov_expulse in &complexcommand.vec_command
                 {
-                    println!("good save ? {:?}", check_mov);
+                    match mov_expulse {
+                        Parse::MovementPlayer(id, x, y, o) => {
+                            if id_1 != *id { // PAREIL CETTE CONDITION EST JUSTE LA PARCE QUE EXPULSE EST MAL IMPLEMENTE DANS SERVER
+                                let num_team = asset_map.get_player_num_team(id);
+                                let sprite_anim_mvmt = asset_map.get_sprite((*o - 1 ) as usize, num_team as usize);
+                                let sprite_anim_expulse = asset_map.get_sprite_expulsion((*o - 1 ) as usize, num_team as usize);
+                                let expulsion = TypeAction::Expulsion{0: *x, 1: *y, 2: *o, 3: sprite_anim_mvmt, 4: sprite_anim_expulse};
+                                add_action(& mut query_action_player, &asset_map.get_player_id(id), expulsion);
+                                
+                            }
+                            // get the current sprite component ? 
+                            // get the expulse sprite component ?  
+                        }
+                        _ => (),
+                    }
                 }
                 //need to set complexcommand back to normal 
             } 
             _ => ()
         }
         statecommand.set(StateCommand::Simple_Command);
+        // miss the reset method for complexcommand
     }
 
    

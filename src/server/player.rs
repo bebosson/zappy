@@ -63,7 +63,7 @@ pub mod player
                 //    3 => Orientation::O,
                 //    _ => Orientation::N,
                 //},
-                orientation: Orientation::E,
+                orientation: Orientation::S,
                 level: 1,
                 actions: Vec::new(),
             }

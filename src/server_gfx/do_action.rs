@@ -1,6 +1,6 @@
 pub mod do_action{
-    use std::collections::VecDeque;
-    use crate::sprite_player::sprite_player::{Cell, AnimationIndices, Player};
+    use std::{collections::VecDeque, fmt::Debug};
+    use crate::sprite_player::sprite_player::{Cell, AnimationIndices, Player, SpriteComponent, SpriteAnimation};
     use bevy::{ecs::{component::Component, system::{Res, Query, ResMut}, entity::Entity}, time::Time, asset::Handle, sprite::{TextureAtlas, TextureAtlasSprite}, transform::components::Transform};
 
     use crate::{TILES_WIDTH, dispatch::dispatch::RessCommandId};
@@ -19,12 +19,9 @@ pub mod do_action{
     #[derive(Component, Debug)]
     pub struct Movementinprogress
     {
-        distance_restante: f32,
+        pub distance_restante: f32,
         orientation: u8,
         type_of_mvmt: TypeofMovement,
-
-        cell_x_origin: u8,
-        cell_y_origin: u8,
     }
 
     impl Movementinprogress
@@ -35,8 +32,6 @@ pub mod do_action{
                 distance_restante: 0.,
                 orientation: 0,
                 type_of_mvmt: TypeofMovement::Nothing,
-                cell_x_origin: 0,
-                cell_y_origin: 0,
             }
         }
         pub fn set_distance(& mut self, dist: f32, o: u8)
@@ -46,13 +41,24 @@ pub mod do_action{
         }
     }
 
-        #[derive(Debug)]
+        #[derive(Clone)]
         pub enum TypeAction{
             Movement(u8,u8,u8),
+            Expulsion(u8, u8, u8, SpriteAnimation, SpriteAnimation),
             Nothing,
         }
-        #[derive(Debug)]
-        enum StateAction
+        impl Debug for TypeAction
+        {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Movement(arg0, arg1, arg2) => f.debug_tuple("Movement").field(arg0).field(arg1).field(arg2).finish(),
+            Self::Expulsion(arg0, arg1, arg2, arg3, arg4) => f.debug_tuple("Expulsion").field(arg0).field(arg1).field(arg2).finish(),
+            Self::Nothing => write!(f, "Nothing"),
+        }
+    }
+        }
+        #[derive(Debug, PartialEq)]
+        pub enum StateAction
         {
             InAction,
             Idle
@@ -126,7 +132,16 @@ pub mod do_action{
 
 
 
-    pub fn player_translation(time: &Res<Time>, action_player: & mut ActionPlayer, movement : &mut Movementinprogress, transform: & mut Transform, cell: &mut Cell, asset_map:  &ResMut<RessCommandId>)
+    pub fn player_translation(time: &Res<Time>,
+        action_player: & mut ActionPlayer,
+        movement : &mut Movementinprogress,
+        transform: & mut Transform,
+        cell: &mut Cell,
+        asset_map:  &ResMut<RessCommandId>,
+        handle_texture_atlas: &mut Handle<TextureAtlas>,
+        texture_atlas_sprite: &mut TextureAtlasSprite,
+        animation_indice: &mut AnimationIndices,
+        opt_change_sprite: Option<SpriteAnimation>)
     {
         
         let t_prime: f32 = asset_map.time  as f32 / 7.0;
@@ -153,6 +168,10 @@ pub mod do_action{
         if movement.distance_restante == 0.
         {
             println!("{:?}", movement.distance_restante);
+            if let Some(sprite_animation) = opt_change_sprite
+            {
+                change_sprite(handle_texture_atlas, texture_atlas_sprite, animation_indice, sprite_animation);
+            }
             action_player.state_action = StateAction::Idle;
             action_player.action_in_progress = TypeAction::Nothing;
             update_cell(movement, cell, asset_map);
@@ -175,33 +194,71 @@ pub mod do_action{
         }
     }
 
-    pub fn set_exec_action(mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, &Cell)>, asset_map: ResMut<RessCommandId>)
+    pub fn change_sprite(
+        handle_texture_atlas: &mut Handle<TextureAtlas>,
+        texture_atlas_sprite: &mut TextureAtlasSprite,
+        animation_indice: &mut AnimationIndices,
+        sprite_animation: SpriteAnimation,
+    ) 
     {
-        for (mut action_player, mut movement, cell) in query_action_player.iter_mut()
+        
+
+        *handle_texture_atlas = sprite_animation.texture_atlas_handle;
+        *texture_atlas_sprite = sprite_animation.texture_atlas_sprite;
+        *animation_indice = sprite_animation.animation_indices;
+
+        // set_texture_atlas_animation_indice(texture_handle, o);
+        // set_sprite_animation(0, o, texture_atlases, asset_server)
+
+    }
+
+    pub fn set_exec_action(
+        mut query_action_player: Query<(&mut ActionPlayer,
+                                        &mut Movementinprogress,
+                                        &mut Cell,
+                                        &mut Handle<TextureAtlas>, 
+                                        &mut TextureAtlasSprite, 
+                                        &mut AnimationIndices,
+                                        &Player)>,
+        asset_map: ResMut<RessCommandId>)
+    {
+        for (mut action_player,
+            mut movement,
+            mut cell,
+            mut handle,
+            mut texture, 
+            mut animation, 
+            player) in query_action_player.iter_mut()
         {
             if let StateAction::Idle = action_player.state_action{
                 if let Some(current_action) = action_player.vecdeque.pop_front()
                 {
                     action_player.state_action = StateAction::InAction;
                     action_player.action_in_progress = current_action;
-                    match action_player.action_in_progress{
+                    match &action_player.action_in_progress{
                         TypeAction::Movement(x_finish, y_finish, o) => {
                             println!("{} {} {} {:?}", x_finish, y_finish, o, cell);
-                            if (cell.0 != x_finish || cell.1 != y_finish) && cell.2 == o 
+                            if (cell.0 != *x_finish || cell.1 != *y_finish) && cell.2 == *o 
                             {
                                 // let pixel_start = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
                                 // let pixel_finish = asset_map.center_map_new_system(x_finish as f32, y_finish as f32);
                                 println!("translation ");
 
-                                *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: o, type_of_mvmt: TypeofMovement::Translation, cell_x_origin: cell.0, cell_y_origin: cell.1 }
+                                *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                             }
                             else
                             {
                                 println!("rotation");
-                                *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: o, type_of_mvmt: TypeofMovement::Rotation, cell_x_origin: cell.0, cell_y_origin: cell.1}
+                                *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Rotation}
 
                                 
                             }
+                        }
+                        TypeAction::Expulsion(x, y, o, _, sprite_expulsion) =>
+                        {
+                            // let sprite_animation = asset_map.get_sprite_expulsion(indice, num_team)
+                            change_sprite(& mut handle, & mut texture, & mut animation, sprite_expulsion.clone());
+                            *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                         }
                         TypeAction::Nothing => ()
                     }
@@ -230,11 +287,20 @@ pub mod do_action{
         // set_sprite_animation(0, o, texture_atlases, asset_server)
 
     }
+
+    
     
 
     pub fn exec_action(
         time: Res<Time>, 
-        mut query_action_player: Query<(& mut ActionPlayer, &mut Movementinprogress, & mut Transform, &mut Handle<TextureAtlas>, & mut TextureAtlasSprite, & mut AnimationIndices, &mut Cell, &Player)>,
+        mut query_action_player: Query<(&mut ActionPlayer,
+                                        &mut Movementinprogress,
+                                        &mut Transform,
+                                        &mut Handle<TextureAtlas>, 
+                                        &mut TextureAtlasSprite, 
+                                        &mut AnimationIndices,
+                                        &mut Cell,
+                                        &Player)>,
         asset_map: ResMut<RessCommandId>)
     {
         for (mut action_player,
@@ -250,13 +316,14 @@ pub mod do_action{
         {
             let typeofmvmt = &movement.type_of_mvmt;
             if let StateAction::InAction = action_player.state_action{
-                match action_player.action_in_progress{
+                let actioninprogress = action_player.action_in_progress.clone();
+                match actioninprogress{
                     TypeAction::Movement(_, _, _) => {
                         match typeofmvmt
                         {
                             TypeofMovement::Translation => {
                                 // let ref_movement = *movement;
-                                player_translation(&time, & mut action_player, & mut movement, & mut transform, &mut cell, &asset_map);
+                                player_translation(&time, & mut action_player, & mut movement, & mut transform, &mut cell, &asset_map,& mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices, None);
                                 // new_coor = asset_map.get_my_coor(trans.x, translat)
                             }
                             TypeofMovement::Rotation => {
@@ -270,6 +337,12 @@ pub mod do_action{
                         }
                         
                     },
+                    TypeAction::Expulsion(_, _, _, sprite_anim_mvmt, _) => {
+                        if let TypeofMovement::Translation = typeofmvmt
+                        {
+                            player_translation(&time, & mut action_player, & mut movement, & mut transform, &mut cell, &asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices,Some(sprite_anim_mvmt.clone()));
+                        }
+                    }
                     TypeAction::Nothing => todo!(),
                 }
             }

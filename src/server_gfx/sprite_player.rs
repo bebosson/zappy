@@ -10,7 +10,7 @@ pub mod sprite_player{
 
     use bevy::prelude::*;
     // use map::map::spawn_map;
-    use crate::{dispatch::dispatch::{RessCommandId, VECSPRITE, VECTEAM}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress}};
+    use crate::{dispatch::dispatch::{RessCommandId, VECSPRITE, VECTEAM, SIZE_VECSPRITE}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress, StateAction}};
     
     
     
@@ -85,9 +85,9 @@ pub mod sprite_player{
         }
     }
 
-    pub fn set_sprite_animation(team: usize, o: u8, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>) -> SpriteAnimation
+    pub fn set_sprite_animation(team: usize, o: u8, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_sprite: [&'static str; SIZE_VECSPRITE]) -> SpriteAnimation
     {
-        let path = format!("{}/{}", VECTEAM[team], VECSPRITE[o as usize]);
+        let path = format!("{}/{}", VECTEAM[team], name_sprite[o as usize]);
         println!("{}", path);
         let texture_handle = asset_server.load(path);
         let texture_atlas_and_anim = set_texture_atlas_animation_indice(texture_handle, o + 1); // on doit regler cette confusion entre orientation et indice 
@@ -118,18 +118,26 @@ pub mod sprite_player{
             &AnimationIndices,
             &mut AnimationTimer,
             &mut TextureAtlasSprite,
+            &ActionPlayer,
         )>,
     ) {
-        for (indices, mut timer, mut sprite) in &mut query {
-            timer.tick(time.delta());
-            if timer.just_finished() {
-                sprite.index = if sprite.index == indices.last {
-                    indices.first
-                } else {
-                    sprite.index + 1
-                };
+        for (indices, mut timer, mut sprite, action) in &mut query {
+            if action.state_action == StateAction::InAction{
+                timer.tick(time.delta());
+                if timer.just_finished() {
+                    sprite.index = if sprite.index == indices.last {
+                        indices.first
+                    } else {
+                        sprite.index + 1
+                    };
+                }
             }
         }
+    }
+    #[derive(Component)]
+    pub enum StateSprite{
+        NoAnimation(SpriteBundle),
+        Animation(SpriteComponent)
     }
 
     pub fn animation_to_sprite_component(animation: SpriteAnimation, x: &f32, y: &f32) -> SpriteComponent
@@ -139,6 +147,7 @@ pub mod sprite_player{
             texture_atlas: animation.texture_atlas_handle,
             sprite: animation.texture_atlas_sprite,
             transform: Transform::from_xyz(*x as f32,*y as f32,15.),
+            visibility: Visibility::Visible,
             ..default()
         };
         SpriteComponent{ sprite_sheet_bundle,  animation_indices: animation.animation_indices }
@@ -155,6 +164,7 @@ pub mod sprite_player{
     ) -> Entity {
         let sprite_component = animation_to_sprite_component(sprite_animation, &coord_pixel.0, &coord_pixel.1);
         
+        // on devrait rajouter un tmp sprite_component et un sprite_bundle 
         commands.spawn((
             sprite_component,
             AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
