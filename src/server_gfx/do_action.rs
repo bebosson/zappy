@@ -190,7 +190,7 @@ pub mod do_action{
         if let Ok(mut action_player) = query_action_player.get_mut(*id)
         {
             action_player.vecdeque.push_back(type_action);
-            // println!("{:?}", action_player);
+            println!("{:?}", action_player);
         }
     }
 
@@ -246,19 +246,29 @@ pub mod do_action{
 
                                 *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                             }
-                            else
+                            else if cell.2 != *o
                             {
                                 println!("rotation");
                                 *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Rotation}
-
-                                
+                            }
+                            else {
+                                println!("Pb de Movement_Rotation ici (set exec action)\n")
                             }
                         }
-                        TypeAction::Expulsion(x, y, o, _, sprite_expulsion) =>
+                        TypeAction::Expulsion(x_finish, y_finish, o, _, sprite_expulsion) =>
                         {
+                            if (cell.0 != *x_finish || cell.1 != *y_finish) && cell.2 == *o 
+                            {
+                                // let pixel_start = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
+                                // let pixel_finish = asset_map.center_map_new_system(x_finish as f32, y_finish as f32);
+                                println!("expulsion ");
+                                change_sprite(& mut handle, & mut texture, & mut animation, sprite_expulsion.clone());
+                                *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
+                            }
+                            else {
+                                println!("Pb d Expulsion ici (set exec action)\n")
+                            }
                             // let sprite_animation = asset_map.get_sprite_expulsion(indice, num_team)
-                            change_sprite(& mut handle, & mut texture, & mut animation, sprite_expulsion.clone());
-                            *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                         }
                         TypeAction::Nothing => ()
                     }
@@ -333,7 +343,10 @@ pub mod do_action{
                                 action_player.state_action = StateAction::Idle;
                                 action_player.action_in_progress = TypeAction::Nothing;
                             },
-                            TypeofMovement::Nothing => panic!(),
+                            TypeofMovement::Nothing => {
+                                action_player.state_action = StateAction::Idle;
+                                action_player.action_in_progress = TypeAction::Nothing;
+                            },
                         }
                         
                     },
@@ -341,6 +354,10 @@ pub mod do_action{
                         if let TypeofMovement::Translation = typeofmvmt
                         {
                             player_translation(&time, & mut action_player, & mut movement, & mut transform, &mut cell, &asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices,Some(sprite_anim_mvmt.clone()));
+                        }
+                        else {
+                            action_player.state_action = StateAction::Idle;
+                            action_player.action_in_progress = TypeAction::Nothing;
                         }
                     }
                     TypeAction::Nothing => todo!(),

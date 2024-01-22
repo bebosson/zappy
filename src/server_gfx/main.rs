@@ -16,6 +16,7 @@ use rand::rngs::StdRng;
 use sprite_player::sprite_player::{setup_sprite, animate_sprite, DoAction};
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::process::exit;
 use std::str::SplitAsciiWhitespace;
 use std::thread;
 
@@ -70,10 +71,11 @@ fn main() {
                         //     FrameTimeDiagnosticsPlugin,
         // ))
         .insert_resource(AppState { listener })
+        .insert_resource(Txrx2 {  channel: bounded::<bool>(0) })
         .add_systems(Startup, setup_handle_connections)
         .add_plugins(Dispatch)
         .add_plugins(DoAction)
-        .add_systems(Update, lolo_fn)
+        // .add_systems(Update, lolo_fn)
         // .add_systems(Startup, setup_sprite)
         .add_systems(Update, animate_sprite)
         // .add_systems(Update, sprite_movement)
@@ -100,17 +102,42 @@ pub fn lolo_fn(mut guizmo: Gizmos)
 #[derive(Resource, Deref)]
 struct StreamReceiver(Receiver<Parse>);
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 pub struct StreamEvent(Parse);
+#[derive(Resource)]
+pub struct Txrx2
+{
+    pub channel: (crossbeam_channel::Sender<bool>, Receiver<bool>), 
+    
+}
+
+// #[derive(Event)]
+// pub struct StreamEventOkReceive(bool);
+
+
+// #[derive(Resource, Deref)]
+// struct StreamOkReceiver(Receiver<Parse>);
+
+// fn read_stream(receiver: Res<StreamOkReceiver>, mut events: EventWriter<StreamEvent>) {
+//     for parse in receiver.try_iter() {
+//         events.send(StreamEventOkReceive(parse));
+//     }
+//     // events.send(StreamEvent(receiver.iter().next().unwrap()));
+// }
 
 
 
-fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
-    for stream in state.listener.incoming() {
+fn setup_handle_connections(state: Res<AppState>, mut command: Commands, mut channel: ResMut<Txrx2>) {
+    for stream in state.listener.incoming() 
+    {
         match stream {
             Ok(mut stream) => {
                 // Spawn a new thread to handle each incoming connection
-                let (tx, rx) = bounded::<Parse>(0);
+                let (tx, rx) = bounded::<Parse>(1);
+                let (tx2, rx2) = bounded::<bool>(0);
+                channel.channel.0 = tx2;
+                // let test = &channel.channel.1;
+                let mut wait: bool = false;
                 thread::spawn(move || {
                     let mut buffer = [0; 32];
                     loop {
@@ -129,7 +156,28 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands) {
                                 let str = copy_until_char(received_data, b'\n');
                                 println!("str {:?}", str);
                                 let parse : Parse = parser_server_packet(str);
-                                tx.send(parse).unwrap(); // => run_stream
+                                println!("thread_parse = {:?}", parse);
+                                // if let Parse::MovementPlayer(_, _, _, _) = parse
+                                // {
+                                //     exit(1);
+                                // }
+                                // if rx2.recv().unwrap() == true
+                                // {
+                                    //     wait = false;
+                                    //     println!("WAIT_RECEIVE = {:?}", wait);
+                                    // }
+                                if wait == false
+                                {
+                                    tx.send(parse).unwrap(); // => run_stream
+                                }
+                                // println!("{:?}", rx2.recv().unwrap());
+                                wait = true;
+                                // let instant = Instant::now();
+                                // if rx2.recv().unwrap() == true
+                                {
+                                    wait = false;
+                                    println!("WAIT_RECEIVE = {:?}", wait);
+                                }
                                 // Optionally, send a response back to the client
                             }
                             Err(e) => {
