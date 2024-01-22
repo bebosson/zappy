@@ -37,6 +37,15 @@ pub mod player
         }
     }
 
+    pub struct SimplePlayer
+    {
+        pub id: u32,
+        pub coord: Point,
+        pub ivt: Ressources,
+        pub life: u16,
+        pub orientation: Orientation,
+        pub level: u8,
+    }
 
     #[derive(Debug)]
     pub struct Player
