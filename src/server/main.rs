@@ -8,7 +8,7 @@ use std::time::SystemTime;
 
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
-use teams::team::Team;
+use teams::team::{Team, self};
 use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION, avance, droite, gauche, voir, inventaire, prend, pose, expulse, broadcast, incantation, fork, connect_nbr};
 use crate::paket_crafter::paquet_crafter::{craft_gfx_packet_pre, craft_gfx_packet_post};
@@ -253,7 +253,7 @@ fn receive_actions(game_ctrl: &mut GameController) -> Vec<Action>
                                 .port()
                 && */player.actions.len() < 11
             {
-                if let  Ok(_) = player.stream.as_ref().unwrap().read(&mut action_receive)
+                if let  Ok(_) = player.stream.read(&mut action_receive)
                 {
                     // TODO : attention ici au mecanisme des 10 commandes
                     // si l'une echoue, les suivantes ne seront peut etre plus
@@ -347,6 +347,30 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 }
 */
 
+fn clone_player_from_id(teams: Vec<Team>, id: u32) -> Option<(Player, Vec<Team>)>
+{
+    for team in teams {
+        for player in team.players {
+            if id == player.id {
+                // let take_stream = player.stream;
+                let ret_player = Player 
+                {
+                    stream: player.stream,
+                    id: player.id,
+                    coord: player.coord,
+                    ivt: player.ivt,
+                    life: player.life,
+                    orientation: player.orientation,
+                    level: player.level,
+                    actions: player.actions.clone(),
+                };
+                return Some((ret_player, teams));
+            }
+        }
+    }
+    None
+}
+
 /*
 **  retreive player from it's id
 **  params:
@@ -355,7 +379,7 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 **  return:
 **      Option<Player>: found player, None instead
 **/
-fn find_player_from_id(teams: &Vec<Team>, id: u32) -> Option<Player>
+fn clone_player_from_isd(teams: &Vec<Team>, id: u32) -> Option<Player>
 {
     for team in teams
     {
@@ -363,7 +387,19 @@ fn find_player_from_id(teams: &Vec<Team>, id: u32) -> Option<Player>
         {
             if id == player.id
             {
-                return Some(player.clone());
+                // return player.clone();
+                let ret_player = Player 
+                {
+                    stream: player.stream,
+                    id,
+                    coord: player.coord,
+                    ivt: player.ivt,
+                    life: player.life,
+                    orientation: player.orientation,
+                    level: player.level,
+                    actions: player.actions.clone(),
+                };
+                return Some(ret_player);
             }
         }
     }
@@ -578,7 +614,16 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
-                let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
+
+
+
+            /*****************************************************************\
+             * Nouvelle logique:
+             * On separe les actions entre
+             *      1/ action sur le player qui execute l'action
+             *      2/ action sur les autres players ou les cells
+            \*****************************************************************/ 
+                let (mut player, teamz) = clone_player_from_id(game_ctrl.teams, ready_action.id).unwrap();
 
                 let action_result = exec_action(&ready_action, &mut game_ctrl, &mut player).unwrap();
                 // stream.write(b"ok"); // on a a nouveau le meme probleme qu'avant dans exec_action pour trouver le player vu qu'on a pas le stream du player

@@ -3,7 +3,7 @@ pub mod team
     use crate::player::player::{Player, Egg};
     use crate::paket_crafter::paquet_crafter::packet_gfx_player_connexion;
     
-    #[derive(Debug, Clone)]
+    #[derive(Debug)]
     pub struct Team
     {
         pub name: String,
@@ -41,7 +41,7 @@ pub mod team
                 if e.count == 0
                 {
                     // add new player
-                    self.players.push(Player::new_from_egg(e.id as u32, e.coord.clone()));
+                    // self.players.push(Player::new_from_egg(e.id as u32, e.coord.clone()));
                 }
             });
             // remove dead eggs

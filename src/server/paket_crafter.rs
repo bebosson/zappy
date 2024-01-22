@@ -1,6 +1,6 @@
 pub mod paquet_crafter
 {
-    use crate::find_player_from_id;
+    use crate::clone_player_from_id;
     use crate::teams::team::Team;
     use crate::gamecontrol::game::GameController;
     use crate::ressources::ressources::Ressources;

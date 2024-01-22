@@ -1,6 +1,7 @@
 pub mod player
 {
     use std::net::TcpStream;
+    use std::ops::Deref;
 
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::Point;
@@ -40,7 +41,7 @@ pub mod player
     #[derive(Debug)]
     pub struct Player
     {
-        pub stream: Option<TcpStream>, // pas sur
+        pub stream: TcpStream, // pas sur
         pub id: u32,
         // pub port: u16,
         pub coord: Point,
@@ -50,32 +51,21 @@ pub mod player
         pub level: u8,
         pub actions: Vec<Action>,
     }
-   
-
-    impl Clone for Player {
-        fn clone(&self) -> Self {
-            Player {
-                stream: None,
-                id: self.id,
-                coord: self.coord,
-                ivt: self.ivt,
-                life: self.life,
-                orientation: self.orientation,
-                level: self.level,
-                actions: self.actions.clone(),// a modifier
-            }
-        }
-    }
     
-    impl Player
-    {
-        pub fn new(stream: TcpStream, id: u32, port: u16, width: u8, height: u8) -> Self
+    // impl Clone for Player
+    // {
+        
+        // }
+        
+        impl Player
+        {
+            pub fn new(stream: TcpStream, id: u32, port: u16, width: u8, height: u8) -> Self
         {
             let mut rng = thread_rng();
 
             Player
             {
-                stream: Some(stream),
+                stream,
                 id,
                 // port: port,
                 //coord: Point::new(rng.gen_range(0..width - 1), rng.gen_range(0..height - 1)),
@@ -88,23 +78,36 @@ pub mod player
                 actions: Vec::new(),
             }
         }
-
-        pub fn new_from_egg(id: u32, coord: Point) -> Self
-        {
-            Player
-            {
-                stream: None,
-                id,
-                // port: 42,
-                coord: Point::new(coord.x, coord.y),
-                ivt: Ressources::new(),
-                life: 1260,
-                orientation: get_random_orientation(),
-                level: 1,
-                actions: Vec::new(),
+        
+        // pub fn new_from_egg(id: u32, coord: Point) -> Self
+        // {
+        //     Player
+        //     {
+        //         stream: Box::new(),
+        //         id,
+        //         // port: 42,
+        //         coord: Point::new(coord.x, coord.y),
+        //         ivt: Ressources::new(),
+        //         life: 1260,
+        //         orientation: get_random_orientation(),
+        //         level: 1,
+        //         actions: Vec::new(),
+        //     }
+        // }
+        
+        fn clone(&self, stream: TcpStream) -> Self {
+            Player {
+                stream,
+                id: self.id,
+                coord: self.coord,
+                ivt: self.ivt,
+                life: self.life,
+                orientation: self.orientation,
+                level: self.level,
+                actions: self.actions.clone(),// a modifier
             }
         }
-
+        
         pub fn update(& mut self)
         {
             self.life -= 1;

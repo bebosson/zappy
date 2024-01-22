@@ -5,8 +5,8 @@ pub mod action
 
     use crate::player::player::{Player, Orientation, Egg};
     use crate::cell::cell::{Point, Cell};
-    use crate::teams::team::Team;
-    use crate::get_obj_from_string;
+    use crate::teams::team::{Team, self};
+    use crate::{get_obj_from_string, player};
 
 
     #[derive(Debug, Copy, Clone)]
@@ -108,7 +108,7 @@ pub mod action
     }
 
 
-    pub fn avance(height: u8, width: u8, player: &mut Player) -> bool
+    pub fn avance(height: u8, width: u8, player: &mut Player/* , orientation: Orientation // pour pouvoir faire avance ou avance_from_expulse */) -> bool
     {
         match player.orientation
         {
@@ -130,7 +130,7 @@ pub mod action
             {
                 if player.coord.x == 0 { player.coord.x = width - 1; }
                 else { player.coord.x -= 1; }
-            }
+            },
         }
         true
     }
@@ -260,20 +260,16 @@ pub mod action
         true
     }
 
-    pub fn fork(player: &Player, teams: &mut Vec<Team>) -> bool
+    pub fn fork(player_clone: &Player, teams: &mut Vec<Team>) -> bool
     {
-        for i in 0..teams.len()
+        let nb_player = get_nb_total_players(&teams);
+        for team in teams
         {
-            for tmp_player in teams[i].players.clone()
-            {
-                if tmp_player.id == player.id
+            for player in &team.players {
+                if player.id == player_clone.id
                 {
-                    //let mut total_players = tmp_team.iter().map(|team| team.players.len() as u16).sum::<u16>();
-                    //total_players += tmp_team.iter().map(|team| team.eggs.len() as u16).sum::<u16>();
-                    teams[i].nb_total_players += 1;
-                    println!("team {} -> nb total players: {}", teams[i].name, teams[i].nb_total_players);
-                    let tmp = teams.clone();
-                    teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone() });
+                    team.nb_total_players += 1;    
+                    team.eggs.push(Egg { id: nb_player + 1, count: 600, coord: player.coord });
                 }
             }
         }
