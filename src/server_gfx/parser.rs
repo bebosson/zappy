@@ -8,6 +8,7 @@ pub enum Parse{
     MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
     NomEquipe(String),
     Expulse(u8),
+    Prend(u8, u8),
     Donothing,
     // Movemement(i32, i32, i32)
 }
@@ -104,6 +105,15 @@ pub fn parse_expulse(content: String) -> Parse
     
 }
 
+pub fn parse_take_ressouce(content: String) -> Parse
+{
+    let iter = content.split_ascii_whitespace().skip(1);
+    let mut map = iter.map(|str| str.parse::<u8>());
+    let id = map.next().unwrap().unwrap();
+    let resource = map.next().unwrap().unwrap();
+    Parse::Prend(id, resource)
+}
+
 
 // dispatch what you parse 
 pub fn parser_server_packet(pkt_receive: String) -> Parse
@@ -155,8 +165,17 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                 // "pdr" => {
                 //     todo!();
                 // }
-                // "pgt" => {
-                //     todo!();
+                "pgt" => {
+                    parse = parse_take_ressouce(pkt_receive);
+                }
+                /*
+                // "   pgt #n i\n"
+                //     "pin #n X Y q q q q q q q\n"
+                //     "bct X Y q q q q q q q\n"
+                */     
+                // todo!();
+                
+                
                 // }
                 // "pdi" => {
                 //     todo!();

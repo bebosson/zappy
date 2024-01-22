@@ -282,11 +282,11 @@ pub mod dispatch{
 
 
     pub fn dispatch_setup_event(
-        mut commands: Commands,
-        asset_server: Res<AssetServer>,
-        mut reader: EventReader<StreamEvent>,
-        mut asset_map: ResMut<RessCommandId>,
-        mut texture_atlases: ResMut<Assets<TextureAtlas>>
+        mut commands: Commands, //spawn des entity 
+        asset_server: Res<AssetServer>, // ptr sur env 
+        mut reader: EventReader<StreamEvent>, // event (interrupts)
+        mut asset_map: ResMut<RessCommandId>, // ptr sur env 
+        mut texture_atlases: ResMut<Assets<TextureAtlas>> // ressource 
     )
 {
     for event in reader.read_with_id()
@@ -368,7 +368,8 @@ pub mod dispatch{
                     match parse
                     {
                         Parse::Expulse(id) => {
-                            let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(&id));
+                            // cherche le nb de joueurs concerne par expulse equivalant au nombre de commande a attendre 
+                            let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(&id));  
                             println!("EXPULSE {:?}", statecommand);
                             complexcommand.first_command = (event.0.0).clone();
                             complexcommand.nbr_command = nbr_mov_command_waited;
@@ -385,16 +386,35 @@ pub mod dispatch{
                             println!("EXPULSE {:?}", statecommand);
                             // println!("reader {:?}", reader.read().map(||));
                             println!("streamevent {:?}", streamevent);
+                            asset_map.last_event_id_visited = streamevent.id;
                             
                             return ;
                         }
+
+                        Parse::Prend(_, _) => {
+                            let nbr_mov_command_waited = 3;
+                            complexcommand.first_command = (event.0.0).clone();
+                            complexcommand.nbr_command;
+                            let first_id = streamevent.id + 1;
+                            let last_id = streamevent.id + nbr_mov_command_waited as usize + 1;
+                            for i in first_id..last_id
+                            {
+                                complexcommand.vec_id_command.push(i);
+                                
+                            }
+                            statecommand.set(StateCommand::Stacking_Command);
+                            return ;
+
+                        }
         
-                        crate::Parse::MovementPlayer(id, x, y, o) =>{
+                        Parse::MovementPlayer(id, x, y, o) =>{
                             println!("MOVEMENT ? STATE {:?}, INDEX {}, Parse {:?}", state.get(), streamevent.id, parse);
                             // let id_back = *id - 1; //method to get the id is wrong because if a player died the index of vector won't be reliable anymore (like arsenal_id [1, 2] chelsea_id [3, 4] => arsenal_id [1, 2] chelsea_id [3], => arsenal_id [1, 2, 5(egg)] chelsea_id [3])
                             let mut mov = TypeAction::Movement{0: *x, 1: *y, 2: *o};
         
                             add_action(& mut query_action_player, &asset_map.get_player_id(&id), mov);
+                            asset_map.last_event_id_visited = streamevent.id;
+
                         }
                         _ => ()
                     }
@@ -403,31 +423,6 @@ pub mod dispatch{
             }
         }
     }
-
-    // pub fn dispatch_init_complex_event(
-    //     mut reader: EventReader<StreamEvent>,
-    //     mut asset_map: ResMut<RessCommandId>,
-    //     mut query_player_cell: Query<(Entity, &Cell)>,
-    //     mut complexcommand: ResMut<Complexcommand>,
-    //     mut statecommand: ResMut<NextState<StateCommand>>,
-    // )
-    // {
-    //     for (_, event) in reader.read().enumerate() {
-    //         let x = &event.0;
-    //         match x
-    //         {
-    //             Parse::Expulse(id) => {
-    //                 let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(id));
-    //                 println!("EXPULSE {:?}", statecommand);
-    //                 complexcommand.first_command = (event.0).clone();
-    //                 complexcommand.nbr_command = nbr_mov_command_waited;
-    //                 statecommand.set(StateCommand::Stacking_Command);
-    //             }
-               
-    //             _ => ()
-    //         }
-    //     }
-    // }
 
     pub fn dispatch_stacking_command(
         mut reader: EventReader<StreamEvent>,
@@ -447,7 +442,6 @@ pub mod dispatch{
             for event in events{
                 let parse = &event.0.0;
                 let streamevent = event.1;
-                // println!("allo {:?}", i.0.0);
                 for id in complexcommand.vec_id_command.clone(){
                     println!("stacking event_id {:?}", streamevent);
                     println!("stacking parse {:?}", parse);
@@ -489,13 +483,19 @@ pub mod dispatch{
         mut query_action_player: Query<& mut ActionPlayer>,
     )
     {
-        match complexcommand.first_command{
+        
+        match complexcommand.first_command
+        {
+            // expulse est un evenement dont le nb de commandes n'est pas connu a l'avance 
             Parse::Expulse(id_1) => {
+                // on iter donc sur tous les movement precedemment sauvegarder 
                 for mov_expulse in &complexcommand.vec_command
                 {
+                    // un if let semblerai plus approprie 
                     match mov_expulse {
                         Parse::MovementPlayer(id, x, y, o) => {
                             if id_1 != *id { // PAREIL CETTE CONDITION EST JUSTE LA PARCE QUE EXPULSE EST MAL IMPLEMENTE DANS SERVER
+                                // on recupere 
                                 let num_team = asset_map.get_player_num_team(id);
                                 let sprite_anim_mvmt = asset_map.get_sprite((*o - 1 ) as usize, num_team as usize);
                                 let sprite_anim_expulse = asset_map.get_sprite_expulsion((*o - 1 ) as usize, num_team as usize);
@@ -504,14 +504,17 @@ pub mod dispatch{
                                 add_action(& mut query_action_player, &asset_map.get_player_id(id), expulsion);
                                 
                             }
-                            // get the current sprite component ? 
-                            // get the expulse sprite component ?  
                         }
-                        _ => (),
+                        _ => panic!("on ne devrai qu'avoir des movement"),
                     }
                 }
+            
                 //need to set complexcommand back to normal 
-            } 
+            }
+            Parse::Prend(_,_) => {
+
+            }
+
             _ => ()
         }
         statecommand.set(StateCommand::Simple_Command);

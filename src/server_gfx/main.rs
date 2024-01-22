@@ -133,8 +133,8 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands, mut cha
         match stream {
             Ok(mut stream) => {
                 // Spawn a new thread to handle each incoming connection
-                let (tx, rx) = bounded::<Parse>(1);
-                let (tx2, rx2) = bounded::<bool>(0);
+                let (tx, rx) = bounded::<Parse>(1); // il envoi au thread principale le packet pour le traitement bool wait a true
+                let (tx2, rx2) = bounded::<bool>(0); // le thread principale => true wait false 
                 channel.channel.0 = tx2;
                 // let test = &channel.channel.1;
                 let mut wait: bool = false;
