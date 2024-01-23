@@ -4,6 +4,7 @@ mod Ressource;
 mod parser;
 pub mod dispatch;
 pub mod do_action;
+mod env;
 
 use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;

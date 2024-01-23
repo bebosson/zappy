@@ -4,7 +4,8 @@ pub mod map{
     use bevy::{prelude::*, math::vec3, asset};
     use bevy_pancam::PanCam;
 
-    use crate::{dispatch::dispatch::RessCommandId};
+    use crate::env::env::RessCommandId;
+
 
     #[derive(Component, Debug)]
     pub struct Position(Vec3);

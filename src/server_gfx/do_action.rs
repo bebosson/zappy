@@ -1,9 +1,9 @@
 pub mod do_action{
     use std::{collections::VecDeque, fmt::Debug};
-    use crate::sprite_player::sprite_player::{Cell, AnimationIndices, Player, SpriteComponent, SpriteAnimation};
+    use crate::{sprite_player::sprite_player::{Cell, AnimationIndices, Player, SpriteComponent, SpriteAnimation}, env::env::RessCommandId};
     use bevy::{ecs::{component::Component, system::{Res, Query, ResMut}, entity::Entity}, time::Time, asset::Handle, sprite::{TextureAtlas, TextureAtlasSprite}, transform::components::Transform};
 
-    use crate::{TILES_WIDTH, dispatch::dispatch::RessCommandId};
+    use crate::{TILES_WIDTH};
 
 
     #[derive(Component, Debug)]

@@ -10,7 +10,7 @@ pub mod sprite_player{
 
     use bevy::prelude::*;
     // use map::map::spawn_map;
-    use crate::{dispatch::dispatch::{RessCommandId, VECSPRITE, VECTEAM, SIZE_VECSPRITE}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress, StateAction}};
+    use crate::{dispatch::dispatch::{VECSPRITE, VECTEAM, SIZE_VECSPRITE}, do_action::do_action::{set_exec_action, exec_action, ActionPlayer, Movementinprogress, StateAction}, env::env::RessCommandId};
     
     
     
