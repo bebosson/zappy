@@ -3,7 +3,7 @@ pub mod dispatch{
 
     use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventWriter, EventReader, Events}, schedule::{States, IntoSystemConfigs, common_conditions::in_state, NextState, State}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default, utils::tracing::Event};
 
-    use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{Ressource, spawn_resources, ContentCase}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action, get_nbr_player_cell}, parser::parser::Parse, env::env::RessCommandId};
+    use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{anim_take_ressource_res, get_ressource_entity, spawn_resources, ContentCase, Ressource}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action, get_nbr_player_cell}, parser::parser::Parse, env::env::RessCommandId};
 
     // const for teams folder name 
     pub const SIZE_VECSPRITE: usize = 4;
@@ -60,6 +60,7 @@ pub mod dispatch{
         pub vec_id_command: Vec<usize>,
         pub first_command: Parse,
         pub vec_command: Vec<Parse>,
+        // pub vec_command: Vec<(Parse, u32)>,
     }
 
     impl Plugin for Dispatch{
@@ -229,9 +230,9 @@ pub mod dispatch{
                         }
 
                         Parse::Prend(_, _) => {
-                            let nbr_mov_command_waited = 3;
+                            let nbr_mov_command_waited = 2;
                             complexcommand.first_command = (event.0.0).clone();
-                            complexcommand.nbr_command;
+                            complexcommand.nbr_command = nbr_mov_command_waited;
                             let first_id = streamevent.id + 1;
                             let last_id = streamevent.id + nbr_mov_command_waited as usize + 1;
                             for i in first_id..last_id
@@ -239,7 +240,9 @@ pub mod dispatch{
                                 complexcommand.vec_id_command.push(i);
                                 
                             }
+                            println!("nbr_command_wanted {} streamevent_id {:?}", nbr_mov_command_waited, streamevent.id);
                             statecommand.set(StateCommand::Stacking_Command);
+                            asset_map.last_event_id_visited = streamevent.id;
                             return ;
 
                         }
@@ -269,24 +272,29 @@ pub mod dispatch{
         mut statecommand: ResMut<NextState<StateCommand>>,
     )
     {
-        println!("stacking {:?}", complexcommand.vec_id_command);
-        println!("complexcommand.nbr_command {:?}", complexcommand.nbr_command);
-        println!("complexcommand.vec_command.len() {:?}", complexcommand.vec_command.len());
-        if complexcommand.nbr_command as usize > complexcommand.vec_command.len()
-        {
+        // pour l instant generic aux 3 complexes events: Expulse(nb: nb de joueurs concerne, type: Movement), Prend et Pose (nb: 2, type: inventaire et contenu de la case)
+        
+        
+        // if complexcommand.nbr_command as usize > complexcommand.vec_command.len()
+        // {
             let mut x = &Parse::Donothing;
             let events = reader.read_with_id();
             for event in events{
                 let parse = &event.0.0;
-                let streamevent = event.1;
-                for id in complexcommand.vec_id_command.clone(){
-                    println!("stacking event_id {:?}", streamevent);
-                    println!("stacking parse {:?}", parse);
-                    if streamevent.id == id{
-                        complexcommand.vec_command.push(parse.clone());
-                        asset_map.last_event_id_visited = streamevent.id;
-                    }
-                }
+                complexcommand.vec_command.push(parse.clone());
+                // let streamevent = event.1;
+                // for id in complexcommand.vec_id_command.clone(){
+                //     println!("stacking event_id {:?}", streamevent);
+                //     println!("stacking parse {:?}", parse);
+                //     if streamevent.id == id{
+                //         complexcommand.vec_command.push(parse.clone());
+                //         asset_map.last_event_id_visited = streamevent.id;
+                //     }
+                //     // if id > streamevent.id{
+                //     //     panic!("ah bah cho un peu")
+                //     //     // println!("{:?}", &events);
+                //     // }
+                // }
             }
             // for event in reader.read(){
             //     x = &event.0; //va jusqu a la fin parce que pour une raison que j ignore le reader.read() stack les fucking events .... 
@@ -295,9 +303,18 @@ pub mod dispatch{
                 // complexcommand.vec_command.push(x.clone());
             // }
             statecommand.set(StateCommand::Stacking_Command);
-        }
-        else
+        
+        if reader.is_empty() 
         {
+            
+            println!("pb stacking command ? {:?}", complexcommand.vec_command);
+            println!(" asset_map.last_event_id  {:?}", asset_map.last_event_id_visited);
+            // asset_map.last_event_id_visited = streamevent.id;
+        
+             println!("stacking {:?}", complexcommand.vec_id_command);
+            println!("complexcommand.nbr_command {:?}", complexcommand.nbr_command);
+            println!("complexcommand.vec_command.len() {:?}", complexcommand.vec_command.len());
+        
             println!("tab {:?} len {}", complexcommand.vec_command, complexcommand.nbr_command);
             statecommand.set(StateCommand::Complexe_Command);
         }
@@ -314,10 +331,12 @@ pub mod dispatch{
     }
 
     pub fn dispatch_handle_complex_command(
+        mut commands: Commands,
         mut asset_map: ResMut<RessCommandId>,
         mut complexcommand: ResMut<Complexcommand>,
         mut statecommand: ResMut<NextState<StateCommand>>,
         mut query_action_player: Query<& mut ActionPlayer>,
+        mut query_transform_res: Query<&mut Transform>,
     )
     {
         
@@ -325,7 +344,7 @@ pub mod dispatch{
         {
             // expulse est un evenement dont le nb de commandes n'est pas connu a l'avance 
             Parse::Expulse(id_1) => {
-                // on iter donc sur tous les movement precedemment sauvegarde
+                // on iter donc sur tous les movements precedemments sauvegarde
                 for mov_expulse in &complexcommand.vec_command
                 {
                     // un if let semblerai plus approprie 
@@ -348,8 +367,17 @@ pub mod dispatch{
                 }
                 
             }
-            Parse::Prend(_,_) => {
-                
+            Parse::Prend(num_player, num_res) => {
+                if let Parse::Inventaire(_, _, _, _, _, _, _, _, _, _) = complexcommand.vec_command[0] 
+                {
+                    if let Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) = complexcommand.vec_command[1]{
+                        println!("Ressource?");
+                        let (x_rel, y_rel) = asset_map.center_map_new_system(x as f32, y as f32);
+                        let res = Ressource{ x_rel: x_rel, x: x, y: y, y_rel: y_rel, n: n, l: l, d: d, s: s, m: m, ph: ph, th: th};
+                        let res_entity = get_ressource_entity(& mut commands,  &res, num_res, & mut asset_map.id_Ressource);
+                        anim_take_ressource_res(&mut query_transform_res, &res_entity, res);
+                    }
+                }
             }
             
             _ => ()

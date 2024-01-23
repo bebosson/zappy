@@ -147,7 +147,8 @@ pub mod paquet_crafter
 
     fn packet_gfx_case_content(coord: Point, cell: Cell) -> String
     {
-        format!("bct {} {} {} {} {} {} {} {} {}",
+        // IL MANQUE UN \n ICI !!!!
+        format!("bct {} {} {} {} {} {} {} {} {}\n",
             coord.x,
             coord.y,
             cell.ressources.food,

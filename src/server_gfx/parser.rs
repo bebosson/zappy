@@ -7,6 +7,7 @@ pub enum Parse{
     ConnexionPlayer(u8, u8, u8, u8, u8, String), //"pnw #n X Y O L N\n"
     MovementPlayer(u8, u8, u8, u8), // "ppo #n X Y O\n"
     NomEquipe(String),
+    Inventaire(u8, u32, u32, u8, u8, u8, u8, u8, u8, u8),
     Expulse(u8),
     Prend(u8, u8),
     Donothing,
@@ -26,6 +27,7 @@ pub fn copy_until_char(buffer: &[u8], char: u8) -> String
 
 pub fn parse_into_integer(content: String) -> Vec<i32>
 {
+    println!("{}", content);
     let mut iter = content.split_ascii_whitespace().skip(1);
     // println!("{:?}", iter);
     let vec : Vec<i32> =  iter.map(|x| x.parse::<i32>().ok().unwrap()).collect();
@@ -114,6 +116,23 @@ pub fn parse_take_ressouce(content: String) -> Parse
     Parse::Prend(id, resource)
 }
 
+pub fn parse_inventaire(content: String) -> Parse
+{
+    let vec_parsing = parse_into_integer(content);
+    
+    let res = Parse::Inventaire(vec_parsing[0] as u8,
+                        vec_parsing[1] as u32, 
+                        vec_parsing[2] as u32, 
+                        vec_parsing[3] as u8, 
+                        vec_parsing[4] as u8, 
+                        vec_parsing[5] as u8, 
+                        vec_parsing[6] as u8, 
+                        vec_parsing[7] as u8, 
+                        vec_parsing[8] as u8, 
+                        vec_parsing[9] as u8);
+    res 
+}
+
 
 // dispatch what you parse 
 pub fn parser_server_packet(pkt_receive: String) -> Parse
@@ -145,10 +164,10 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                 //     // Niveau d’un joueur. "plv #n L\n" 
                 //     todo!();
                 // }
-                // "pin" => {
-                //     // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
-                //     todo!();
-                // }
+                "pin" => {
+                    // Inventaire d’un joueur. "pin #n X Y q q q q q q q\n" 
+                    parse = parse_inventaire(pkt_receive);
+                }
                 "pex" => {
                     parse = parse_expulse(pkt_receive);
                 }

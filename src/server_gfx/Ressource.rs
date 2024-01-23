@@ -2,7 +2,7 @@ pub mod Ressource
 {
     use std::collections::HashMap;
 
-    use bevy::{ecs::{system::{Commands, Res}, entity::Entity}, asset::AssetServer, sprite::SpriteBundle, a11y::accesskit::Vec2, math::Vec3, transform::components::Transform};
+    use bevy::{ecs::{system::{Commands, Query, Res}, entity::Entity}, asset::AssetServer, sprite::SpriteBundle, a11y::accesskit::Vec2, math::Vec3, transform::{self, components::Transform}};
 
     use crate::{map::map::{transform_for_ressource}, TILES_WIDTH};
     
@@ -199,6 +199,8 @@ pub mod Ressource
         }
     }
 
+
+    
     pub fn spawn_resources(commands: & mut Commands, asset_server: &Res<AssetServer> , res: Ressource, vec_hashress: &mut Vec<Vec<HashMap<usize, ContentCase>>>)
     {
         println!("{:?}", vec_hashress[res.y as usize][res.x as usize]);
@@ -223,5 +225,33 @@ pub mod Ressource
         // ));
         // commands.get_entity(entity)
 
+    }
+
+    pub fn anim_take_ressource_res(mut query_pos_res: & mut Query<& mut Transform>, id: &Entity, res: Ressource)
+    {
+        // let type_action_ref: TypeAction = type_action;
+        if let Ok(mut transform) = query_pos_res.get_mut(*id)
+        {
+            let vec = Vec3::new(res.x_rel, res.y_rel, 13.);
+            *transform = Transform::from_translation(vec);
+            // action_player.vecdeque.push_back(type_action);
+            // println!("{:?}", action_player);
+        }
+    }
+
+    pub fn get_ressource_entity(command: &mut Commands, res: &Ressource, num_res: u8, vec_hashress: &mut Vec<Vec<HashMap<usize, ContentCase>>>) -> Entity
+    {
+        if let Some(content_case) = vec_hashress[res.y as usize][res.x as usize].get(&(num_res as usize)){
+            if let Some(entity) = content_case.all_entity.last()
+            {
+                return *entity
+            }
+            else{
+                panic!("at this point the entity must exist");
+            }
+        }
+        else {
+            panic!("at this point the content case must exist");
+        }
     }
 }
