@@ -33,10 +33,11 @@ fn main()
                                                 .expect("Couldn't connect to the server");
     stream.set_read_timeout(Some(Duration::new(1, 0)))
             .expect("set_read_timeout call failed");
+    // ATTENTION!!!! la taille du buffer n'est pas previsble sur voir, ivt etc...
     let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
-    connect_to_server(& mut stream, & mut data, &teamname);
+    connect_to_server(&mut stream, &mut data, &teamname);
     
-    player_exec(& mut stream, & mut data);
+    player_exec(&mut stream, &mut data);
 
     println!("Terminated.");
 }
@@ -48,13 +49,13 @@ fn extract_lines(buffer: &str) -> Vec<String>
 
 fn flush(data: &mut [u8])
 {
-    for i in & mut *data{
+    for i in &mut *data{
         *i = 0;
     }
     //println!("{:?}", data);
 }
 
-fn connect_to_server(stream: & mut TcpStream, data: & mut [u8], teamname: &String)
+fn connect_to_server(stream: &mut TcpStream, data: &mut [u8], teamname: &String)
 {
     loop 
     {
@@ -74,7 +75,33 @@ fn connect_to_server(stream: & mut TcpStream, data: & mut [u8], teamname: &Strin
 
 }
 
-fn player_exec(stream: & mut TcpStream, data: & mut [u8])
+fn read_match(data: &mut[u8], cmd_snt: &mut u8)
+{
+    //convert data(buffer) into string and flush (overkill)
+    let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
+    let string_buffer = string_buffer.trim_matches(char::from(0));  
+    //println!("string buffer --> {:?}", string_buffer);
+    
+    match string_buffer
+    {
+        "ok" =>
+        {
+            *cmd_snt -= 1;
+            println!("\n\nACTION EXECUTEE\n\n");
+        },
+        "ko" =>
+        {
+            println!("\n\nACTION REFUSEE\n\n");
+        },
+        "Endconnection" =>
+        {
+            exit(0);
+        },
+        _ => (), // println!("Failed to receive data: {}", e);
+    } 
+}
+
+fn player_exec(stream: &mut TcpStream, data: &mut [u8])
 {
     let mut cmd_snt = 0;
     loop
@@ -82,28 +109,7 @@ fn player_exec(stream: & mut TcpStream, data: & mut [u8])
         println!("rentre dans la boucle");
         if let Ok(_) = stream.read(data)
         {
-            //convert data(buffer) into string and flush (overkill)
-            let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
-            let string_buffer = string_buffer.trim_matches(char::from(0));  
-            //println!("string buffer --> {:?}", string_buffer);
-            
-            match string_buffer
-            {
-                "ok" =>
-                {
-                    cmd_snt -= 1;
-                    println!("ACTION EXECUTEE");
-                },
-                "Endconnection" =>
-                {
-                    exit(0);
-                },
-                _ => 
-                {
-                    // println!("Failed to receive data: {}", e);
-                    ;
-                },
-            } 
+            read_match(data, &mut cmd_snt);
         }
         if cmd_snt < 10
         {

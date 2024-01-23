@@ -47,6 +47,21 @@ pub mod player
         pub level: u8,
     }
 
+    impl SimplePlayer {
+        pub fn new(original_player: &Player) -> Self
+        {
+            SimplePlayer
+            {
+                id:original_player.id,
+                coord: original_player.coord,
+                ivt: original_player.ivt,
+                life: original_player.life,
+                orientation: original_player.orientation,
+                level: original_player.level,
+            }
+        }
+    }
+
     #[derive(Debug)]
     pub struct Player
     {
@@ -66,8 +81,8 @@ pub mod player
         
         // }
         
-        impl Player
-        {
+    impl Player
+    {
             pub fn new(stream: TcpStream, id: u32, port: u16, width: u8, height: u8) -> Self
         {
             let mut rng = thread_rng();

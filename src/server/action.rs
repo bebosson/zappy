@@ -3,7 +3,7 @@ pub mod action
     use std::arch::x86_64::_MM_FROUND_TO_NEAREST_INT;
     use std::collections::HashMap;
 
-    use crate::player::player::{Player, Orientation, Egg};
+    use crate::player::player::{Player, Orientation, Egg, SimplePlayer};
     use crate::cell::cell::{Point, Cell};
     use crate::teams::team::{Team, self};
     use crate::{get_obj_from_string, player};
@@ -62,6 +62,7 @@ pub mod action
         ActionInt(u8),
         ActionHashMap(HashMap<String, u8>),
         ActionVecHashMap(Vec<HashMap<String, u8>>),
+        ActionOthers,
     }
 
     #[derive(Debug, Clone)]
@@ -108,7 +109,7 @@ pub mod action
     }
 
 
-    pub fn avance(height: u8, width: u8, player: &mut Player/* , orientation: Orientation // pour pouvoir faire avance ou avance_from_expulse */) -> bool
+    pub fn avance(width: u8, height: u8, player: &mut Player/* , orientation: Orientation // pour pouvoir faire avance ou avance_from_expulse */) -> bool
     {
         match player.orientation
         {
@@ -159,7 +160,7 @@ pub mod action
         true
     }
 
-    pub fn voir(player: &Player, cells: &Vec<Vec<Cell>>, teams: &Vec<Team>) -> Vec<HashMap<String, u8>>
+    pub fn voir(player: &SimplePlayer, cells: &Vec<Vec<Cell>>, teams: &Vec<Team>) -> Vec<HashMap<String, u8>>
     {
         let mut cases_content: Vec<HashMap<String, u8>> = Vec::new();
         let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
@@ -234,7 +235,7 @@ pub mod action
         true
     }
 
-    pub fn expulse(teams: & mut Vec<Team>, player: & Player, width: u8, height: u8) -> bool
+    pub fn expulse(teams: & mut Vec<Team>, player: &SimplePlayer, width: u8, height: u8) -> bool
     {
         let mut nb_kick_player = 0;
         let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, width as usize, height as usize);
@@ -260,7 +261,7 @@ pub mod action
         true
     }
 
-    pub fn fork(player_clone: &Player, teams: &mut Vec<Team>) -> bool
+    pub fn fork(player_clone: &SimplePlayer, teams: &mut Vec<Team>) -> bool
     {
         let nb_player = get_nb_total_players(&teams);
         for team in teams
@@ -276,7 +277,7 @@ pub mod action
         true
     }
 
-    pub fn connect_nbr(player: &Player, teams: &Vec<Team>) -> u8
+    pub fn connect_nbr(player: &SimplePlayer, teams: &Vec<Team>) -> u8
     {
         for team in teams
         {
@@ -291,7 +292,7 @@ pub mod action
         0
     }
 
-    pub fn incantation(player: &Player, teams: &Vec<Team>) -> String
+    pub fn incantation(player: &SimplePlayer, teams: &Vec<Team>) -> String
     {
         let mut nb_players = 0;
         let mut is_enough_players_on_coord = false;
@@ -337,7 +338,7 @@ pub mod action
         "".to_string()
     }
 
-    pub fn broadcast(player: &Player, teams: &Vec<Team>) -> bool
+    pub fn broadcast(player: &SimplePlayer, teams: &Vec<Team>) -> bool
     {
         for team in teams
         {
@@ -426,7 +427,7 @@ pub mod action
         }
     }
 
-    fn get_cases_coord_from_player_pov(player: &Player, width: usize, height: usize) -> Vec<Point>
+    fn get_cases_coord_from_player_pov(player: &SimplePlayer, width: usize, height: usize) -> Vec<Point>
     {
         let mut cases_coord : Vec<Point> = Vec::new();
 

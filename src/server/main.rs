@@ -13,7 +13,8 @@ use gamecontrol::game::GameController;
 use teams::team::{Team, self};
 use player::player::Player;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION, avance, droite, gauche, voir, inventaire, prend, pose, expulse, broadcast, incantation, fork, connect_nbr};
-use crate::paket_crafter::paquet_crafter::{craft_gfx_packet_pre, craft_gfx_packet_post};
+use crate::paket_crafter::paquet_crafter::{craft_gfx_packet_pre, craft_gfx_packet_post, craft_client_packet};
+use crate::player::player::SimplePlayer;
 
 
 //add module in the crate root
@@ -349,30 +350,6 @@ fn get_ready_action_list(teams: &[Team]) -> Vec<ReadyAction>
 }
 */
 
-// fn clone_player_from_id(teams: Vec<Team>, id: u32) -> Option<(Player, Vec<Team>)>
-// {
-//     for team in teams {
-//         for player in team.players {
-//             if id == player.id {
-//                 // let take_stream = player.stream;
-//                 let ret_player = Player 
-//                 {
-//                     stream: player.stream,
-//                     id: player.id,
-//                     coord: player.coord,
-//                     ivt: player.ivt,
-//                     life: player.life,
-//                     orientation: player.orientation,
-//                     level: player.level,
-//                     actions: player.actions.clone(),
-//                 };
-//                 return Some((ret_player, teams));
-//             }
-//         }
-//     }
-//     None
-// }
-
 fn get_player_from_id(teams: &mut Vec<Team>, id: u32) -> Option<&mut Player>
 {
     for team in teams {
@@ -384,41 +361,6 @@ fn get_player_from_id(teams: &mut Vec<Team>, id: u32) -> Option<&mut Player>
     }
     None
 }
-
-/*
-**  retreive player from it's id
-**  params:
-**      teams: all teams
-**      id: player id to find into `teams`
-**  return:
-**      Option<Player>: found player, None instead
-**/
-// fn clone_player_from_isd(teams: &Vec<Team>, id: u32) -> Option<Player>
-// {
-//     for team in teams
-//     {
-//         for player in &team.players
-//         {
-//             if id == player.id
-//             {
-//                 // return player.clone();
-//                 let ret_player = Player 
-//                 {
-//                     stream: player.stream,
-//                     id,
-//                     coord: player.coord,
-//                     ivt: player.ivt,
-//                     life: player.life,
-//                     orientation: player.orientation,
-//                     level: player.level,
-//                     actions: player.actions.clone(),
-//                 };
-//                 return Some(ret_player);
-//             }
-//         }
-//     }
-//     None
-// }
 
 /*
 **  find the ready action in the player actions list
@@ -447,88 +389,27 @@ fn find_index_action(ready_action: &ReadyAction, player: &Player) -> usize
 /*
 **  execute action from a ReadyAction 
 **/
-fn exec_action(ready_action: &ReadyAction, game_ctrl: &mut GameController, player: &mut Player) -> Option<ActionResult>
+// reste faire la premiere partie de l'incantation
+// debut incantation -> others / fin -> self ???
+fn action_on_self_or_cells(ready_action: &ReadyAction, player: &mut Player, cells: &mut Vec<Vec<Cell>>, width: u8, height: u8) -> (Option<ActionResult>, Option<SimplePlayer>)
 {
-    // let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
-    // TODO:    checher une autre facon plus propre de faire executer mes actions
-    //          ou alors changer les method par des methodes statics 
-    // let action = Action::new(NO_ACTION);
     let ret = match ready_action.action.action_name.as_str()
     {
-        "avance" => ActionResult::ActionBool(avance(game_ctrl.x, game_ctrl.y, player)),
+        // actions sur self
+        "avance" => ActionResult::ActionBool(avance(width, height, player)),
         "droite" => ActionResult::ActionBool(droite(player)),
         "gauche" => ActionResult::ActionBool(gauche(player)),
-        "voir" => ActionResult::ActionVecHashMap(voir(player, &game_ctrl.cells, &game_ctrl.teams)),
-        "inventaire" => ActionResult::ActionHashMap(inventaire(player)),
-        "prend" => ActionResult::ActionBool(prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
-        "pose" => ActionResult::ActionBool(pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
-        "expulse" => ActionResult::ActionBool(expulse(&mut game_ctrl.teams, player, game_ctrl.x, game_ctrl.y)),
-        "broadcast" => ActionResult::ActionBool(broadcast(player, &game_ctrl.teams)),
-        "incantation" => ActionResult::ActionString(incantation(player, &game_ctrl.teams)),
-        "fork" => ActionResult::ActionBool(fork(player, &mut game_ctrl.teams)),
-        "connect_nbr" => ActionResult::ActionInt(connect_nbr(player, &game_ctrl.teams)),
-        _ => return None,
-    };
-    // find the index of the executed actions
-    // TODO:    normally the ready action is on top of the
-    //          player action list, so the index is always 0
-    let index_action = find_index_action(&ready_action, player);
-    // remove action from player action list
-    player.actions.remove(index_action);
-    
-    // TODO :   find a better way to apply the modification of the
-    //          player on the team directly
-    for team in &mut game_ctrl.teams
-    {
-        for team_player in &mut team.players
-        {
-            if player.id == team_player.id
-            {
-                //un peu degueu -> TODO: implementer une methode
-                team_player.coord = player.coord;
-                team_player.ivt = player.ivt;
-                team_player.life = player.life;
-                team_player.orientation = player.orientation;
-                team_player.level = player.level;
-                team_player.actions.clone_from(&player.actions);
-            }
-        }
-    }
-    //println!("exec action {} ---> {:?}", ready_action.action.action_name, ret);
-    Some(ret)
-}
-
-fn self_or_cells_action(ready_action: &ReadyAction, player: &mut Player, cells: &mut Vec<Vec<Cell>>) -> Option<ActionResult>
-{
-    // let mut player = find_player_from_id(&game_ctrl.teams, ready_action.id).unwrap();
-    // TODO:    checher une autre facon plus propre de faire executer mes actions
-    //          ou alors changer les method par des methodes statics 
-    // let action = Action::new(NO_ACTION);
-
-    let x = cells.len();
-    let y = cells[0].len();
-    println!("x = {} / y = {}", x, y);
-    let ret = match ready_action.action.action_name.as_str()
-    {
-        "avance" => ActionResult::ActionBool(avance(x as u8, y as u8, player)),
-        "droite" => ActionResult::ActionBool(droite(player)),
-        "gauche" => ActionResult::ActionBool(gauche(player)),
-        // "voir" => ActionResult::ActionVecHashMap(voir(player, &game_ctrl.cells, &game_ctrl.teams)),
-        "voir" => ActionResult::ActionBool((true)),
         "inventaire" => ActionResult::ActionHashMap(inventaire(player)),
         "prend" => ActionResult::ActionBool(prend(&mut cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
         "pose" => ActionResult::ActionBool(pose(&mut cells[player.coord.y as usize][player.coord.x as usize], player, ready_action.action.arg.as_ref().unwrap())),
-        // "expulse" => ActionResult::ActionBool(expulse(&mut game_ctrl.teams, player, game_ctrl.x, game_ctrl.y)),
-        "expulse" =>  ActionResult::ActionBool((true)),
-        // "broadcast" => ActionResult::ActionBool(broadcast(player, &game_ctrl.teams)),
-        "broadcast" =>  ActionResult::ActionBool((true)),
-        // "incantation" => ActionResult::ActionString(incantation(player, &game_ctrl.teams)),
-        "incantation" =>  ActionResult::ActionBool((true)),
-        // "fork" => ActionResult::ActionBool(fork(player, &mut game_ctrl.teams)),
-        "fork" =>  ActionResult::ActionBool((true)),
-        // "connect_nbr" => ActionResult::ActionInt(connect_nbr(player, &game_ctrl.teams)),
-        "connect_nbr" =>  ActionResult::ActionBool((true)),
-        _ => return None,
+        // actions sur les autres players
+        "voir" => ActionResult::ActionOthers,
+        "expulse" =>  ActionResult::ActionOthers,
+        "broadcast" =>  ActionResult::ActionOthers,
+        "incantation" =>  ActionResult::ActionOthers,
+        "fork" =>  ActionResult::ActionOthers,
+        "connect_nbr" =>  ActionResult::ActionOthers,
+        _ => return (None, None),
     };
     // // find the index of the executed actions
     // // TODO:    normally the ready action is on top of the
@@ -537,27 +418,24 @@ fn self_or_cells_action(ready_action: &ReadyAction, player: &mut Player, cells: 
     // // remove action from player action list
     player.actions.remove(index_action);
     
-    // // TODO :   find a better way to apply the modification of the
-    // //          player on the team directly
-    // for team in &mut game_ctrl.teams
-    // {
-    //     for team_player in &mut team.players
-    //     {
-    //         if player.id == team_player.id
-    //         {
-    //             //un peu degueu -> TODO: implementer une methode
-    //             team_player.coord = player.coord;
-    //             team_player.ivt = player.ivt;
-    //             team_player.life = player.life;
-    //             team_player.orientation = player.orientation;
-    //             team_player.level = player.level;
-    //             team_player.actions.clone_from(&player.actions);
-    //         }
-    //     }
-    // }
-    //println!("exec action {} ---> {:?}", ready_action.action.action_name, ret);
-    // Some(ret)
-    Some(ActionResult::ActionBool((true)))
+    let simple_player = SimplePlayer::new(&player);
+    (Some(ret), Some(simple_player))
+    // Some(ActionResult::ActionBool((true)))
+}
+
+fn action_on_others(ready_action: &ReadyAction, teams: &mut Vec<Team>, cells: &Vec<Vec<Cell>>, simple_player: &SimplePlayer, width: u8, height: u8) -> Option<ActionResult>
+{
+    let ret = match ready_action.action.action_name.as_str()
+    {
+        "voir" => ActionResult::ActionVecHashMap(voir(&simple_player, cells, teams)),
+        "expulse" => ActionResult::ActionBool(expulse(teams, simple_player, width, height)),
+        "broadcast" => ActionResult::ActionBool(broadcast(simple_player, teams)),
+        "incantation" => ActionResult::ActionString(incantation(simple_player, teams)),
+        "fork" => ActionResult::ActionBool(fork(simple_player, teams)),
+        "connect_nbr" => ActionResult::ActionInt(connect_nbr(simple_player, teams)),
+        _ => return None,
+    };
+    Some(ret)
 }
 
 fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 32]
@@ -619,6 +497,51 @@ pub fn first_connection_gfx() -> Option<TcpStream>
     } 
 }
 
+// fn initialize_connections(listener: TcpListener)
+// {
+//     for tcpstream in listener.incoming()
+//     {
+//         // println!("{:?}", listener.incoming());
+//         let mut stream = tcpstream?;
+//         println!("Connection established!");
+        
+//         let _ = stream.write(b"Bienvenue");
+//         // register the new client
+//         create_player_or_kick(stream, &mut hashmap, &mut vec_args, &mut id, &mut game_ctrl);
+//         // set timeout
+        
+//         // vec_stream.push(stream);
+//         if client_all_connect(vec_args.c, vec_args.n.len(), &mut hashmap) { break ; }
+//     }
+// }
+
+fn exec_and_send(ready_action: &ReadyAction, game_ctrl: &mut GameController, id: &mut u32, gfx_stream: &mut TcpStream)
+{
+    /*****************************************************************\
+     * Nouvelle logique:
+     * On separe les actions entre
+     *      1/ action sur le player qui execute l'action et/ou les cells
+     *      2/ action sur les autres players
+    \*****************************************************************/ 
+    let mut player = get_player_from_id(&mut game_ctrl.teams, *id).unwrap();
+    let (option_action, option_player) = action_on_self_or_cells(&ready_action, &mut player, &mut game_ctrl.cells, game_ctrl.x, game_ctrl.y);
+    let mut action_result = option_action.unwrap();
+    let simple_player = option_player.unwrap();
+    if action_result == ActionResult::ActionOthers {
+        action_result = action_on_others(&ready_action, &mut game_ctrl.teams, &game_ctrl.cells, &simple_player, game_ctrl.x, game_ctrl.y).unwrap();
+    }
+    // deuxieme appel a get_player_from_id a cause des borrows mut, y a peut etre mieux a faire ?
+    let client_pkt = craft_client_packet(&action_result);
+    let player = get_player_from_id(&mut game_ctrl.teams, *id).unwrap();
+    let _ = player.stream.write(b"ok"); // on a a nouveau le meme probleme qu'avant dans exec_action pour trouver le player vu qu'on a pas le stream du player
+    
+    let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl, &simple_player);
+    println!("gfx pkt ready action ---> {:?}", gfx_pkt);
+    if let Some(packet) = gfx_pkt {
+        send_to_server_gfx(packet, gfx_stream);
+    }
+}
+
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut gfx_stream: TcpStream;
@@ -671,10 +594,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
     
     loop
     {
-        if check_winner(&game_ctrl.teams) { return Ok(()); } // un peu bizarre ?
+        if check_winner(&game_ctrl.teams) { return Ok(()); } // provisoire
         let current_actions = receive_actions(&mut game_ctrl);
-                // break ; // bizarre: break sans concditions dans un for
-                
 
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
@@ -688,34 +609,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
             //     //let ret = send_pkt(gfx_pkt, None, GFX_SERVER_PORT, stream);
             // }
             println!("ready action list --> {:?}", ready_action_list);
-            for ready_action in ready_action_list
-            {
-
-
-
-            /*****************************************************************\
-             * Nouvelle logique:
-             * On separe les actions entre
-             *      1/ action sur le player qui execute l'action
-             *      2/ action sur les autres players ou les cells
-            \*****************************************************************/ 
-                // let (mut player, teamz) = clone_player_from_id(game_ctrl.teams, ready_action.id).unwrap();
-                let mut player = get_player_from_id(&mut game_ctrl.teams, id).unwrap();
-
-                let action_result = self_or_cells_action(&ready_action, &mut player, &mut game_ctrl.cells).unwrap();
-                // stream.write(b"ok"); // on a a nouveau le meme probleme qu'avant dans exec_action pour trouver le player vu qu'on a pas le stream du player
-                // let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl, &player); // need to be a option<vec<string>>
-                // println!("gfx pkt ready action ---> {:?}", gfx_pkt);
-                
-                // TODO :   soit on enleve c'est 3 lignes en dessous pour remplacer par send_pkt
-                //          soit on fait le meme mechansime qu'en dessous pour le client
-                // if let Some(packet) = gfx_pkt 
-                // {
-                //     send_to_server_gfx(packet, &mut gfx_stream);
-                // }
-                //let gfx_pkt = craft_gfx_packet(&action_result, &game_ctrl.teams);
-                // let client_pkt = craft_client_packet(&action_result, &game_ctrl.teams);
-                //let ret = send_pkt(gfx_pkt, client_pkt, GFX_SERVER_PORT, stream);
+            for ready_action in ready_action_list {
+                exec_and_send(&ready_action, &mut game_ctrl, &mut id, &mut gfx_stream);
             }
         }
 
@@ -736,6 +631,3 @@ fn main() -> Result<(), Box<dyn GenericError>>
     }
     
 }
-
-//use std::process;
-//process::exit(0);

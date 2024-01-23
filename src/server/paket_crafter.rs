@@ -1,11 +1,12 @@
 pub mod paquet_crafter
 {
+    use crate::BUF_SIZE;
     // use crate::clone_player_from_id;
     use crate::teams::team::Team;
     use crate::gamecontrol::game::GameController;
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::{Point, Cell};
-    use crate::player::player::{Orientation, Player};
+    use crate::player::player::{Orientation, Player, SimplePlayer};
     use crate::action::action::{ActionResult, ReadyAction, Action};
 
 
@@ -40,7 +41,7 @@ pub mod paquet_crafter
     **      None if the execution fail or if the cmd doesn't need to send gfx pkt
     **  
     */
-    pub fn craft_gfx_packet_post(ready_action: &ReadyAction, action_result: &ActionResult, game_ctrl: &GameController, player: &Player) -> Option<Vec<String>>
+    pub fn craft_gfx_packet_post(ready_action: &ReadyAction, action_result: &ActionResult, game_ctrl: &GameController, player: &SimplePlayer) -> Option<Vec<String>>
     {
         let mut cmd: Vec<String> = Vec::new();
         match ready_action.action.action_name.as_str()
@@ -86,23 +87,45 @@ pub mod paquet_crafter
                 // ICI le pkt envoye est celui de fin d'incantation
                 // TODO :   creer le paquet de debut d'incantation 
                 //          + creer le paquet de debut d'incantation
-                if *action_result == ActionResult::ActionBool(false) { return None; }
-                cmd.push(packet_gfx_incantation(player.coord.clone()));
-                for team in &game_ctrl.teams
-                {
-                    for tmp_player in &team.players
-                    {
-                        if incantation_is_finish(&player, &tmp_player)
-                        {
-                            cmd.push(packet_gfx_level_up(tmp_player.id, tmp_player.level));
-                        }
-                    }
-                }
+                // if *action_result == ActionResult::ActionBool(false) { return None; }
+                // cmd.push(packet_gfx_incantation(player.coord.clone()));
+                // for team in &game_ctrl.teams
+                // {
+                //     for tmp_player in &team.players
+                //     {
+                //         if incantation_is_finish(&player, &tmp_player)
+                //         {
+                //             cmd.push(packet_gfx_level_up(tmp_player.id, tmp_player.level));
+                //         }
+                //     }
+                // }
+                return None;
             },
             _ => (),
         };
         Some(cmd)
     }
+
+    fn str_to_buf(str: &str) -> [u8; BUF_SIZE]
+    {
+        let mut buf = [0 as u8; BUF_SIZE];
+        for (i, c) in str.chars().enumerate()
+        {
+            buf[i] = c as u8;
+        }
+        buf
+    }
+
+    pub fn craft_client_packet(action_result: &ActionResult) -> Option<[u8; BUF_SIZE]>
+    {
+        match action_result {
+            // ActionResult::ActionBool() => buf,
+            ActionResult::ActionBool(true) => Some(str_to_buf("ok")),
+            ActionResult::ActionBool(false) => Some(str_to_buf("ko")),
+            _ => None
+        };
+        None
+    } 
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
