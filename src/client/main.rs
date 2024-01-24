@@ -49,7 +49,7 @@ fn extract_lines(buffer: &str) -> Vec<String>
 
 fn flush(data: &mut [u8])
 {
-    for i in &mut *data{
+    for i in &mut *data {
         *i = 0;
     }
     //println!("{:?}", data);

@@ -109,8 +109,7 @@ pub mod paquet_crafter
     fn str_to_buf(str: &str) -> [u8; BUF_SIZE]
     {
         let mut buf = [0 as u8; BUF_SIZE];
-        for (i, c) in str.chars().enumerate()
-        {
+        for (i, c) in str.chars().enumerate() {
             buf[i] = c as u8;
         }
         buf
@@ -118,13 +117,11 @@ pub mod paquet_crafter
 
     pub fn craft_client_packet(action_result: &ActionResult) -> Option<[u8; BUF_SIZE]>
     {
-        match action_result {
-            // ActionResult::ActionBool() => buf,
+        return match action_result {
             ActionResult::ActionBool(true) => Some(str_to_buf("ok")),
             ActionResult::ActionBool(false) => Some(str_to_buf("ko")),
             _ => None
         };
-        None
     } 
 
 

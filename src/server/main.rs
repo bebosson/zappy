@@ -497,24 +497,6 @@ pub fn first_connection_gfx() -> Option<TcpStream>
     } 
 }
 
-// fn initialize_connections(listener: TcpListener)
-// {
-//     for tcpstream in listener.incoming()
-//     {
-//         // println!("{:?}", listener.incoming());
-//         let mut stream = tcpstream?;
-//         println!("Connection established!");
-        
-//         let _ = stream.write(b"Bienvenue");
-//         // register the new client
-//         create_player_or_kick(stream, &mut hashmap, &mut vec_args, &mut id, &mut game_ctrl);
-//         // set timeout
-        
-//         // vec_stream.push(stream);
-//         if client_all_connect(vec_args.c, vec_args.n.len(), &mut hashmap) { break ; }
-//     }
-// }
-
 fn exec_and_send(ready_action: &ReadyAction, game_ctrl: &mut GameController, id: &mut u32, gfx_stream: &mut TcpStream)
 {
     /*****************************************************************\
@@ -530,10 +512,11 @@ fn exec_and_send(ready_action: &ReadyAction, game_ctrl: &mut GameController, id:
     if action_result == ActionResult::ActionOthers {
         action_result = action_on_others(&ready_action, &mut game_ctrl.teams, &game_ctrl.cells, &simple_player, game_ctrl.x, game_ctrl.y).unwrap();
     }
+
     // deuxieme appel a get_player_from_id a cause des borrows mut, y a peut etre mieux a faire ?
-    let client_pkt = craft_client_packet(&action_result);
+    let client_pkt = craft_client_packet(&action_result).unwrap();
     let player = get_player_from_id(&mut game_ctrl.teams, *id).unwrap();
-    let _ = player.stream.write(b"ok"); // on a a nouveau le meme probleme qu'avant dans exec_action pour trouver le player vu qu'on a pas le stream du player
+    let _ = player.stream.write(&client_pkt);
     
     let gfx_pkt = craft_gfx_packet_post(&ready_action, &action_result, &game_ctrl, &simple_player);
     println!("gfx pkt ready action ---> {:?}", gfx_pkt);
@@ -599,7 +582,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
-        if ready_action_list.len() > 0 || current_actions.len() > 0
+        if ready_action_list.len() > 0 || current_actions.len() > 0 // pourquoi on verifie aussi current_actions ?
         {
             println!("current action list --> {:?}", current_actions);
             // for current_action in &current_actions
