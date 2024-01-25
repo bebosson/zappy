@@ -1,1 +1,11 @@
-prend food
+avance
+avance
+avance
+avance
+gauche
+gauche
+avance
+avance
+avance
+avance
+avance

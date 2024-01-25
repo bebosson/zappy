@@ -1,1 +1,12 @@
-expulse
+prend food
+avance
+prend food
+avance
+avance
+avance
+droite
+avance
+avance
+avance
+avance
+avance

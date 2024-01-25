@@ -147,6 +147,7 @@ pub mod dispatch{
             let parse = &event.0.0;
             let streamevent = event.1;
             println!("parse_dispatch {:?}", parse);
+            println!("state_enum_dispatch {:?}", state_enum);
             match state_enum
             {
                 StateCommand::Simple_Command => {
@@ -249,11 +250,12 @@ pub mod dispatch{
     )
     {
         
-        // println!("reader {:?}", reader.read_with_id());
-        
-            // println!("dispatch action event {:?}", parse);
-            // let last_id = reader.read_with_id().map(|x | )
-            // let event = event;
+            // Complex command
+            //first command => prend
+            // nb_command = 2
+            // 33
+            // [34, 35]
+            //
             match parse
             {
                 Parse::Expulse(id) => {
@@ -306,13 +308,14 @@ pub mod dispatch{
         query_action_player: & mut Query<& mut ActionPlayer>,
     )
     {
-        for id in complexcommand.vec_id_command.clone()
+        // println!("{:?}")
+        for id in complexcommand.vec_id_command.clone() //34, 36
         {
             println!("stacking event_id {:?}", streamevent);
             println!("stacking parse {:?}", parse);
             if streamevent.id == id // ajouter test command attendu (expulse => movement, pose => {Inventaire, Ressource})
             {
-                complexcommand.vec_command.push(parse.clone());
+                complexcommand.vec_command.push(parse.clone()); // [Inventaire, Ressource]
                 asset_map.last_event_id_visited = streamevent.id;
             }
             if complexcommand.nbr_command as usize == complexcommand.vec_command.len()
@@ -323,10 +326,10 @@ pub mod dispatch{
                 dispatch_handle_complex_command(commands, & mut asset_map, & mut complexcommand, statecommand, query_action_player, query_transform_res);
                 // }
             }
-            else {
-                statecommand.set(StateCommand::Stacking_Command);
+            // else {
+            //     statecommand.set(StateCommand::Stacking_Command);
                 
-            }
+            // }
         }
     }
 
@@ -351,7 +354,7 @@ pub mod dispatch{
                     match mov_expulse {
                         Parse::MovementPlayer(id, x, y, o) => {
                             // PAREIL CETTE CONDITION EST JUSTE LA PARCE QUE EXPULSE EST MAL IMPLEMENTE DANS SERVER
-                            if id_1 != *id { 
+                            
                                 // on recupere 
                                 let num_team = asset_map.get_player_num_team(id);
                                 let sprite_anim_mvmt = asset_map.get_sprite((*o - 1 ) as usize, num_team as usize);
@@ -360,7 +363,6 @@ pub mod dispatch{
                                 println!("do_action {:?}", mov_expulse);
                                 add_action(& mut query_action_player, &asset_map.get_player_id(id), expulsion);
                                 
-                            }
                         }
                         _ => panic!("on ne devrai qu'avoir des movement"),
                     }
@@ -380,7 +382,7 @@ pub mod dispatch{
                 }
             }
             
-            _ => ()
+            _ => (panic!("you should not be here"))
         }
         statecommand.set(StateCommand::Simple_Command);
         complexcommand.fflush();
