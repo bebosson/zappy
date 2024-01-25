@@ -14,6 +14,23 @@ pub enum Parse{
     // Movemement(i32, i32, i32)
 }
 
+    // pub enum TypeParse{
+    //     Simple(Parse)
+    //     Stacking(Ex)
+    // }
+pub fn simple_command(parse: &Parse) -> bool
+{
+    match parse
+    {
+        Parse::Expulse(_) | Parse::Prend(_, _) => // change state from simple to stacking 
+        {
+            false
+        }
+        Parse::Donothing => false,
+        _ => true,
+    }
+}
+
 
 pub fn copy_until_char(buffer: &[u8], char: u8) -> String
 {

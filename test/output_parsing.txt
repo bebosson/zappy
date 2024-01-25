@@ -1,131 +1,196 @@
-str "msz 4 4"
-thread_parse = Map(4, 4)
+str "msz 5 5"
+thread_parse = Map(5, 5)
 WAIT_RECEIVE = false
-str "sgt 1"
-thread_parse = Time(1)
-state Simple_Command
-WAIT_RECEIVE = false
-str "bct 0 0 3 1 0 0 0 1 1"
-bct 0 0 3 1 0 0 0 1 1
-thread_parse = RessourceCase(0, 0, 3, 1, 0, 0, 0, 1, 1)
-PARSE Map(4, 4)
-state Simple_Command
-state Simple_Command
-{}
-WAIT_RECEIVE = false
-PARSE Time(1)
-PARSE RessourceCase(0, 0, 3, 1, 0, 0, 0, 1, 1)
-str "bct 1 0 3 1 0 1 1 0 0"
-bct 1 0 3 1 0 1 1 0 0
-thread_parse = RessourceCase(1, 0, 3, 1, 0, 1, 1, 0, 0)
-WAIT_RECEIVE = false
-str "bct 2 0 0 1 0 1 0 1 0"
-bct 2 0 0 1 0 1 0 1 0
-thread_parse = RessourceCase(2, 0, 0, 1, 0, 1, 0, 1, 0)
-state Simple_Command
-state Simple_Command
-WAIT_RECEIVE = false
-{}
-str "bct 3 0 1 1 0 1 1 1 1"
-bct 3 0 1 1 0 1 1 1 1
-thread_parse = RessourceCase(3, 0, 1, 1, 0, 1, 1, 1, 1)
-WAIT_RECEIVE = false
-str "bct 0 1 1 1 0 0 1 1 1"
-bct 0 1 1 1 0 0 1 1 1
-thread_parse = RessourceCase(0, 1, 1, 1, 0, 0, 1, 1, 1)
-{}
-PARSE RessourceCase(1, 0, 3, 1, 0, 1, 1, 0, 0)
-PARSE RessourceCase(2, 0, 0, 1, 0, 1, 0, 1, 0)
+str "sgt 3"
+thread_parse = Time(3)
 state Simple_Command
 WAIT_RECEIVE = false
 state Simple_Command
-str "bct 1 1 1 1 0 1 1 1 0"
-bct 1 1 1 1 0 1 1 1 0
-thread_parse = RessourceCase(1, 1, 1, 1, 0, 1, 1, 1, 0)
+str "bct 0 0 0 1 1 0 1 1 0"
+bct 0 0 0 1 1 0 1 1 0
+thread_parse = RessourceCase(0, 0, 0, 1, 1, 0, 1, 1, 0)
 WAIT_RECEIVE = false
-{}
-str "bct 2 1 3 1 0 1 1 1 0"
-bct 2 1 3 1 0 1 1 1 0
-thread_parse = RessourceCase(2, 1, 3, 1, 0, 1, 1, 1, 0)
-{}
-PARSE RessourceCase(3, 0, 1, 1, 0, 1, 1, 1, 1)
-PARSE RessourceCase(0, 1, 1, 1, 0, 0, 1, 1, 1)
+str "bct 1 0 3 1 0 1 1 0 1"
+bct 1 0 3 1 0 1 1 0 1
+thread_parse = RessourceCase(1, 0, 3, 1, 0, 1, 1, 0, 1)
+PARSE Map(5, 5)
+PARSE Time(3)
 state Simple_Command
 state Simple_Command
 WAIT_RECEIVE = false
-str "bct 3 1 3 1 1 1 1 1 0"
-bct 3 1 3 1 1 1 1 1 0
-thread_parse = RessourceCase(3, 1, 3, 1, 1, 1, 1, 1, 0)
+str "bct 2 0 0 1 0 1 0 1 1"
+bct 2 0 0 1 0 1 0 1 1
+thread_parse = RessourceCase(2, 0, 0, 1, 0, 1, 0, 1, 1)
 WAIT_RECEIVE = false
-str "bct 0 2 3 1 1 1 0 0 0"
-bct 0 2 3 1 1 1 0 0 0
-thread_parse = RessourceCase(0, 2, 3, 1, 1, 1, 0, 0, 0)
+str "bct 3 0 0 1 1 1 0 1 1"
+bct 3 0 0 1 1 1 0 1 1
+thread_parse = RessourceCase(3, 0, 0, 1, 1, 1, 0, 1, 1)
 {}
 {}
-PARSE RessourceCase(1, 1, 1, 1, 0, 1, 1, 1, 0)
-PARSE RessourceCase(2, 1, 3, 1, 0, 1, 1, 1, 0)
+PARSE RessourceCase(0, 0, 0, 1, 1, 0, 1, 1, 0)
+PARSE RessourceCase(1, 0, 3, 1, 0, 1, 1, 0, 1)
 state Simple_Command
 WAIT_RECEIVE = false
 state Simple_Command
-str "bct 1 2 2 1 0 1 1 0 1"
-bct 1 2 2 1 0 1 1 0 1
-thread_parse = RessourceCase(1, 2, 2, 1, 0, 1, 1, 0, 1)
+str "bct 4 0 0 1 1 1 1 0 1"
+bct 4 0 0 1 1 1 1 0 1
+{}
+thread_parse = RessourceCase(4, 0, 0, 1, 1, 1, 1, 0, 1)
+WAIT_RECEIVE = false
+str "bct 0 1 3 1 0 1 0 1 0"
+bct 0 1 3 1 0 1 0 1 0
+thread_parse = RessourceCase(0, 1, 3, 1, 0, 1, 0, 1, 0)
+{}
+PARSE RessourceCase(2, 0, 0, 1, 0, 1, 0, 1, 1)
+PARSE RessourceCase(3, 0, 0, 1, 1, 1, 0, 1, 1)
+state Simple_Command
+WAIT_RECEIVE = false
+state Simple_Command
+str "bct 1 1 0 1 1 0 0 1 1"
+bct 1 1 0 1 1 0 0 1 1
+thread_parse = RessourceCase(1, 1, 0, 1, 1, 0, 0, 1, 1)
+WAIT_RECEIVE = false
+str "bct 2 1 1 1 0 1 0 0 0"
+bct 2 1 1 1 0 1 0 0 0
+thread_parse = RessourceCase(2, 1, 1, 1, 0, 1, 0, 0, 0)
+{}
+{}
+PARSE RessourceCase(4, 0, 0, 1, 1, 1, 1, 0, 1)
+PARSE RessourceCase(0, 1, 3, 1, 0, 1, 0, 1, 0)
+state Simple_Command
+WAIT_RECEIVE = false
+state Simple_Command
+str "bct 3 1 1 1 0 0 1 0 1"
+bct 3 1 1 1 0 0 1 0 1
+thread_parse = RessourceCase(3, 1, 1, 1, 0, 0, 1, 0, 1)
 {}
 WAIT_RECEIVE = false
-str "bct 2 2 0 1 0 0 0 1 0"
-bct 2 2 0 1 0 0 0 1 0
-thread_parse = RessourceCase(2, 2, 0, 1, 0, 0, 0, 1, 0)
+str "bct 4 1 2 1 1 1 0 1 0"
+bct 4 1 2 1 1 1 0 1 0
+thread_parse = RessourceCase(4, 1, 2, 1, 1, 1, 0, 1, 0)
 {}
-PARSE RessourceCase(3, 1, 3, 1, 1, 1, 1, 1, 0)
-PARSE RessourceCase(0, 2, 3, 1, 1, 1, 0, 0, 0)
+PARSE RessourceCase(1, 1, 0, 1, 1, 0, 0, 1, 1)
+PARSE RessourceCase(2, 1, 1, 1, 0, 1, 0, 0, 0)
 state Simple_Command
 state Simple_Command
 WAIT_RECEIVE = false
-str "bct 3 2 1 1 0 1 0 0 1"
+str "bct 0 2 3 1 1 0 1 0 0"
 {}
-bct 3 2 1 1 0 1 0 0 1
-thread_parse = RessourceCase(3, 2, 1, 1, 0, 1, 0, 0, 1)
+bct 0 2 3 1 1 0 1 0 0
+thread_parse = RessourceCase(0, 2, 3, 1, 1, 0, 1, 0, 0)
 WAIT_RECEIVE = false
-str "bct 0 3 2 1 0 1 0 1 1"
-bct 0 3 2 1 0 1 0 1 1
-thread_parse = RessourceCase(0, 3, 2, 1, 0, 1, 0, 1, 1)
+str "bct 1 2 1 1 1 1 0 0 0"
+bct 1 2 1 1 1 1 0 0 0
+thread_parse = RessourceCase(1, 2, 1, 1, 1, 1, 0, 0, 0)
 {}
-PARSE RessourceCase(1, 2, 2, 1, 0, 1, 1, 0, 1)
-PARSE RessourceCase(2, 2, 0, 1, 0, 0, 0, 1, 0)
+PARSE RessourceCase(3, 1, 1, 1, 0, 0, 1, 0, 1)
+PARSE RessourceCase(4, 1, 2, 1, 1, 1, 0, 1, 0)
+state Simple_Command
+WAIT_RECEIVE = false
+str "bct 2 2 1 1 1 0 0 0 1"
+bct 2 2 1 1 1 0 0 0 1
+state Simple_Command
+thread_parse = RessourceCase(2, 2, 1, 1, 1, 0, 0, 0, 1)
+WAIT_RECEIVE = false
+str "bct 3 2 2 1 1 0 1 1 0"
+bct 3 2 2 1 1 0 1 1 0
+thread_parse = RessourceCase(3, 2, 2, 1, 1, 0, 1, 1, 0)
+{}
+{}
+PARSE RessourceCase(0, 2, 3, 1, 1, 0, 1, 0, 0)
+PARSE RessourceCase(1, 2, 1, 1, 1, 1, 0, 0, 0)
+state Simple_Command
+state Simple_Command
+WAIT_RECEIVE = false
+str "bct 4 2 1 1 0 1 1 1 1"
+bct 4 2 1 1 0 1 1 1 1
+{}
+thread_parse = RessourceCase(4, 2, 1, 1, 0, 1, 1, 1, 1)
+WAIT_RECEIVE = false
+str "bct 0 3 3 1 1 1 0 0 0"
+bct 0 3 3 1 1 1 0 0 0
+thread_parse = RessourceCase(0, 3, 3, 1, 1, 1, 0, 0, 0)
+{}
+PARSE RessourceCase(2, 2, 1, 1, 1, 0, 0, 0, 1)
+PARSE RessourceCase(3, 2, 2, 1, 1, 0, 1, 1, 0)
 state Simple_Command
 state Simple_Command
 WAIT_RECEIVE = false
 {}
-str "bct 1 3 2 1 1 0 1 0 1"
-bct 1 3 2 1 1 0 1 0 1
-thread_parse = RessourceCase(1, 3, 2, 1, 1, 0, 1, 0, 1)
+str "bct 1 3 1 1 0 0 0 1 0"
+bct 1 3 1 1 0 0 0 1 0
+thread_parse = RessourceCase(1, 3, 1, 1, 0, 0, 0, 1, 0)
 WAIT_RECEIVE = false
-str "bct 2 3 2 1 1 0 1 1 0"
-bct 2 3 2 1 1 0 1 1 0
-thread_parse = RessourceCase(2, 3, 2, 1, 1, 0, 1, 1, 0)
+str "bct 2 3 0 1 1 0 0 0 1"
+bct 2 3 0 1 1 0 0 0 1
+thread_parse = RessourceCase(2, 3, 0, 1, 1, 0, 0, 0, 1)
 {}
-PARSE RessourceCase(3, 2, 1, 1, 0, 1, 0, 0, 1)
-PARSE RessourceCase(0, 3, 2, 1, 0, 1, 0, 1, 1)
+PARSE RessourceCase(4, 2, 1, 1, 0, 1, 1, 1, 1)
+PARSE RessourceCase(0, 3, 3, 1, 1, 1, 0, 0, 0)
 state Simple_Command
 state Simple_Command
 WAIT_RECEIVE = false
-str "bct 3 3 1 1 0 1 0 1 1"
-bct 3 3 1 1 0 1 0 1 1
 {}
-thread_parse = RessourceCase(3, 3, 1, 1, 0, 1, 0, 1, 1)
+str "bct 3 3 1 1 0 0 0 1 1"
+bct 3 3 1 1 0 0 0 1 1
+thread_parse = RessourceCase(3, 3, 1, 1, 0, 0, 0, 1, 1)
+WAIT_RECEIVE = false
+str "bct 4 3 1 1 0 0 1 0 0"
+bct 4 3 1 1 0 0 1 0 0
+thread_parse = RessourceCase(4, 3, 1, 1, 0, 0, 1, 0, 0)
+{}
+PARSE RessourceCase(1, 3, 1, 1, 0, 0, 0, 1, 0)
+PARSE RessourceCase(2, 3, 0, 1, 1, 0, 0, 0, 1)
+state Simple_Command
+state Simple_Command
+WAIT_RECEIVE = false
+{}
+str "bct 0 4 2 1 0 1 0 0 1"
+bct 0 4 2 1 0 1 0 0 1
+thread_parse = RessourceCase(0, 4, 2, 1, 0, 1, 0, 0, 1)
+WAIT_RECEIVE = false
+str "bct 1 4 3 1 1 0 0 1 1"
+bct 1 4 3 1 1 0 0 1 1
+thread_parse = RessourceCase(1, 4, 3, 1, 1, 0, 0, 1, 1)
+{}
+PARSE RessourceCase(3, 3, 1, 1, 0, 0, 0, 1, 1)
+PARSE RessourceCase(4, 3, 1, 1, 0, 0, 1, 0, 0)
+state Simple_Command
+state Simple_Command
+WAIT_RECEIVE = false
+str "bct 2 4 1 1 1 0 1 0 1"
+{}
+bct 2 4 1 1 1 0 1 0 1
+thread_parse = RessourceCase(2, 4, 1, 1, 1, 0, 1, 0, 1)
+WAIT_RECEIVE = false
+str "bct 3 4 0 1 1 0 1 0 1"
+bct 3 4 0 1 1 0 1 0 1
+thread_parse = RessourceCase(3, 4, 0, 1, 1, 0, 1, 0, 1)
+{}
+PARSE RessourceCase(0, 4, 2, 1, 0, 1, 0, 0, 1)
+PARSE RessourceCase(1, 4, 3, 1, 1, 0, 0, 1, 1)
+state Simple_Command
+state Simple_Command
+WAIT_RECEIVE = false
+str "bct 4 4 2 1 0 0 0 1 0"
+bct 4 4 2 1 0 0 0 1 0
+{}
+thread_parse = RessourceCase(4, 4, 2, 1, 0, 0, 0, 1, 0)
 WAIT_RECEIVE = false
 str "tna arsenal"
 thread_parse = NomEquipe("arsenal")
 {}
-PARSE RessourceCase(1, 3, 2, 1, 1, 0, 1, 0, 1)
-PARSE RessourceCase(2, 3, 2, 1, 1, 0, 1, 1, 0)
-state Simple_Command
+PARSE RessourceCase(2, 4, 1, 1, 1, 0, 1, 0, 1)
+PARSE RessourceCase(3, 4, 0, 1, 1, 0, 1, 0, 1)
 state Simple_Command
 WAIT_RECEIVE = false
+state Simple_Command
+str "tna chelsea"
 {}
+thread_parse = NomEquipe("chelsea")
+WAIT_RECEIVE = false
 str "pnw 1 0 0 3 1 arsenal"
 thread_parse = ConnexionPlayer(1, 0, 0, 3, 1, "arsenal")
-WAIT_RECEIVE = false
 name_team arsenal name arsenal nbr_iter 0 
 zelda_1/zelda_up2.png
 zelda_1/zelda_east.png
@@ -135,44 +200,57 @@ zelda_1/expulse_up.png
 zelda_1/expulse_east.png
 zelda_1/expulse_down.png
 zelda_1/zelda_west.png
-PARSE RessourceCase(3, 3, 1, 1, 0, 1, 0, 1, 1)
+PARSE RessourceCase(4, 4, 2, 1, 0, 0, 0, 1, 0)
 PARSE NomEquipe("arsenal")
 state Simple_Command
+state Simple_Command
+WAIT_RECEIVE = false
+name_team chelsea name arsenal nbr_iter 0 
+name_team chelsea name chelsea nbr_iter 1 
+zelda_2/zelda_up2.png
+str "pnw 2 0 0 3 1 chelsea"
+thread_parse = ConnexionPlayer(2, 0, 0, 3, 1, "chelsea")
+WAIT_RECEIVE = false
+zelda_2/zelda_east.png
+zelda_2/zelda_down.png
+zelda_2/zelda_west.png
+zelda_2/expulse_up.png
+zelda_2/expulse_east.png
+zelda_2/expulse_down.png
+zelda_2/zelda_west.png
 name_team arsenal name arsenal nbr_iter 0 
 num_team 0 indice 2
+PARSE NomEquipe("chelsea")
 PARSE ConnexionPlayer(1, 0, 0, 3, 1, "arsenal")
-str "pgt 1 0"
-thread_parse = Prend(1, 0)
+state Simple_Command
+name_team chelsea name arsenal nbr_iter 0 
+name_team chelsea name chelsea nbr_iter 1 
+num_team 1 indice 2
+PARSE ConnexionPlayer(2, 0, 0, 3, 1, "chelsea")
+str "pex 2"
+thread_parse = Expulse(2)
 WAIT_RECEIVE = false
-str "pin 1 0 0 1 0 0 0 0 0 0"
-pin 1 0 0 1 0 0 0 0 0 0
-thread_parse = Inventaire(1, 0, 0, 1, 0, 0, 0, 0, 0, 0)
+str "ppo 1 0 1 3"
+ppo 1 0 1 3
+thread_parse = MovementPlayer(1, 0, 1, 3)
+state Simple_Command
 state Simple_Command
 WAIT_RECEIVE = false
-state Simple_Command
-str "bct 0 0 2 0 0 1 0 1 1"
-bct 0 0 2 0 0 1 0 1 1
-thread_parse = RessourceCase(0, 0, 2, 0, 0, 1, 0, 1, 1)
+str "ppo 2 0 0 3"
+ppo 2 0 0 3
+thread_parse = MovementPlayer(2, 0, 0, 3)
 WAIT_RECEIVE = false
-PARSE Prend(1, 0)
+PARSE Expulse(2)
+EXPULSE ResMut(NextState(None))
+nbr_command_wanted 1 streamevent_id 31
+first_id 32
+last_id 33
+EXPULSE ResMut(NextState(Some(Stacking_Command)))
+streamevent event<StreamEvent>#31
 state Stacking_Command
-stacking [21, 22]
-complexcommand.nbr_command 2
-complexcommand.vec_command.len() 0
-stacking event_id event<StreamEvent>#20
-stacking parse Prend(1, 0)
-stacking event_id event<StreamEvent>#20
-stacking parse Prend(1, 0)
-stacking event_id event<StreamEvent>#21
-stacking parse Inventaire(1, 0, 0, 1, 0, 0, 0, 0, 0, 0)
-stacking event_id event<StreamEvent>#21
-stacking parse Inventaire(1, 0, 0, 1, 0, 0, 0, 0, 0, 0)
-stacking event_id event<StreamEvent>#22
-stacking parse RessourceCase(0, 0, 2, 0, 0, 1, 0, 1, 1)
-stacking event_id event<StreamEvent>#22
-stacking parse RessourceCase(0, 0, 2, 0, 0, 1, 0, 1, 1)
-stacking [21, 22]
-complexcommand.nbr_command 2
-complexcommand.vec_command.len() 2
-tab [Inventaire(1, 0, 0, 1, 0, 0, 0, 0, 0, 0), RessourceCase(0, 0, 2, 0, 0, 1, 0, 1, 1)] len 2
-Ressource?
+pb stacking command ? [Expulse(2), MovementPlayer(1, 0, 1, 3), MovementPlayer(2, 0, 0, 3)]
+ asset_map.last_event_id  31
+stacking [32]
+complexcommand.nbr_command 1
+complexcommand.vec_command.len() 3
+tab [Expulse(2), MovementPlayer(1, 0, 1, 3), MovementPlayer(2, 0, 0, 3)] len 1
