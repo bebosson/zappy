@@ -2,7 +2,9 @@
 pub mod game_utils
 {
     use crate::action::action::ReadyAction;
-    use crate::player::player::{PlayerType, Player};
+    use crate::cell::cell::Point;
+    use crate::player;
+    use crate::player::player::{Egg, Player, PlayerType};
     use crate::teams::team::Team;
 
     /*
@@ -48,6 +50,38 @@ pub mod game_utils
             }
         }
         None
+    }
+
+    pub fn find_hatch_egg(teams: Vec<Team>) -> Option<Egg>
+    {
+        for team in teams
+        {
+            for egg in &team.eggs
+            {
+                if egg.count == 0
+                {
+                    return Some(egg.clone())
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_players_id_from_coord(coord: Point, teams: &Vec<Team>) -> Vec<u32>
+    {
+        let mut ids: Vec<u32> = Vec::new();
+
+        for team in teams
+        {
+            for player in &team.players
+            {
+                if coord.x == player.coord.x && coord.y == player.coord.y
+                {
+                    ids.push(player.id);
+                }
+            }
+        }
+        ids
     }
 
     pub fn find_team_from_player_id(id: u32, teams: &Vec<Team>) -> &Team

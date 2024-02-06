@@ -445,24 +445,32 @@ fn main() -> Result<(), Box<dyn GenericError>>
             break ;
         }
 
-        // when command finish to wait, execute action and send packet to client and gfx
-        let ready_action_list = get_ready_action_list(&game_ctrl.teams);
-        if ready_action_list.len() > 0 || current_actions.len() > 0
+        // this part is in order to send pkt to gfx & client at the beginning of the receive cmd
+        if current_actions.len() > 0
         {
             println!("current action list --> {:?}", current_actions);
             for current_action in &current_actions
             {
-                let gfx_pkt = craft_gfx_packet_action_receive(&current_action.action, &game_ctrl.teams);
+                let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
                 if let Some(gfx_pkt_tmp) = gfx_pkt
                 {
                     send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
                 }
+
                 let client_pkt = craft_client_packet_action_receive(&current_action.action, &game_ctrl.teams);
                 if let Some(client_pkt_tmp) = client_pkt
                 {
+                    // l'action est une incantation, donc je recup les stream concernees par l'incantation
+                    // et je boucle pour envoyer a tous ces streams
                     send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&current_action.id).unwrap());
                 }
             }
+        }
+
+        // when command finish to wait, execute action and send packet to client and gfx
+        let ready_action_list = get_ready_action_list(&game_ctrl.teams);
+        if ready_action_list.len() > 0
+        {
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {

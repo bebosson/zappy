@@ -1,7 +1,7 @@
 pub mod paquet_crafter
 {
     use crate::{find_player_from_id, ressources};
-    use crate::game_utils::game_utils::find_team_from_player_id;
+    use crate::game_utils::game_utils::{find_hatch_egg, find_team_from_player_id, get_players_id_from_coord};
     use crate::teams::team::Team;
     use crate::gamecontrol::game::{GameController};
     use crate::ressources::ressources::Ressources;
@@ -22,22 +22,37 @@ pub mod paquet_crafter
     **      None if the execution fail or if the cmd doesn't need to send gfx pkt
     **  
     */
-    pub fn craft_gfx_packet_action_receive(action: &Action, teams: &Vec<Team>) -> Option<Vec<String>>
+    pub fn craft_gfx_packet_action_receive(action_ref: &ReadyAction, teams: &Vec<Team>) -> Option<Vec<String>>
     {
         // TODO : attention ici pour gfx il faut crafter 2 types de paquets 
         // pic pour debu incantation et pfk pour debut de fork
         // mais je dois récupérer l'id des joueurs et la il y a un petit probleme
         // il faudra peut etre renvoyer un tuple (vec<string>, id) dans receive_action au lieu d'un simple vec<string>
 
+
+        let action: ReadyAction = action_ref.clone();
+        let player = find_player_from_id(teams.clone(), &action.id).unwrap();
         let mut pkt: Vec<String> = Vec::new();
-        //let player = get_player_from_new_action();
-        match action.action_name.as_str()
+
+        match action.action.action_name.as_str()
         {
-            //"incantation" => pkt.push(get_incantation_players_id(id, teams)),
-            //"fork" => pkt.push(get_player_id_from_action()),
+            "incantation" =>
+            {
+                let players_id = get_players_id_from_coord(player.coord.clone(), &teams.clone());
+                pkt.push(packet_gfx_incantation_start(&player.coord, players_id))
+            },
+            "fork" =>
+            {
+                pkt.push(packet_gfx_fork_start(player.id))
+            },
             _ => (),
         }
-        Some(Vec::new())
+        println!("craft_gfx_packet_action_receive ---------------> {:?}", pkt);
+        if pkt.len() > 0
+        {
+            return Some(pkt);
+        }
+        None
     }
 
     pub fn craft_client_packet_action_ready(ready_action_ref: &ReadyAction, action_result_ref: &Option<ActionResult>, game_ctrl: &GameController) -> Option<Vec<String>>
@@ -117,7 +132,6 @@ pub mod paquet_crafter
                     }
                     _ => { pkts.push("ko".to_string()); }
                 };
-                
             },
             "incantation" =>
             {
@@ -155,7 +169,7 @@ pub mod paquet_crafter
             "voir" => { return None; },
             "inventaire" => { return None; },
             "connect_nbr" => { return None; },
-            "fork" => { cmd.push(packet_gfx_fork(player.id)); },
+            "fork" => { return None; },
             "broadcast" => { cmd.push(packet_gfx_broadcast(player.id, ready_action.action.arg.unwrap())); },
             "avance" | "droite" | "gauche" => { cmd.push(packet_gfx_player_position(player.id, player.coord, player.orientation)); },
             "prend" =>
@@ -340,9 +354,9 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `fork` command
     */
-    fn packet_gfx_fork(id: u32) -> String
+    fn packet_gfx_fork(player_id: u32, egg_id: u32, coord: Point) -> String
     {
-        format!("pfk {}\n", id)
+        format!("enw {} {} {} {}\n", egg_id, player_id, coord.x, coord.y)
     }
 
     /*
@@ -371,13 +385,29 @@ pub mod paquet_crafter
         format!("pdi {}\n", id)
     }
 
+    pub fn packet_gfx_incantation_start(coord: &Point, ids: Vec<u32>) -> String
+    {
+        let mut str_ids: String = "".to_string();
+
+        for id in ids
+        {
+            str_ids.push_str(&format!("{} ", id));
+        }
+        format!("pic {} {} {}\n", coord.x, coord.y, str_ids)
+    }
+
+    pub fn packet_gfx_fork_start(id: u32) -> String
+    {
+        format!("pfk {}\n", id)
+    }
+
 
     pub fn craft_client_packet_action_receive(actions: &Action, teams: &Vec<Team>) -> Option<Vec<String>>
     {
         let mut pkts: Vec<String> = Vec::new();
         match actions.action_name.as_str()
         {
-            "incantation" => pkts.push(format!("elevation en cours")),
+            "incantation" => pkts.push(format!("elevation en cours\n")),
             _ => { return None; }
         }
         Some(pkts)
