@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::process::{exit, ExitStatus};
 use std::str::from_utf8;
 
-const BUF_SIZE: usize = 160;
+const BUF_SIZE: usize = 4096;
 
 fn flush(data: &mut [u8])
 {
@@ -29,12 +29,12 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
         if *number_command_sent < vec_string.len() as u8
         {
             //stream.write(command.as_bytes());
-            let mut array = Vec::with_capacity(16);
+            let mut array = Vec::with_capacity(BUF_SIZE / 10);
             array.extend(command.chars());
-            array.extend(std::iter::repeat('0').take(16 - command.len()));
+            array.extend(std::iter::repeat('0').take((BUF_SIZE / 10) - command.len()));
             //println!("our fucking array ------------> {:?}", array);
             
-            let mut result_array = [0u8; 16];
+            let mut result_array = [0u8; BUF_SIZE / 10];
             for (i, &c) in array.iter().enumerate()
             {
                 result_array[i] = c as u8;

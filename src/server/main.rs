@@ -37,7 +37,7 @@ pub mod stream_utils;
 static GFX_SERVER_PORT: u16 = 1312;
 const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
 const RESSOURCES_SLICE: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"];
-const BUF_SIZE: usize = 256;
+const BUF_SIZE: usize = 4096;
 
 
 /*
