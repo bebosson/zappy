@@ -401,7 +401,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
     // network initialization
     let listener = TcpListener::bind(format!("127.0.0.1:{}", vec_args.p)).unwrap();
     println!("Start server");
-    
+
     // listen for client connexion
     for tcpstream in listener.incoming()
     {
@@ -475,8 +475,16 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 if let Some(packet) = client_pkt 
                 {
+                    // let tmp_stream = get_stream_by_id(ready_action.id);
                     //send_pkt_to_stream(packet, &mut vec_stream);
                 }
+
+                
+
+                // pour le fork, on attend les 42 cycles et on envoie ok au client
+                // a ce moment le client cree un nouveau stream directement pour son oeuf
+                // le serveur ecoute donc (avec timeout) si y a un stream incomming()
+
             }
         }
 

@@ -87,6 +87,7 @@ pub mod team
                         action.count,
                         action.arg);
                 }
+                println!("");
             }
         }
 

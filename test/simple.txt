@@ -1,4 +1,7 @@
-fork
 avance
-fork
+droite
+avance
+droite
+avance
+droite
 avance
