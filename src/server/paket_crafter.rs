@@ -7,7 +7,7 @@ pub mod paquet_crafter
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::{Point, Cell};
     use crate::player::player::{Orientation, Player, PlayerType};
-    use crate::action::action::{ActionResult, ReadyAction, Action};
+    use crate::action::action::{Action, ActionResult, ActionTemplate, ReadyAction};
 
 
     /*
@@ -374,7 +374,13 @@ pub mod paquet_crafter
 
     pub fn craft_client_packet_action_receive(actions: &Action, teams: &Vec<Team>) -> Option<Vec<String>>
     {
-        Some(Vec::new())
+        let mut pkts: Vec<String> = Vec::new();
+        match actions.action_name.as_str()
+        {
+            "incantation" => pkts.push(format!("elevation en cours")),
+            _ => { return None; }
+        }
+        Some(pkts)
     }
 
     pub fn packet_client_player_die() -> String
