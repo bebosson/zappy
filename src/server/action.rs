@@ -109,8 +109,8 @@ pub mod action
             let mut x: i8 = player.coord.x as i8;
             let mut y: i8 = player.coord.y as i8;
 
-            //println!("player coord X {}", player.coord.x);
-            //println!("player coord Y {}", player.coord.y);
+            ////println!("player coord X {}", player.coord.x);
+            ////println!("player coord Y {}", player.coord.y);
             match player.orientation
             {
                 Orientation::N =>
@@ -195,7 +195,7 @@ pub mod action
 
         pub fn prend(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
         {
-            //println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
+            ////println!("player {} want to 'prend' {} on the cell -> {:?}", player.id, obj, cell);
             if check_obj_is_present_on_cell(obj.to_string(), cell) == false { return false; }
 
             match obj.as_str()
@@ -213,13 +213,13 @@ pub mod action
                 "thystate" => {player.ivt.thystate += 1; cell.ressources.thystate -= 1;},
                 _ => {()},
             }
-            //println!("after 'prend', cell content -> {:?}", cell);
+            ////println!("after 'prend', cell content -> {:?}", cell);
             true
         }
 
         pub fn pose(&self, cell: & mut Cell, player: &mut Player, obj: String) -> bool
         {
-            //println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
+            ////println!("player {} want to 'pose' {} on the cell -> {:?}", player.id, obj, cell);
             if check_obj_is_present_on_player(obj.to_string(), player) == false { return false; }
 
             match obj.as_str()
@@ -233,7 +233,7 @@ pub mod action
                 "thystate" => {player.ivt.thystate -= 1; cell.ressources.thystate += 1;},
                 _ => {()},
             }
-            //println!("after 'prend', cell content -> {:?}", cell);
+            ////println!("after 'prend', cell content -> {:?}", cell);
             true
         }
 
@@ -242,13 +242,14 @@ pub mod action
             let mut nb_kick_player = 0;
             let target_cell = find_target_cell_from_coord(&player.orientation, &player.coord, *width as usize, *height as usize);
 
-            println!("target cell for player {} --> {:?}", player.id, target_cell);
+            //println!("target cell for player {} --> {:?}", player.id, target_cell);
             for team in teams
             {
                 for tmp_player in &mut team.players
                 {
-                    if player.coord.x == tmp_player.coord.x
+                    if player.coord.x == tmp_player.coord.x && player.coord.y == tmp_player.coord.y && player.id != tmp_player.id
                     {
+                        //println!("Player id ??? = {}", player.id);
                         tmp_player.coord.x = target_cell.x;
                         tmp_player.coord.y = target_cell.y;
                         nb_kick_player += 1;
@@ -385,7 +386,7 @@ pub mod action
             },
             Orientation::S => {
                 if y as usize == height - 1 { y = - 1;}
-                Point{x: x as u8, y: y as u8 + 1}
+                Point{x: x as u8, y: (y + 1) as u8} // attempt to add with overflow if y = height (soit pour une map 3x3 y = 3?)
             },
             _ => Point{x: 0, y: 0},
         }
@@ -438,7 +439,7 @@ pub mod action
                     Orientation::O => player.coord.x as i8 -1 * i,
                     Orientation::E => player.coord.x as i8 + i,
                 };
-                //println!("x -----> {}", x);
+                ////println!("x -----> {}", x);
                 if x < 0 { x = width as i8 + x; }
                 else if x > width as i8 - 1 { x = x % width as i8; }
                 let mut y = match player.orientation
@@ -448,14 +449,14 @@ pub mod action
                     Orientation::N => player.coord.y as i8 -1 * i,
                     Orientation::S => player.coord.y as i8 + i,
                 };
-                //println!("y -----> {}", y);
+                ////println!("y -----> {}", y);
                 if y < 0 { y = height as i8 + y; }
                 else if y > height as i8 - 1 { y = y % height as i8; }
                 cases_coord.push(Point{x: x as u8, y: y as u8});
-                println!("\n");
+                //println!("\n");
             }
         }
-        //println!("coord des cases a voir ---> {:?}", cases_coord);
+        ////println!("coord des cases a voir ---> {:?}", cases_coord);
         cases_coord
     }
 
@@ -463,8 +464,8 @@ pub mod action
     {
         let mut cell_content: HashMap<String, u8> = HashMap::new();
 
-        //println!("cell ({},{}) -> {:?} {}", coord.x, coord.y, cells.len(), cells[0].len());
-        println!("cell ({},{})", coord.x, coord.y);
+        ////println!("cell ({},{}) -> {:?} {}", coord.x, coord.y, cells.len(), cells[0].len());
+        //println!("cell ({},{})", coord.x, coord.y);
         cell_content.insert("food".to_string(), cells[coord.y as usize][coord.x as usize].ressources.food);
         cell_content.insert("sibur".to_string(), cells[coord.y as usize][coord.x as usize].ressources.sibur);
         cell_content.insert("mendiane".to_string(), cells[coord.y as usize][coord.x as usize].ressources.mendiane);
@@ -488,7 +489,7 @@ pub mod action
         cell_content.insert("player".to_string(), nb_players);
 
         
-        //println!("cell ({},{}) --> {:?}", coord.x, coord.y, cell_content);
+        ////println!("cell ({},{}) --> {:?}", coord.x, coord.y, cell_content);
         
         cell_content
     }

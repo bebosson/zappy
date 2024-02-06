@@ -145,11 +145,11 @@ pub mod do_action{
     {
         
         let t_prime: f32 = asset_map.time  as f32 / 7.0;
-        // println!("asset_map.time = {:?}", asset_map.time);
+        // //println!("asset_map.time = {:?}", asset_map.time);
 
-        let mut distance_delta = TILES_WIDTH * time.delta_seconds() * t_prime as f32; // time
-        // println!("{:?}", time.delta_seconds());
-        // println!("distance_delta = {:?}", distance_delta);
+        let mut distance_delta = TILES_WIDTH * time.delta_seconds() * t_prime as f32 * 2.0; // time
+        // //println!("{:?}", time.delta_seconds());
+        // //println!("distance_delta = {:?}", distance_delta);
         if distance_delta > movement.distance_restante {distance_delta = movement.distance_restante;}
         
         match movement.orientation
@@ -160,14 +160,14 @@ pub mod do_action{
             4 => { transform.translation.x -= distance_delta } // Ouest
             _ => { panic!() }
         }
-        // println!("transform.x = {} transform.y = {}", transform.translation.x, transform.translation.y);
-        // println!("asset_map.x_max {} asset_map.y_max {}", asset_map.pixel_x_max, asset_map.pixel_y_max);
-        // println!("asset_map.x_min {} asset_map.y_min {}", asset_map.pixel_x_min, asset_map.pixel_y_min);
+        // //println!("transform.x = {} transform.y = {}", transform.translation.x, transform.translation.y);
+        // //println!("asset_map.x_max {} asset_map.y_max {}", asset_map.pixel_x_max, asset_map.pixel_y_max);
+        // //println!("asset_map.x_min {} asset_map.y_min {}", asset_map.pixel_x_min, asset_map.pixel_y_min);
         out_of_bound(transform, asset_map);
         movement.distance_restante -= distance_delta;
         if movement.distance_restante == 0.
         {
-            println!("{:?}", movement.distance_restante);
+            //println!("{:?}", movement.distance_restante);
             if let Some(sprite_animation) = opt_change_sprite
             {
                 change_sprite(handle_texture_atlas, texture_atlas_sprite, animation_indice, sprite_animation);
@@ -175,6 +175,7 @@ pub mod do_action{
             action_player.state_action = StateAction::Idle;
             action_player.action_in_progress = TypeAction::Nothing;
             update_cell(movement, cell, asset_map);
+            //println!("cell after update{:?}", cell);
             // let pos = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
             // transform.translation.x = pos.0;
             // transform.translation.y = pos.1;            
@@ -190,7 +191,7 @@ pub mod do_action{
         if let Ok(mut action_player) = query_action_player.get_mut(*id)
         {
             action_player.vecdeque.push_back(type_action);
-            println!("{:?}", action_player);
+            //println!("{:?}", action_player);
         }
     }
 
@@ -237,36 +238,37 @@ pub mod do_action{
                     action_player.action_in_progress = current_action;
                     match &action_player.action_in_progress{
                         TypeAction::Movement(x_finish, y_finish, o) => {
-                            println!("{} {} {} {:?}", x_finish, y_finish, o, cell);
+                            //println!("{} {} {} {:?}", x_finish, y_finish, o, cell);
                             if (cell.0 != *x_finish || cell.1 != *y_finish) && cell.2 == *o 
                             {
                                 // let pixel_start = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
                                 // let pixel_finish = asset_map.center_map_new_system(x_finish as f32, y_finish as f32);
-                                println!("translation ");
+                                //println!("translation ");
 
                                 *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                             }
                             else if cell.2 != *o
                             {
-                                println!("rotation");
+                                //println!("rotation");
                                 *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Rotation}
                             }
                             else {
-                                println!("Pb de Movement_Rotation ici (set exec action)\n")
+                                //println!("Pb de Movement_Rotation ici (set exec action)\n")
                             }
                         }
                         TypeAction::Expulsion(x_finish, y_finish, o, _, sprite_expulsion) =>
                         {
-                            if (cell.0 != *x_finish || cell.1 != *y_finish) && cell.2 == *o 
+                            if (cell.0 != *x_finish || cell.1 != *y_finish) 
                             {
+                                //ici l'orientation est celle du player qui expulse et non celui qui est expulse
                                 // let pixel_start = asset_map.center_map_new_system(cell.0 as f32, cell.1 as f32);
                                 // let pixel_finish = asset_map.center_map_new_system(x_finish as f32, y_finish as f32);
-                                println!("expulsion ");
+                                //println!("expulsion ");
                                 change_sprite(& mut handle, & mut texture, & mut animation, sprite_expulsion.clone());
                                 *movement = Movementinprogress{ distance_restante: TILES_WIDTH, orientation: *o, type_of_mvmt: TypeofMovement::Translation}
                             }
                             else {
-                                println!("Pb d Expulsion ici (set exec action)\n")
+                                //println!("Pb d Expulsion ici (set exec action)\n")
                             }
                             // let sprite_animation = asset_map.get_sprite_expulsion(indice, num_team)
                         }
@@ -337,7 +339,7 @@ pub mod do_action{
                                 // new_coor = asset_map.get_my_coor(trans.x, translat)
                             }
                             TypeofMovement::Rotation => {
-                                println!("team_num {:?}", player.0 as usize);
+                                //println!("team_num {:?}", player.0 as usize);
                                 player_rotation(movement.orientation ,&asset_map, & mut handle_texture_atlas, & mut texture_atlas_sprite, & mut animation_indices, player.0 as usize);
                                 cell.2 = movement.orientation;
                                 action_player.state_action = StateAction::Idle;
@@ -380,6 +382,17 @@ pub mod do_action{
             }
         }
         nbr_player
+    }
+
+    pub fn get_cell(query_player_cell: &Query<(Entity, &Cell)>, player_entity: Entity) -> Cell
+    {
+        if let Ok((entity, cell)) = query_player_cell.get(player_entity) {
+            Cell(cell.0, cell.1, cell.2)
+        }
+        else {
+            panic!("GET CELL HAVE SOME ISSUES HERE");
+        }
+        
     }
 
 }

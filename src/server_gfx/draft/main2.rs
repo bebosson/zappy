@@ -59,7 +59,7 @@ fn info_mouvement(sprite_position: Query<&Transform, With<Player>>, tile_positio
     let player = sprite_position.single();
     let x = player.translation.x;
     let y = player.translation.y;
-    // println!("{} , {}", x, y);
+    // //println!("{} , {}", x, y);
 
 
 
@@ -69,10 +69,10 @@ fn info_mouvement(sprite_position: Query<&Transform, With<Player>>, tile_positio
         let tuple = (transform.translation.x, transform.translation.y);
         if dist_abs(x, tuple.0) < TILES_WIDTH / 2.0
         {
-            println!("transform {:?} x =  {} , y = {}", transform, x, y);
+            //println!("transform {:?} x =  {} , y = {}", transform, x, y);
         }
     }
-    // println!("{} {}", x, y);
+    // //println!("{} {}", x, y);
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {

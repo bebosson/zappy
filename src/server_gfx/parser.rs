@@ -44,9 +44,9 @@ pub fn copy_until_char(buffer: &[u8], char: u8) -> String
 
 pub fn parse_into_integer(content: String) -> Vec<i32>
 {
-    println!("{}", content);
+    //println!("{}", content);
     let mut iter = content.split_ascii_whitespace().skip(1);
-    // println!("{:?}", iter);
+    // //println!("{:?}", iter);
     let vec : Vec<i32> =  iter.map(|x| x.parse::<i32>().ok().unwrap()).collect();
     vec
 }
@@ -98,7 +98,7 @@ pub fn parse_connexion_player(content: String) -> Parse
     {
         if i.0 < 5
         {
-            // println!("{:?}", i.1);
+            // //println!("{:?}", i.1);
             vec_parsing_u8.push(i.1.parse::<u8>().ok().unwrap());
         }
         else {
@@ -154,7 +154,7 @@ pub fn parse_inventaire(content: String) -> Parse
 // dispatch what you parse 
 pub fn parser_server_packet(pkt_receive: String) -> Parse
 {
-    // println!("{}", pkt_receive);
+    // //println!("{}", pkt_receive);
     let mut iter = pkt_receive.split_ascii_whitespace();
     let mut parse: Parse = Parse::Donothing;
     match iter.nth(0)
@@ -165,7 +165,7 @@ pub fn parser_server_packet(pkt_receive: String) -> Parse
                     parse = take_dim_map(pkt_receive);
                 }
                 "bct" => {
-                    // println!("bct");
+                    // //println!("bct");
                     parse = parse_ressource(pkt_receive);
                 }
                 "tna" => {
@@ -261,7 +261,7 @@ fn take_dim_map(string_map: String) -> Parse
     for i in iter
     {
         let string = i;
-        // println!("STRING MAP = {:?}", string);
+        // //println!("STRING MAP = {:?}", string);
         vec_map.push(string.parse::<u32>().ok().unwrap());
     }
     // let x = vec_map[0].parse::<u32>;

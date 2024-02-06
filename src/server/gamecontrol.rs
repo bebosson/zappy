@@ -54,13 +54,13 @@ pub mod game
         {
             for team in & self.teams
             {
-                println!("- - - - - - - team {} - - - - - - - - -", team.name);
+                //println!("- - - - - - - team {} - - - - - - - - -", team.name);
                 team.print_players_from_team();
-                println!("-------------------------------");
+                //println!("-------------------------------");
                 team.print_eggs_from_team();
-                println!(" - - - - - - - - - - - - - - - - - - - - - - - -");
+                //println!(" - - - - - - - - - - - - - - - - - - - - - - - -");
             }
-            println!("\n\n");
+            //println!("\n\n");
         }
 
         pub fn get_team_and_push(& mut self, teamname: &String, id: u32, stream: &TcpStream, width: u8, height: u8)
@@ -147,9 +147,9 @@ pub mod game
                             }
                         );
                         //remove egg
-                        //println!("tmp -----> {:?}", tmp);
+                        ////println!("tmp -----> {:?}", tmp);
                         tmp.eggs.retain(|e| e.id != egg.id);
-                        //println!("tmp -----> {:?}", tmp);
+                        ////println!("tmp -----> {:?}", tmp);
                         //tmp.eggs.retain(|e| e.id != egg.id);
                     }
                 }

@@ -12,7 +12,7 @@ fn flush(data: &mut [u8])
     for i in & mut *data{
         *i = 0;
     }
-    //println!("{:?}", data);
+    ////println!("{:?}", data);
 }
 
 
@@ -25,21 +25,21 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
 {
     for command in vec_string
     {
-        //println!("vec string {:?}", vec_string);
+        ////println!("vec string {:?}", vec_string);
         if *number_command_sent < vec_string.len() as u8
         {
             //stream.write(command.as_bytes());
             let mut array = Vec::with_capacity(16);
             array.extend(command.chars());
             array.extend(std::iter::repeat('0').take(16 - command.len()));
-            //println!("our fucking array ------------> {:?}", array);
+            ////println!("our fucking array ------------> {:?}", array);
             
             let mut result_array = [0u8; 16];
             for (i, &c) in array.iter().enumerate()
             {
                 result_array[i] = c as u8;
             }
-            println!("{:?}", result_array);
+            //println!("{:?}", result_array);
             stream.write(&result_array);
             // stream.write(b"]");
             // use std::thread::sleep as sleep;
@@ -55,13 +55,13 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
     let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
-    //println!("{:?}", args);
+    ////println!("{:?}", args);
 
     let contents = fs::read_to_string(args[2].clone())
         .expect("Should have been able to read the file");
-    //println!("{:?}", contents);
+    ////println!("{:?}", contents);
     let vec_command = extract_lines(&contents);
-    println!("vec command --> {:?}", vec_command);
+    //println!("vec command --> {:?}", vec_command);
     let mut number_command_send: u8 = 0;
     
     
@@ -69,7 +69,7 @@ fn main() {
     {
         Ok(mut stream) =>
         {
-            println!("Successfully connected to server in port 1312");
+            //println!("Successfully connected to server in port 1312");
             loop
             {
                 match stream.read(&mut data) 
@@ -78,13 +78,13 @@ fn main() {
                         //convert data(buffer) into string and flush (overkill)
                         let string_buffer = String::from_utf8(data.to_vec()).expect("ok");
                         let string_buffer = string_buffer.trim_matches(char::from(0));  
-                        println!("string buffer --> {:?}", string_buffer);
+                        //println!("string buffer --> {:?}", string_buffer);
                         
                         match string_buffer
                         {
                             "Bienvenue" => 
                             {
-                                println!("Reply is ok! Send back teamname = {:?}", teamname);
+                                //println!("Reply is ok! Send back teamname = {:?}", teamname);
                                 // data.;
                                 // stream.write(teamname.as_bytes()).unwrap();
                                 stream.write(teamname.as_bytes()); // on envoie le teamname
@@ -98,28 +98,28 @@ fn main() {
                             {
                                 send_command(&mut stream, &vec_command, &mut number_command_send);
                                 //number_command_send = 0;
-                                //println!("{}", number_command_send);
+                                ////println!("{}", number_command_send);
                                 // let text = from_utf8(&data).unwrap();
                             }
                             _ => 
                             {
-                                println!("{:?}", stream);
-                                println!("id = {}", string_buffer);
+                                //println!("{:?}", stream);
+                                //println!("id = {}", string_buffer);
                             }   
                         } 
                     },
                     Err(e) => 
                     {
-                        println!("Failed to receive data: {}", e);
+                        //println!("Failed to receive data: {}", e);
                     }
                 }
             }
         },
         Err(e) => 
         {
-            println!("Failed to connect: {}", e);
+            //println!("Failed to connect: {}", e);
         }
     }
-    println!("Terminated.");
+    //println!("Terminated.");
 
 }

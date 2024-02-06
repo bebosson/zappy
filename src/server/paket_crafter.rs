@@ -53,7 +53,10 @@ pub mod paquet_crafter
                 {
                     for tmp_player in team.players
                     {
-                       cmd.push(packet_gfx_player_position(tmp_player.id, tmp_player.coord, tmp_player.orientation));
+                        if tmp_player.id != ready_action.id
+                        {
+                            cmd.push(packet_gfx_player_position(tmp_player.id, tmp_player.coord, tmp_player.orientation));
+                        }
                     }
                 }
             },

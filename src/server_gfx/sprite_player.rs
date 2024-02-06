@@ -63,7 +63,7 @@ pub mod sprite_player{
     {
         let text_at;
         let anim_i;
-        // println!("o {}", o);
+        // //println!("o {}", o);
         match o
         {
 
@@ -88,7 +88,7 @@ pub mod sprite_player{
     pub fn set_sprite_animation(team: usize, o: u8, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_sprite: [&'static str; SIZE_VECSPRITE]) -> SpriteAnimation
     {
         let path = format!("{}/{}", VECTEAM[team], name_sprite[o as usize]);
-        println!("{}", path);
+        //println!("{}", path);
         let texture_handle = asset_server.load(path);
         let texture_atlas_and_anim = set_texture_atlas_animation_indice(texture_handle, o + 1); // on doit regler cette confusion entre orientation et indice 
             // TextureAtlas::from_grid(texture_handle, Vec2::new(27.1, 32.0), 10, 1, None, None);

@@ -82,16 +82,16 @@ pub mod player
                     break ;
                 }
             }
-            println!("id = {} Action {:?}", self.id, action);
+            //println!("id = {} Action {:?}", self.id, action);
             self.actions.push(action.clone());
         }
 
         pub fn print_player_actions(&self)
         {
-            println!("--------print_player_actions-----------\nplayer {} actions:", self.id);
+            //println!("--------print_player_actions-----------\nplayer {} actions:", self.id);
             for action in &self.actions
             {
-                println!("action : {} , arg : {:?} count : {}", action.action_name, action.arg, action.count);
+                //println!("action : {} , arg : {:?} count : {}", action.action_name, action.arg, action.count);
             }
 
         }

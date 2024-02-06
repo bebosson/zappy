@@ -84,7 +84,7 @@ pub mod env{
         pub fn get_player_id(&self, id_game: &u8) -> Entity
         {
             let playable_opt = self.player_id.get(&id_game);
-            // println!("{:?}", playable_opt);
+            // //println!("{:?}", playable_opt);
             let entity;
             if let Some(playable) = playable_opt{
                 entity = match playable{
@@ -101,7 +101,7 @@ pub mod env{
         pub fn get_player_num_team(&self, id_game: &u8) -> u8
         {
             let playable_opt = self.player_id.get(&id_game);
-            println!("{:?}", playable_opt);
+            //println!("{:?}", playable_opt);
             let num_team;
             if let Some(playable) = playable_opt{
                 num_team = match playable{
@@ -119,7 +119,7 @@ pub mod env{
         {
             let iter = self.name_equipe.iter().enumerate(); 
             for (nbr_iter, name) in iter{
-                println!("name_team {} name {} nbr_iter {} ", name_team, name, nbr_iter);
+                //println!("name_team {} name {} nbr_iter {} ", name_team, name, nbr_iter);
                 if name.eq(name_team){
                     return Some(nbr_iter as u8)
                 }
@@ -133,6 +133,8 @@ pub mod env{
             // }
         }
 
+//        
+
         pub fn set_sprites_mvmt(& mut self, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_team: &String) //(nbr_teams)
         {
             let num_team = self.get_num_team(name_team).unwrap() as usize;
@@ -144,25 +146,26 @@ pub mod env{
             {
                 self.vec_sprite_player_expulsion[num_team].push(set_sprite_animation(num_team, i as u8, texture_atlases, asset_server, VECEXPULSION))
             }
-            // println!("{:?}", self.vec_sprite_player_mvmt[num_team].len());
+            // //println!("{:?}", self.vec_sprite_player_mvmt[num_team].len());
         }
 
         pub fn get_sprite(&self, indice: usize, num_team: usize) -> SpriteAnimation// (team, orientation)
         {
-            println!("num_team {} indice {}", num_team, indice); //num_team 1 
+            println!("sprite num_team {} indice {}", num_team, indice); //num_team 1 
             self.vec_sprite_player_mvmt[num_team][indice].clone()
         }
 
         pub fn get_sprite_expulsion(&self, indice: usize, num_team: usize) -> SpriteAnimation// (team, orientation)
         {
-            println!("num_team {} indice {}", num_team, indice); //num_team 1 
+            // println!("num_team {} indice {}", num_team, indice); //num_team 1 
             self.vec_sprite_player_expulsion[num_team][indice].clone()
         }
 
-        pub fn set_new_entry_hashmap_player(&mut self, id: &u8, level: &u8, team: String, entity: Entity)
+        pub fn set_new_entry_hashmap_player(&mut self, id: &u8, level: &u8, team: String, num_team: u8, entity: Entity)
         {
-            let player = Player::new(level, team, entity);
+            let player = Player::new(num_team, level, team, entity);
             let playable = Playable::Player(player);
+            println!("add Player {:?}", playable);
             self.player_id.insert(*id, playable);
             // let player = Playable::Player(())
         }

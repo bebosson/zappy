@@ -143,7 +143,7 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands, mut cha
                     let mut buffer = [0; 32];
                     loop {
                         // if (tx)
-                        // println!("{:?}", stream);
+                        // //println!("{:?}", stream);
                         match stream.read(&mut buffer) {
                             Ok(n) if n == 0 => {
                             
@@ -153,32 +153,13 @@ fn setup_handle_connections(state: Res<AppState>, mut command: Commands, mut cha
                             Ok(n) => {
                                 // Process the received data
                                 let received_data = &buffer[..n];
-                                // println!("Received data: {:?}", received_data);
                                 let str = copy_until_char(received_data, b'\n');
-                                println!("str {:?}", str);
                                 let parse : Parse = parser_server_packet(str);
-                                println!("thread_parse = {:?}", parse);
-                                // if let Parse::MovementPlayer(_, _, _, _) = parse
-                                // {
-                                //     exit(1);
-                                // }
-                                // if rx2.recv().unwrap() == true
-                                // {
-                                    //     wait = false;
-                                    //     println!("WAIT_RECEIVE = {:?}", wait);
-                                    // }
-                                if wait == false
-                                {
-                                    tx.send(parse).unwrap(); // => run_stream
-                                }
-                                // println!("{:?}", rx2.recv().unwrap());
-                                wait = true;
+                                tx.send(parse).unwrap(); // => run_stream
+                                // //println!("{:?}", rx2.recv().unwrap());
                                 // let instant = Instant::now();
                                 // if rx2.recv().unwrap() == true
-                                {
-                                    wait = false;
-                                    println!("WAIT_RECEIVE = {:?}", wait);
-                                }
+                                    //println!("WAIT_RECEIVE = {:?}", wait);
                                 // Optionally, send a response back to the client
                             }
                             Err(e) => {

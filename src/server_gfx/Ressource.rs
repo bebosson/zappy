@@ -203,7 +203,7 @@ pub mod Ressource
     
     pub fn spawn_resources(commands: & mut Commands, asset_server: &Res<AssetServer> , res: Ressource, vec_hashress: &mut Vec<Vec<HashMap<usize, ContentCase>>>)
     {
-        println!("{:?}", vec_hashress[res.y as usize][res.x as usize]);
+        //println!("{:?}", vec_hashress[res.y as usize][res.x as usize]);
         //verifier si hashmap[y][x].is_empty -> spawn ressources
         //sinon on modifie la ou les ressources concerne, donc spawn ou despawn
         if vec_hashress[res.y as usize][res.x as usize].is_empty()
@@ -234,8 +234,8 @@ pub mod Ressource
         {
             let vec = Vec3::new(res.x_rel, res.y_rel, 13.);
             *transform = Transform::from_translation(vec);
-            // action_player.vecdeque.push_back(type_action);
-            // println!("{:?}", action_player);
+            //change sprite
+            //despawn resource 
         }
     }
 

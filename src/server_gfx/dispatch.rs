@@ -1,15 +1,15 @@
 pub mod dispatch{
-    use std::{collections::HashMap, default};
+    use std::{collections::HashMap, default, process::ExitCode};
 
     use bevy::{ecs::{system::{Resource, Commands, Res, ResMut, Query}, entity::Entity, event::{EventId, EventReader, EventWriter, Events}, schedule::{States, IntoSystemConfigs, common_conditions::in_state, NextState, State}}, math::Vec2, app::{Plugin, App, Startup, Update}, asset::{AssetServer, Assets, self}, sprite::{TextureAtlas, SpriteSheetBundle}, transform::components::Transform, prelude::default, utils::tracing::Event};
 
-    use crate::{TILES_WIDTH, StreamEvent, StreamReceiver, map::map::spawn_map, Ressource::Ressource::{anim_take_ressource_res, get_ressource_entity, spawn_resources, ContentCase, Ressource}, sprite_player::{sprite_player::{setup_sprite, SpriteAnimation, SpriteComponent, set_sprite_animation, Cell}, self}, do_action::do_action::{ActionPlayer, TypeAction, add_action, get_nbr_player_cell}, parser::parser::{simple_command, Parse}, env::env::RessCommandId};
+    use crate::{do_action::do_action::{add_action, get_cell, get_nbr_player_cell, ActionPlayer, TypeAction}, env::env::RessCommandId, map::map::spawn_map, parser::parser::{simple_command, Parse}, sprite_player::{self, sprite_player::{set_sprite_animation, setup_sprite, Cell, SpriteAnimation, SpriteComponent}}, Ressource::Ressource::{anim_take_ressource_res, get_ressource_entity, spawn_resources, ContentCase, Ressource}, StreamEvent, StreamReceiver, TILES_WIDTH};
 
     // const for teams folder name 
     pub const SIZE_VECSPRITE: usize = 4;
     pub const SIZE_VECTEAM: usize = 2;
     pub const VECSPRITE: [&'static str; SIZE_VECSPRITE] = ["zelda_up2.png", "zelda_east.png", "zelda_down.png", "zelda_west.png"];
-    pub const VECEXPULSION: [&'static str; SIZE_VECSPRITE] = ["expulse_up.png", "expulse_east.png", "expulse_down.png", "zelda_west.png"]; // miss expulse west
+    pub const VECEXPULSION: [&'static str; SIZE_VECSPRITE] = ["expulse_up.png", "expulse_east.png", "expulse_down.png", "expulse_west.png"]; // miss expulse west
     pub const VECTEAM: [&'static str; SIZE_VECTEAM] = ["zelda_1", "zelda_2"];
     
     #[derive(Debug)]
@@ -31,10 +31,10 @@ pub mod dispatch{
     }
 
     impl Player{
-        pub fn new(level: &u8, team: String, entity: Entity) -> Self
+        pub fn new(num_team: u8, level: &u8, team: String, entity: Entity) -> Self
         {
             Player{
-                num_team: 0,
+                num_team: num_team,
                 name_team: team,
                 level: *level,
                 inventory: None,
@@ -78,7 +78,7 @@ pub mod dispatch{
             app
             .add_state::<StateCommand>()
             .add_event::<StreamEvent>()
-            .insert_resource(Complexcommand { nbr_command: 1,vec_id_command: vec![],  first_command: Parse::Donothing, vec_command: vec![] })
+            .insert_resource(Complexcommand { nbr_command: 0,vec_id_command: vec![],  first_command: Parse::Donothing, vec_command: vec![] })
 
             .add_systems(Startup, init)
             .add_systems(Update, read_stream)
@@ -119,7 +119,7 @@ pub mod dispatch{
 
     fn read_stream(receiver: Res<StreamReceiver>, mut events: EventWriter<StreamEvent>, state: Res<State<StateCommand>>) {
         for parse in receiver.try_iter() {
-            // println!("{:?}", events.g);
+            // ////println!("{:?}", events.g);
             
             events.send(StreamEvent(parse));
         }
@@ -146,11 +146,11 @@ pub mod dispatch{
             let state_enum = state.get();
             let parse = &event.0.0;
             let streamevent = event.1;
-            println!("parse_dispatch {:?}", parse);
-            println!("state_enum_dispatch {:?}", state_enum);
-            match state_enum
+            ////println!("parse_dispatch {:?}", parse);
+            ////println!("state_enum_dispatch {:?}", state_enum);
+            match complexcommand.nbr_command // autant de complexe commande qu il y a de joueur ? (donc vec_complex command)
             {
-                StateCommand::Simple_Command => {
+                0 => {
                     if simple_command(&parse) {
                         //ici on execute la simple command sans changer d'etat (simple -> simple)
                         dispatch_setup_event(parse, & mut commands, &asset_server, & mut asset_map, & mut texture_atlases, & mut query_action_player);
@@ -161,7 +161,7 @@ pub mod dispatch{
                         //ici on set up la complexe command (expulse/prend/pose) et on change d'etat (simple -> stacking)
                     }
                 },
-                StateCommand::Stacking_Command => {
+                1.. => {
                     dispatch_stacking_command(&parse, &mut asset_map, &mut query_player_cell, &mut complexcommand, &mut next_state, &streamevent, &mut commands, &mut query_transform_res, &mut query_action_player);
                 },
                 // StateCommand::Complexe_Command => {
@@ -219,11 +219,11 @@ pub mod dispatch{
                 let player_animation = asset_map.get_sprite((*o - 1) as usize, team_num);
                 // let player_component = animation_to_sprite_component(, x, y)
                 let entity = setup_sprite(commands, &asset_server, (x_rel, y_rel),(*x, *y, *o), asset_map, player_animation, team_num as u8);
-                asset_map.set_new_entry_hashmap_player(id, l, team_name, entity);
+                asset_map.set_new_entry_hashmap_player(id, l, team_name, team_num as u8,  entity);
                 // asset_map.last_event_id_visited = streamevent.id;
             }
             Parse::MovementPlayer(id, x, y, o) =>{
-                println!("MOVEMENT ? , Parse {:?}", parse);
+                ////println!("MOVEMENT ? , Parse {:?}", parse);
                 // let id_back = *id - 1; //method to get the id is wrong because if a player died the index of vector won't be reliable anymore (like arsenal_id [1, 2] chelsea_id [3, 4] => arsenal_id [1, 2] chelsea_id [3], => arsenal_id [1, 2, 5(egg)] chelsea_id [3])
                 let mut mov = TypeAction::Movement{0: *x, 1: *y, 2: *o};
 
@@ -261,7 +261,8 @@ pub mod dispatch{
                 Parse::Expulse(id) => {
                     // cherche le nb de joueurs concerne par expulse equivalant au nombre de commande a attendre 
                     let nbr_mov_command_waited = get_nbr_player_cell(& mut query_player_cell, asset_map.get_player_id(&id));  
-                    println!("EXPULSE {:?}", statecommand);
+                    ////println!("EXPULSE {:?}", statecommand);
+                    ////println!("nbr_mov_command_waited {:?}", nbr_mov_command_waited);
                     complexcommand.first_command = parse.clone();
                     complexcommand.nbr_command = nbr_mov_command_waited;
                     let first_id = streamevent.id + 1;
@@ -286,7 +287,7 @@ pub mod dispatch{
                         complexcommand.vec_id_command.push(i);
                         
                     }
-                    // println!("nbr_command_wanted {} streamevent_id {:?}", nbr_mov_command_waited, streamevent.id);
+                    // ////println!("nbr_command_wanted {} streamevent_id {:?}", nbr_mov_command_waited, streamevent.id);
                     asset_map.last_event_id_visited = streamevent.id;
                     statecommand.set(StateCommand::Stacking_Command);
                     return 
@@ -308,22 +309,28 @@ pub mod dispatch{
         query_action_player: & mut Query<& mut ActionPlayer>,
     )
     {
-        // println!("{:?}")
+        // ////println!("{:?}")
+        ////println!("stacking event_id {:?}", streamevent);
+        ////println!("stacking parse {:?}", parse);
+        ////println!("Complexe Command {:?}", complexcommand);
+        ////println!("nbr_command {:?}", complexcommand.nbr_command);
+        ////println!("nb wait  {:?}",complexcommand.vec_id_command);
+        ////println!("Last command visit = {}", asset_map.last_event_id_visited);
+        // if nb wait == 0 => panic ? 
+        if complexcommand.nbr_command == 0 {panic!("something wrong w/ complex command (expulse)")}
+        ////println!("vec_command.len() {:?}", complexcommand.vec_command.len());
         for id in complexcommand.vec_id_command.clone() //34, 36
         {
-            println!("stacking event_id {:?}", streamevent);
-            println!("stacking parse {:?}", parse);
             if streamevent.id == id // ajouter test command attendu (expulse => movement, pose => {Inventaire, Ressource})
             {
                 complexcommand.vec_command.push(parse.clone()); // [Inventaire, Ressource]
+                // ////println!("")
                 asset_map.last_event_id_visited = streamevent.id;
             }
             if complexcommand.nbr_command as usize == complexcommand.vec_command.len()
             {
-                println!("Complexe Command {:?}", complexcommand);
-                println!("nbr_command {:?}", complexcommand.nbr_command);
-                println!("vec_command.len() {:?}", complexcommand.vec_command.len());
-                dispatch_handle_complex_command(commands, & mut asset_map, & mut complexcommand, statecommand, query_action_player, query_transform_res);
+                // statecommand.set(StateCommand::Simple_Command); // ? multithreade ? 
+                dispatch_handle_complex_command(commands, & mut asset_map, & mut complexcommand, statecommand, query_action_player, query_player_cell, query_transform_res);
                 // }
             }
             // else {
@@ -339,6 +346,7 @@ pub mod dispatch{
         mut complexcommand: & mut ResMut<Complexcommand>,
         mut statecommand: & mut ResMut<NextState<StateCommand>>,
         mut query_action_player: & mut Query<& mut ActionPlayer>,
+        mut query_cell: &Query<(Entity, &Cell)>,
         mut query_transform_res: & mut Query<&mut Transform>,
     )
     {
@@ -356,11 +364,13 @@ pub mod dispatch{
                             // PAREIL CETTE CONDITION EST JUSTE LA PARCE QUE EXPULSE EST MAL IMPLEMENTE DANS SERVER
                             
                                 // on recupere 
+                                println!("player id => {}", id_1);
                                 let num_team = asset_map.get_player_num_team(id);
+                                println!("-----EXPULSION----- ");
                                 let sprite_anim_mvmt = asset_map.get_sprite((*o - 1 ) as usize, num_team as usize);
-                                let sprite_anim_expulse = asset_map.get_sprite_expulsion((*o - 1 ) as usize, num_team as usize);
-                                let expulsion = TypeAction::Expulsion{0: *x, 1: *y, 2: *o, 3: sprite_anim_mvmt, 4: sprite_anim_expulse};
-                                println!("do_action {:?}", mov_expulse);
+                                let tmp_cell = get_cell(query_cell, asset_map.get_player_id(&id_1)) ;
+                                let sprite_anim_expulse = asset_map.get_sprite_expulsion((tmp_cell.2 - 1 ) as usize, num_team as usize);
+                                let expulsion = TypeAction::Expulsion{0: *x, 1: *y, 2: tmp_cell.2, 3: sprite_anim_mvmt, 4: sprite_anim_expulse};
                                 add_action(& mut query_action_player, &asset_map.get_player_id(id), expulsion);
                                 
                         }
@@ -373,7 +383,7 @@ pub mod dispatch{
                 if let Parse::Inventaire(_, _, _, _, _, _, _, _, _, _) = complexcommand.vec_command[0] 
                 {
                     if let Parse::RessourceCase(x, y, n, l, d, s,m , ph, th) = complexcommand.vec_command[1]{
-                        println!("Ressource?");
+                        ////println!("Ressource?");
                         let (x_rel, y_rel) = asset_map.center_map_new_system(x as f32, y as f32);
                         let res = Ressource{ x_rel: x_rel, x: x, y: y, y_rel: y_rel, n: n, l: l, d: d, s: s, m: m, ph: ph, th: th};
                         let res_entity = get_ressource_entity(& mut commands,  &res, num_res, & mut asset_map.id_Ressource);
@@ -384,7 +394,7 @@ pub mod dispatch{
             
             _ => (panic!("you should not be here"))
         }
-        statecommand.set(StateCommand::Simple_Command);
+        statecommand.set(StateCommand::Simple_Command); // plus besoin 
         complexcommand.fflush();
         //need to set complexcommand back to normal 
         // miss the reset method for complexcommand
