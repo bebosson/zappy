@@ -9,7 +9,6 @@ use std::time::SystemTime;
 use args::args::{Args, ParsingError};
 use gamecontrol::game::GameController;
 use teams::team::Team;
-use player::player::Player;
 use stream_utils::stream_utils::send_pkt_to_stream;
 use utils::utils::copy_until_char;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
@@ -346,7 +345,7 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
         "avance" => ActionResult::ActionBool(action.avance(&game_ctrl.x, &game_ctrl.y, &mut player)),
         "droite" => ActionResult::ActionBool(action.droite(&mut player)),
         "gauche" => ActionResult::ActionBool(action.gauche(&mut player)),
-        "voir" => ActionResult::ActionVecHashMap(action.voir(&mut player, &game_ctrl.cells, game_ctrl.teams.clone())),
+        "voir" => ActionResult::ActionVecHashMap(action.voir(&mut player, &game_ctrl.cells, &game_ctrl.teams)),
         "inventaire" => ActionResult::ActionHashMap(action.inventaire(&mut player)),
         "prend" => ActionResult::ActionBool(action.prend(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
         "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
@@ -417,7 +416,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
         vec_stream.push(stream);
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) { break ; }
     }
-    
+
     println!("Everybody is connected, let's start the game");
     //println!("vec stream -> {:?}", vec_stream);
     
@@ -465,6 +464,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
+                // list before = get list des id de tous les joueurs
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 println!("gfx pkt ready action ---> {:?}", gfx_pkt);
@@ -475,15 +475,28 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 if let Some(packet) = client_pkt 
                 {
-                    // let tmp_stream = get_stream_by_id(ready_action.id);
                     //send_pkt_to_stream(packet, &mut vec_stream);
+
+                    //hashmap.add_keys(ready_action.id) == stream(packet)
                 }
+
+                //let tmp_id = get_nb_total_players(teams)
+                //stream.incoming()
+                //{
+                //    hashmap.insert(tmp_id, stream);
+                //}
+
+                // list after = get list des id de tous les joueurs
+                // new list = list after - list before  == nouveau joueurs ne d'un oeuf
+                // hashmap.insert(new list) --> on aura un stream = None
 
                 
 
                 // pour le fork, on attend les 42 cycles et on envoie ok au client
                 // a ce moment le client cree un nouveau stream directement pour son oeuf
                 // le serveur ecoute donc (avec timeout) si y a un stream incomming()
+
+                // on associe le strean incomming au hashmap.id = stream
 
             }
         }

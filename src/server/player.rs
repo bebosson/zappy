@@ -28,7 +28,7 @@ pub mod player
     #[derive(Debug, Clone)]
     pub struct Egg
     {
-        pub id: u16,
+        pub id: u32,
         pub count: u16,
         pub coord: Point,
     }

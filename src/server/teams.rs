@@ -11,7 +11,7 @@ pub mod team
         pub port_start_index: u16,
         pub players: Vec<Player>,
         pub eggs: Vec<Egg>,
-        pub nb_total_players: u16, // count dead and alive players and eggs
+        pub nb_total_players: u32, // count dead and alive players and eggs
     }
 
 

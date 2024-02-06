@@ -3,7 +3,8 @@ pub mod game
 {
     use std::net::TcpStream;
     use std::time::SystemTime;
-
+    use std::collections::HashMap;
+    
     use crate::teams::team::Team;
     use crate::args::args::Args;
     use crate::player::player::{Player, PlayerType};
@@ -23,6 +24,7 @@ pub mod game
         pub teams: Vec<Team>,
         pub timestamp: u32,
         pub stream_gfx: Option<TcpStream>,
+        pub stream_hashmap: HashMap<u32, Option<TcpStream>>
     }
 
     impl GameController
@@ -43,7 +45,8 @@ pub mod game
                 cells : init_map_cells(args.x, args.y),
                 teams: vec_teams,
                 timestamp: 0,
-                stream_gfx: None
+                stream_gfx: None,
+                stream_hashmap: HashMap::new()
             }
         }
 
@@ -92,6 +95,9 @@ pub mod game
             let after_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
             // remove after_id from before_id
             let dead_players: Vec<(u32, PlayerType)> = get_dead_people_list(before_id, after_id);
+            
+            // retirer de la hashmap de stream les dead_players
+
             dead_players
         }
 

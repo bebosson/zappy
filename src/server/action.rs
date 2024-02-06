@@ -163,7 +163,7 @@ pub mod action
             true
         }
 
-        pub fn voir(&self, player: &Player, cells: &Vec<Vec<Cell>>, teams: Vec<Team>) -> Vec<HashMap<String, u8>>
+        pub fn voir(&self, player: &Player, cells: &Vec<Vec<Cell>>, teams: &Vec<Team>) -> Vec<HashMap<String, u8>>
         {
             let mut cases_content: Vec<HashMap<String, u8>> = Vec::new();
             let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
@@ -248,7 +248,7 @@ pub mod action
             {
                 for tmp_player in &mut team.players
                 {
-                    if player.coord.x == tmp_player.coord.x
+                    if player.coord.x == tmp_player.coord.x && player.coord.y == tmp_player.coord.y && player.id != tmp_player.id
                     {
                         tmp_player.coord.x = target_cell.x;
                         tmp_player.coord.y = target_cell.y;
@@ -368,7 +368,7 @@ pub mod action
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    pub fn get_nb_total_players(teams: &Vec<Team>) -> u16
+    pub fn get_nb_total_players(teams: &Vec<Team>) -> u32
     {
         let mut ret = 0;
 
