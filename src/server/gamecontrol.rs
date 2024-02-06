@@ -4,7 +4,7 @@ pub mod game
     use std::net::TcpStream;
     use std::time::SystemTime;
     use std::collections::HashMap;
-    
+
     use crate::teams::team::Team;
     use crate::args::args::Args;
     use crate::player::player::{Player, PlayerType};

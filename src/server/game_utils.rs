@@ -50,6 +50,23 @@ pub mod game_utils
         None
     }
 
+    pub fn find_team_from_player_id(id: u32, teams: &Vec<Team>) -> &Team
+    {
+        let mut tmp: Option<&Team> = None;
+
+        for team in teams
+        {
+            for player in &team.players
+            {
+                if id == player.id
+                {
+                    tmp = Some(team);
+                }
+            }
+        }
+        &tmp.unwrap() // ici faut gerer avec des opt
+    }
+
     /*
     **  find the ready action in the player actions list
     **  params:

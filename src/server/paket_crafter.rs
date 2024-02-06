@@ -1,6 +1,7 @@
 pub mod paquet_crafter
 {
-    use crate::find_player_from_id;
+    use crate::{find_player_from_id, ressources};
+    use crate::game_utils::game_utils::find_team_from_player_id;
     use crate::teams::team::Team;
     use crate::gamecontrol::game::{GameController};
     use crate::ressources::ressources::Ressources;
@@ -41,7 +42,91 @@ pub mod paquet_crafter
 
     pub fn craft_client_packet_action_ready(ready_action_ref: &ReadyAction, action_result_ref: &Option<ActionResult>, game_ctrl: &GameController) -> Option<Vec<String>>
     {
-        Some(Vec::new())
+        let ready_action: ReadyAction = ready_action_ref.clone();
+        let action_result = action_result_ref.as_ref().clone().unwrap();
+        let mut pkts: Vec<String> = Vec::new();
+        let teams = game_ctrl.teams.clone();
+        let player = find_player_from_id(teams.clone(), &ready_action.id).unwrap();
+        let team = find_team_from_player_id(player.id, &teams.clone());
+
+        match ready_action.action.action_name.as_str()
+        {
+            "voir" =>
+            {
+                match action_result
+                {
+                    ActionResult::ActionVecHashMap(x) =>
+                    {
+                        // attention ici ce n'est pas juste
+                        // je dois renvoyer case1, case2 avec case 1 = phiras player food food
+                        // actuellement je renvoie pas ca
+                        let mut voir_pkt: String = format!("");
+                        for elem in x
+                        {
+                            println!("{:?}", elem);
+                            let ressources_name = ["food", "linemate", "sibur", "phiras", "thystate", "mendiane", "deraumere"];
+                            for ressource_name in ressources_name
+                            {
+                                if let Some(val) = elem.get(ressource_name)
+                                {
+                                    for i in 0..*val
+                                    {
+                                        voir_pkt.push_str(&format!("{} ", ressource_name));
+                                    }
+                                }
+                            }
+                            if x[x.len()- 1] != *elem
+                            {
+                                voir_pkt.push_str(&format!(", "));
+                            }
+                        }
+                        pkts.push(format!("{}", voir_pkt));
+                    }
+                    _ => ()
+                };
+            },
+            "inventaire" =>
+            {
+                match action_result
+                {
+                    ActionResult::ActionHashMap(x) =>
+                    {
+                        // ici c'est plus simple d'aller checker direct dans ivt du player plutot que dans la hashmap x
+                        pkts.push(format!("food {}, phiras {}, sibur {}, mendiane {}, linemate {}, thystate {}, deraumere {}",
+                                    player.ivt.food,
+                                    player.ivt.phiras,
+                                    player.ivt.sibur,
+                                    player.ivt.mendiane,
+                                    player.ivt.linemate,
+                                    player.ivt.thystate,
+                                    player.ivt.deraumere));
+                    }
+                    _ => ()
+                };
+            },
+            "connect_nbr" => { pkts.push(format!("{}", teams[0].connect_nbr)); },
+            "avance" | "droite" | "gauche" | "fork" | "broadcast" => { pkts.push("ok".to_string()); },
+            "prend" | "pose" | "expulse" =>
+            {
+                match action_result
+                {
+                    ActionResult::ActionBool(x) =>
+                    {
+                        if x == &true   { pkts.push("ok".to_string()); }
+                        else            { pkts.push("ko".to_string()); }
+                    }
+                    _ => { pkts.push("ko".to_string()); }
+                };
+                
+            },
+            "incantation" =>
+            {
+                pkts.push(format!("niveau actuel : {}", player.level + 1));
+            },
+            _ => (),
+        };
+        println!(" les pkt pour le client sont ----------> {:?}", pkts);
+        Some(pkts)
     }
 
     /*

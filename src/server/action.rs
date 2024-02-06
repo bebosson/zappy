@@ -169,12 +169,6 @@ pub mod action
             let cases_coord = get_cases_coord_from_player_pov(player, cells[0].len(), cells.len());
             for case_coord in cases_coord
             {
-                let mut x = HashMap::new();
-                let mut y = HashMap::new();
-                x.insert("x".to_string(), case_coord.x);
-                y.insert("y".to_string(), case_coord.y);
-                cases_content.push(x);
-                cases_content.push(y);
                 cases_content.push(get_case_content_from_position(case_coord, cells, &teams));
             }
             cases_content
@@ -479,6 +473,8 @@ pub mod action
 
         //println!("cell ({},{}) -> {:?} {}", coord.x, coord.y, cells.len(), cells[0].len());
         println!("cell ({},{})", coord.x, coord.y);
+        cell_content.insert("x".to_string(), coord.x);
+        cell_content.insert("y".to_string(), coord.y);
         cell_content.insert("food".to_string(), cells[coord.y as usize][coord.x as usize].ressources.food);
         cell_content.insert("sibur".to_string(), cells[coord.y as usize][coord.x as usize].ressources.sibur);
         cell_content.insert("mendiane".to_string(), cells[coord.y as usize][coord.x as usize].ressources.mendiane);

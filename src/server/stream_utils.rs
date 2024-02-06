@@ -3,19 +3,20 @@ pub mod stream_utils
     use std::net::TcpStream;
     use std::io::{Write, Read};
 
-    use crate::GFX_SERVER_PORT;
+    use crate::{BUF_SIZE, GFX_SERVER_PORT};
     use crate::gamecontrol::game::GameController;
+
 
     /*
     **  Convert String into buffer to send to gfx or client stream
     **/
-    fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; 32]
+    fn translate_string_to_buffer(gfx_pck_string: String) -> [u8; BUF_SIZE]
     {
-        let mut array = Vec::with_capacity(32);
+        let mut array = Vec::with_capacity(BUF_SIZE);
         array.extend(gfx_pck_string.chars());
-        array.extend(std::iter::repeat('0').take(32 - gfx_pck_string.len()));
+        array.extend(std::iter::repeat('0').take(BUF_SIZE - gfx_pck_string.len()));
         
-        let mut result_array = [0u8; 32];
+        let mut result_array = [0u8; BUF_SIZE];
         for (i, &c) in array.iter().enumerate()
         {
             result_array[i] = c as u8;
@@ -30,12 +31,13 @@ pub mod stream_utils
     **      pkts: string vector that contains the packet to send
     **      stream: destination of the TCP packets list
     **/
-    pub fn send_pkt_to_stream(pkts: Vec<String>, stream: &mut TcpStream)
+    pub fn send_pkt_to_stream(pkts: Vec<String>, mut stream: &TcpStream)
     {
-        let mut buf: [u8; 32];
+        let mut buf: [u8; BUF_SIZE];
     
         for pkt in pkts
         {
+            println!("sending pkt -----> {}", pkt);
             buf = translate_string_to_buffer(pkt);
             let _ = stream.write(&buf);
         }

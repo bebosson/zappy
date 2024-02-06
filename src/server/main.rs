@@ -37,7 +37,7 @@ pub mod stream_utils;
 static GFX_SERVER_PORT: u16 = 1312;
 const COMMAND_SLICE: [&'static str; 12] = ["avance", "droite", "gauche", "voir", "inventaire", "expulse", "incantation", "fork", "connect_nbr", "prend ", "pose ", "broadcast "]; 
 const RESSOURCES_SLICE: [&'static str; 7] = ["food", "linemate", "deraumere", "sibure", "mendiane", "phiras", "thystame"];
-const BUF_SIZE: usize = 160;
+const BUF_SIZE: usize = 256;
 
 
 /*
@@ -222,10 +222,10 @@ fn get_obj_from_string(command: &String) -> Option<String>
 **  return:
 **      Vec<Action>: list of all new cmd receive from stream
 **/
-fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<Action>
+fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<ReadyAction>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
-    let mut actions : Vec<Action> = Vec::new();
+    let mut actions : Vec<ReadyAction> = Vec::new();
 
     // println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
@@ -257,7 +257,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
                             if is_valid_cmd(&string_command)
                             {
                                 // keep the new commands into actions in order to create corresponding gfx pkt
-                                actions.push(Action::new_from_string(string_command.clone()));
+                                actions.push(ReadyAction{id: player.id, action: Action::new_from_string(string_command.clone())});
                                 player.action_push(string_command);
                             }
                         }
@@ -382,10 +382,10 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut gfx_stream: TcpStream;
+    let mut stream_hashmap: HashMap<u32, TcpStream> = HashMap::new();
     // use to trigger the execution
     let mut wait_for_answer: bool = true;
-    let mut vec_stream: Vec<TcpStream> = Vec::new();
-    let mut current_actions: Vec<Action> = Vec::new();
+    let mut current_actions: Vec<ReadyAction> = Vec::new();
     let mut hashmap: HashMap<String, u8> = HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
@@ -413,7 +413,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
         create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
         // set timeout
         let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
-        vec_stream.push(stream);
+        //game_ctrl.stream_hashmap.insert(id, Some(stream));
+        stream_hashmap.insert(id, stream);
         if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) { break ; }
     }
 
@@ -431,15 +432,16 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     loop
     {
-        for mut stream in & mut vec_stream
+        for stream in &mut stream_hashmap
         {
             if check_winner(&game_ctrl.teams) { break; }
             if wait_for_answer == true
             {
-                let _ = stream.write(b"sendme");
+                let _ = stream.1.write(b"sendme");
                 wait_for_answer = false;
             }
-            current_actions = receive_action(& mut stream, & mut game_ctrl);
+            current_actions = receive_action(stream.1, &mut game_ctrl);
+            //current_actions = receive_action(& mut stream_hashmap.1.unwrap(), & mut game_ctrl);
             break ;
         }
 
@@ -450,15 +452,15 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("current action list --> {:?}", current_actions);
             for current_action in &current_actions
             {
-                let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
+                let gfx_pkt = craft_gfx_packet_action_receive(&current_action.action, &game_ctrl.teams);
                 if let Some(gfx_pkt_tmp) = gfx_pkt
                 {
                     send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
                 }
-                let client_pkt = craft_client_packet_action_receive(&current_action, &game_ctrl.teams);
+                let client_pkt = craft_client_packet_action_receive(&current_action.action, &game_ctrl.teams);
                 if let Some(client_pkt_tmp) = client_pkt
                 {
-                    //send_pkt_to_stream(client_pkt_tmp, &vec_stream);
+                    send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&current_action.id).unwrap());
                 }
             }
             println!("ready action list --> {:?}", ready_action_list);
@@ -475,7 +477,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 if let Some(packet) = client_pkt 
                 {
-                    //send_pkt_to_stream(packet, &mut vec_stream);
+                    send_pkt_to_stream(packet, stream_hashmap.get(&ready_action.id).unwrap());
 
                     //hashmap.add_keys(ready_action.id) == stream(packet)
                 }
