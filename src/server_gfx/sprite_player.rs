@@ -64,25 +64,9 @@ pub mod sprite_player{
         let text_at;
         let anim_i;
         // //println!("o {}", o);
-        match o
-        {
-
-            2 | 4 => { 
-                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27., 32.0), 9, 1, None, None);
-                anim_i = AnimationIndices { first: 1, last: 8 };
-                (text_at, anim_i)
-            },
-            3 => {
-                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27., 32.0), 9, 1, None, None);
-                anim_i = AnimationIndices { first: 1, last: 8 };
-                (text_at, anim_i)
-            },
-            _ => {
-                text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27., 32.0), 9, 1, None, None);
-                anim_i = AnimationIndices { first: 1, last: 8 };
-                (text_at, anim_i)
-            },
-        }
+        text_at = TextureAtlas::from_grid(texture_handle, Vec2::new(27., 32.0), 9, 1, None, None);
+        anim_i = AnimationIndices { first: 1, last: 8 };
+        (text_at, anim_i)
     }
 
     pub fn set_sprite_animation(team: usize, o: u8, mut texture_atlases: & mut ResMut<Assets<TextureAtlas>>, asset_server: &Res<AssetServer>, name_sprite: [&'static str; SIZE_VECSPRITE]) -> SpriteAnimation

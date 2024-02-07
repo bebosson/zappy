@@ -5,11 +5,13 @@ mod parser;
 pub mod dispatch;
 pub mod do_action;
 mod env;
+pub mod button;
 
 use bevy::diagnostic::{LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy::window::{WindowTheme, PresentMode};
 use bevy_pancam::PanCamPlugin;
+use button::craftbutton::Craftbutton;
 use crossbeam_channel::bounded;
 use dispatch::dispatch::Dispatch;
 use rand::SeedableRng;
@@ -76,6 +78,7 @@ fn main() {
         .add_systems(Startup, setup_handle_connections)
         .add_plugins(Dispatch)
         .add_plugins(DoAction)
+        .add_plugins(Craftbutton)
         // .add_systems(Update, lolo_fn)
         // .add_systems(Startup, setup_sprite)
         .add_systems(Update, animate_sprite)

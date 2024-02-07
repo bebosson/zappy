@@ -1,22 +1,42 @@
 pub mod map{
 
 
-    use bevy::{prelude::*, math::vec3, asset};
+    use bevy::{asset, math::vec3, prelude::*, ui::RelativeCursorPosition};
     use bevy_pancam::PanCam;
 
     use crate::env::env::RessCommandId;
 
 
-    #[derive(Component, Debug)]
+    #[derive(Component, Debug, Clone)]
     pub struct Position(Vec3);
 
-    #[derive(Component)]
-    pub struct Tile;
+    #[derive(Component, Clone)]
+    pub struct Tile; //vouer a disparaitre (a remplacer par Cell)
     
     #[derive(Component)]
     pub struct Map(Vec<Tile>);
 
-    
+    #[derive(Bundle, Clone)]
+    pub struct TileBundle{
+        // pub sprite_sheet_bundle: SpriteSheetBundle,
+        pub tile: Tile,
+        pub position: Position,
+        pub sprite_bundle: SpriteBundle,
+        pub interact: Interaction,
+    }
+
+    impl TileBundle
+    {
+        pub fn new(texture_handle: &Handle<Image>, vec: &Vec3) -> Self
+        {
+            TileBundle{
+                tile: Tile,
+                position: Position(*vec),
+                sprite_bundle: sprite_bundle(texture_handle.clone(), vec),
+                interact: Interaction::None,
+            }
+        }
+    }
     
     
 
@@ -49,15 +69,8 @@ pub mod map{
             {
                 let (x_rel, y_rel) = asset_map.center_map_new_system(x_iter as f32, y_iter as f32);
                 let vec = Vec3 { x: x_rel, y: y_rel, z: 12. };
-                commands.spawn((
-                        Tile,
-                        Position(vec),
-                        SpriteBundle {
-                            texture: texture_handle.clone(),
-                            transform: transform_for_tiles(x_rel, y_rel),
-                            ..default()
-                        }
-                    )
+                commands.spawn(
+                    TileBundle::new(&texture_handle, &vec)
                 );
             }
         }
@@ -68,10 +81,19 @@ pub mod map{
         my_transform.with_scale(vec3(0.5, 0.5, 1.0))
     }
 
-    pub fn transform_for_tiles(x: f32, y: f32) -> Transform
+    pub fn transform_for_tiles(vec: &Vec3) -> Transform
     {
-        let my_transform = Transform::from_translation(vec3(x, y, 12.));
+        let my_transform = Transform::from_translation(vec3(vec.x, vec.y, 12.));
         my_transform.with_scale(vec3(2., 2., 1.0))
+    }
+
+    pub fn sprite_bundle(texture_handle: Handle<Image>, vec: &Vec3) -> SpriteBundle
+    {
+        SpriteBundle{
+            texture: texture_handle.clone(),
+            transform: transform_for_tiles(vec),
+            ..default()
+        }
     }
 
     
