@@ -15,7 +15,7 @@ pub mod craftbutton{
             // .add_plugins(DefaultPlugins)
             .add_plugins(FrameTimeDiagnosticsPlugin::default())
             .add_systems(Startup, setup_button)
-            .add_systems(Update, (text_update_system, mouse_motion, cursor_position));
+            .add_systems(Update, (text_update_system));
             // .add_systems(
             //     Update,
             //     (animate_translation, animate_rotation, animate_scale),
@@ -36,24 +36,24 @@ pub mod craftbutton{
     struct Textatrou;
 
 
-    fn mouse_motion(
-        mut motion_evr: EventReader<MouseMotion>,
-    ) {
-        for ev in motion_evr.read() {
-            println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
-        }
-    }
+    // fn mouse_motion(
+    //     mut motion_evr: EventReader<MouseMotion>,
+    // ) {
+    //     for ev in motion_evr.read() {
+    //         println!("Mouse moved: X: {} px, Y: {} px", ev.delta.x, ev.delta.y);
+    //     }
+    // }
 
-    fn cursor_position(
-        q_windows: Query<&Window, With<PrimaryWindow>>,
-    ) {
-        // Games typically only have one window (the primary window)
-        if let Some(position) = q_windows.single().cursor_position() {
-            println!("Cursor is inside the primary window, at {:?}", position);
-        } else {
-            println!("Cursor is not in the game window.");
-        }
-    }
+    // fn cursor_position(
+    //     q_windows: Query<&Window, With<PrimaryWindow>>,
+    // ) {
+    //     // Games typically only have one window (the primary window)
+    //     if let Some(position) = q_windows.single().cursor_position() {
+    //         println!("Cursor is inside the primary window, at {:?}", position);
+    //     } else {
+    //         println!("Cursor is not in the game window.");
+    //     }
+    // }
     
     fn setup_button(mut commands: Commands, asset_server: Res<AssetServer>) {
         let font = asset_server.load("fonts/FiraSans-Bold.ttf");
@@ -229,34 +229,39 @@ pub mod craftbutton{
         q_parent: Query<(&Transform, With<Textatrou>, &Children)>,
         mut q_child: Query<&mut Text>,
         relative_cursor_position_query: Query<&RelativeCursorPosition>,
+        mut asset_map: ResMut<RessCommandId>,
     ) {
-        
-        let relative_cursor_position = relative_cursor_position_query.single();
-        // get the properties of each squad
-        for (_, _, children) in q_parent.iter() {
-            // `children` is a collection of Entity IDs
-            for &child in children.iter() {
-
-                // get the health of each child unit
-                let mut text = q_child.get_mut(child).unwrap();
-                text.sections[1].value =
-                if let Some(relative_cursor_position) = relative_cursor_position.normalized {
-                    format!(
-                        "({:.1}, {:.1})",
-                        relative_cursor_position.x, relative_cursor_position.y
-                    )
-                } else {
-                    "unknown".to_string()
-                };
-    
-                text.sections[1].style.color = if relative_cursor_position.mouse_over() {
-                    Color::rgb(0.1, 0.9, 0.1)
-                } else {
-                    Color::rgb(0.9, 0.1, 0.1)
-                };
-                // do something
-            }
+        if asset_map.vec_tile_id.len() < 1
+        {
+            return;
         }
+            let relative_cursor_position = relative_cursor_position_query.get(asset_map.vec_tile_id[0]).unwrap();
+            for (_, _, children) in q_parent.iter() {
+                // `children` is a collection of Entity IDs
+                for &child in children.iter() {
+    
+                    // get the health of each child unit
+                    let mut text = q_child.get_mut(child).unwrap();
+                    text.sections[1].value =
+                    if let Some(relative_cursor_position) = relative_cursor_position.normalized {
+                        format!(
+                            "({:.1}, {:.1})",
+                            relative_cursor_position.x, relative_cursor_position.y
+                        )
+                    } else {
+                        "unknown".to_string()
+                    };
+        
+                    text.sections[1].style.color = if relative_cursor_position.mouse_over() {
+                        Color::rgb(0.1, 0.9, 0.1)
+                    } else {
+                        Color::rgb(0.9, 0.1, 0.1)
+                    };
+                    // do something
+                }
+            }
+
+        // get the properties of each squad
     }
 
     // fn relative_cursor_position_system(

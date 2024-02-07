@@ -113,6 +113,7 @@ pub mod dispatch{
             nbr_equipe: 0, 
             name_equipe: vec![],
             last_event_id_visited: 0,
+            vec_tile_id: vec![],
         });
         // let toto = world.query(Query<)
     }

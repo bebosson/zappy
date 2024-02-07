@@ -22,6 +22,7 @@ pub mod env{
         pub vec_sprite_player_mvmt: Vec<Vec<SpriteAnimation>>, // vec<vec<sprite>>> ?
         pub vec_sprite_player_expulsion: Vec<Vec<SpriteAnimation>>, // vec<vec<sprite>>> ?
         pub last_event_id_visited: usize,
+        pub vec_tile_id: Vec<Entity>,
     }
 
     impl RessCommandId{

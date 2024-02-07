@@ -69,9 +69,16 @@ pub mod map{
             {
                 let (x_rel, y_rel) = asset_map.center_map_new_system(x_iter as f32, y_iter as f32);
                 let vec = Vec3 { x: x_rel, y: y_rel, z: 12. };
-                commands.spawn(
-                    TileBundle::new(&texture_handle, &vec)
-                );
+                let entity_tile = commands.spawn((
+                    TileBundle::new(&texture_handle, &vec),
+                    RelativeCursorPosition::default()
+                )
+                ).id();
+                asset_map.vec_tile_id.push(entity_tile);
+                // if let Some(mut my_entity) = commands.get_entity(entity_tile)
+                // {
+                    // my_entity.insert(RelativeCursorPosition::default());
+                // }
             }
         }
     }
