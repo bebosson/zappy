@@ -93,6 +93,9 @@ pub mod game
             self.teams.iter_mut().for_each(|t| t.update());
             // get all id of eggs and players after updating timestamp
             let after_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
+
+            println!("before and after {:?} --- {:?}", before_id, after_id);
+
             // remove after_id from before_id
             let dead_players: Vec<(u32, PlayerType)> = get_dead_people_list(before_id, after_id);
             

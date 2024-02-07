@@ -1,12 +1,12 @@
-pose food
-prend linemate
 avance
 droite
 gauche
 voir
+pose food
+prend linemate
 inventaire
 expulse
-incantation
 fork
 connect_nbr
 broadcast coucou
+incantation

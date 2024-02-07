@@ -7,7 +7,7 @@ pub mod paquet_crafter
     use crate::ressources::ressources::Ressources;
     use crate::cell::cell::{Point, Cell};
     use crate::player::player::{Orientation, Player, PlayerType};
-    use crate::action::action::{Action, ActionResult, ActionTemplate, ReadyAction};
+    use crate::action::action::{Action, ActionResult, ActionTemplate, ReadyAction, SpecialActionParam};
 
 
     /*
@@ -22,7 +22,7 @@ pub mod paquet_crafter
     **      None if the execution fail or if the cmd doesn't need to send gfx pkt
     **  
     */
-    pub fn craft_gfx_packet_action_receive(action_ref: &ReadyAction, teams: &Vec<Team>) -> Option<Vec<String>>
+    pub fn craft_gfx_packet_action_receive(actions_ref: Vec<(u32, SpecialActionParam)>, teams: &Vec<Team>) -> Option<Vec<String>>
     {
         // TODO : attention ici pour gfx il faut crafter 2 types de paquets 
         // pic pour debu incantation et pfk pour debut de fork
@@ -30,28 +30,25 @@ pub mod paquet_crafter
         // il faudra peut etre renvoyer un tuple (vec<string>, id) dans receive_action au lieu d'un simple vec<string>
 
 
-        let action: ReadyAction = action_ref.clone();
-        let player = find_player_from_id(teams.clone(), &action.id).unwrap();
+        let actions = actions_ref.clone();
         let mut pkt: Vec<String> = Vec::new();
 
-        match action.action.action_name.as_str()
+        for action in actions
         {
-            "incantation" =>
+            match action.1
             {
-                let players_id = get_players_id_from_coord(player.coord.clone(), &teams.clone());
-                pkt.push(packet_gfx_incantation_start(&player.coord, players_id))
-            },
-            "fork" =>
-            {
-                pkt.push(packet_gfx_fork_start(player.id))
-            },
-            _ => (),
+                SpecialActionParam::ActionIncantation(coord, level, ids) =>
+                {
+                    pkt.push(packet_gfx_incantation_start(&coord, ids, level))
+                },
+                SpecialActionParam::ActionFork(id) =>
+                {
+                    pkt.push(packet_gfx_fork_start(id))
+                },
+            }
         }
-        println!("craft_gfx_packet_action_receive ---------------> {:?}", pkt);
-        if pkt.len() > 0
-        {
-            return Some(pkt);
-        }
+        //println!("craft_gfx_packet_action_receive ---------------> {:?}", pkt);
+        if pkt.len() > 0 { return Some(pkt); }
         None
     }
 
@@ -135,11 +132,18 @@ pub mod paquet_crafter
             },
             "incantation" =>
             {
-                pkts.push(format!("niveau actuel : {}", player.level + 1));
+                if action_result == &ActionResult::ActionBool(true)
+                {
+                    pkts.push(format!("niveau actuel : {}", player.level + 1));
+                }
+                else
+                {
+                    pkts.push(format!("niveau actuel : {}", player.level));
+                }
             },
             _ => (),
         };
-        println!(" les pkt pour le client sont ----------> {:?}", pkts);
+        //println!(" les pkt pour le client sont ----------> {:?}", pkts);
         Some(pkts)
     }
 
@@ -169,7 +173,20 @@ pub mod paquet_crafter
             "voir" => { return None; },
             "inventaire" => { return None; },
             "connect_nbr" => { return None; },
-            "fork" => { return None; },
+            "fork" =>
+            {
+                let mut egg_id: u32 = 0;
+                let team = find_team_from_player_id(player.id, &teams);
+                for egg in &team.eggs
+                {
+                    if egg.count == 600 && egg.coord.x == player.coord.x && egg.coord.y == player.coord.y
+                    {
+                        egg_id = egg.id;
+                        break ;
+                    }
+                }
+                if egg_id != 0 { cmd.push(packet_gfx_fork(player.id, egg_id, player.coord)); }
+            },
             "broadcast" => { cmd.push(packet_gfx_broadcast(player.id, ready_action.action.arg.unwrap())); },
             "avance" | "droite" | "gauche" => { cmd.push(packet_gfx_player_position(player.id, player.coord, player.orientation)); },
             "prend" =>
@@ -207,10 +224,13 @@ pub mod paquet_crafter
                 // ICI le pkt envoye est celui de fin d'incantation
                 // TODO :   creer le paquet de debut d'incantation 
                 //          + creer le paquet de debut d'incantation
-                if *action_result == ActionResult::ActionBool(false) { return None; }
-                cmd.push(packet_gfx_incantation(player.coord.clone()));
+                let mut ret = 0;
+                //println!("action result ma gueule {:?}", action_result);
+                if *action_result == ActionResult::ActionBool(true) { ret = 1; }
+                cmd.push(packet_gfx_incantation(player.coord.clone(), ret));
+                cmd.push(packet_gfx_level_up(player.id, player.level));
                 for team in teams
-                {
+                { // probleme ici cr on remove de la liste d'action les incantations des players avant de passer par la
                     for tmp_player in team.players
                     {
                         if incantation_is_finish(&player, &tmp_player)
@@ -219,6 +239,8 @@ pub mod paquet_crafter
                         }
                     }
                 }
+                let coord = player.coord.clone();
+                cmd.push(packet_gfx_case_content(coord.clone(), cells[coord.y as usize][coord.x as usize].clone()));
             },
             _ => (),
         };
@@ -362,9 +384,9 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `incantation` command
     */
-    fn packet_gfx_incantation(coord: Point) -> String
+    fn packet_gfx_incantation(coord: Point, result: u32) -> String
     {
-        format!("pie {} {} 1\n", coord.x, coord.y)
+        format!("pie {} {} {}\n", coord.x, coord.y, result)
     }
 
     /*
@@ -385,7 +407,7 @@ pub mod paquet_crafter
         format!("pdi {}\n", id)
     }
 
-    pub fn packet_gfx_incantation_start(coord: &Point, ids: Vec<u32>) -> String
+    pub fn packet_gfx_incantation_start(coord: &Point, ids: Vec<u32>, level: u8) -> String
     {
         let mut str_ids: String = "".to_string();
 
@@ -393,7 +415,7 @@ pub mod paquet_crafter
         {
             str_ids.push_str(&format!("{} ", id));
         }
-        format!("pic {} {} {}\n", coord.x, coord.y, str_ids)
+        format!("pic {} {} {} {}\n", coord.x, coord.y, level, str_ids)
     }
 
     pub fn packet_gfx_fork_start(id: u32) -> String
@@ -402,13 +424,16 @@ pub mod paquet_crafter
     }
 
 
-    pub fn craft_client_packet_action_receive(actions: &Action, teams: &Vec<Team>) -> Option<Vec<String>>
+    pub fn craft_client_packet_action_receive(actions: &Vec<(u32, SpecialActionParam)>) -> Option<Vec<String>>
     {
         let mut pkts: Vec<String> = Vec::new();
-        match actions.action_name.as_str()
+        for action in actions
         {
-            "incantation" => pkts.push(format!("elevation en cours\n")),
-            _ => { return None; }
+            match action.1
+            {
+                SpecialActionParam::ActionIncantation(_, _, _) => pkts.push(packet_client_pre_incantation()),
+                _ => { return None; }
+            }
         }
         Some(pkts)
     }
@@ -421,6 +446,11 @@ pub mod paquet_crafter
     pub fn packet_client_egg_die() -> String
     {
         format!("mort\n")
+    }
+
+    pub fn packet_client_pre_incantation() -> String
+    {
+        format!("elevation en cours\n")
     }
 
 
@@ -473,13 +503,12 @@ pub mod paquet_crafter
     */
     fn incantation_is_finish(ref_player: &Player, player: &Player) -> bool
     {
-        if ref_player.coord.x == player.coord.x &&
-            ref_player.coord.y == player.coord.y
+        if ref_player.coord.x == player.coord.x && ref_player.coord.y == player.coord.y
         {
-            for action in &player.actions
+            if player.actions.len() > 0
             {
-                if action.action_name == "incantation".to_string() &&
-                    action.count == 0
+                if player.actions[0].action_name == "incantation".to_string() &&
+                    player.actions[0].count == 1
                 {
                     return true;
                 }

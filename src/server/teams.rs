@@ -41,11 +41,11 @@ pub mod team
                 if e.count == 0
                 {
                     // add new player
-                    self.players.push(Player::new_from_egg(e.id as u32, e.coord.clone()));
+                    self.players.push(Player::new_from_egg(e.id as u32, e.coord.clone(), e.life));
                 }
             });
             // remove dead eggs
-            self.eggs.retain(|egg| egg.count != 0);
+            self.eggs.retain(|egg| egg.count != 0 || egg.life != 0);
         }
 
         pub fn packet_gfx_add_teams(&self) -> Vec<String>
@@ -96,10 +96,11 @@ pub mod team
             for egg in &self.eggs
             {
                 println!("egg #{}    :\n\
-                coord     : ({}, {}) --- count: {}\n", 
+                coord     : ({}, {}) --- life / count: {} {}\n", 
                 egg.id, 
                 egg.coord.x,
                 egg.coord.y,
+                egg.life,
                 egg.count);
             }
         }

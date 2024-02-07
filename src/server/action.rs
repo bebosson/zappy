@@ -16,7 +16,13 @@ pub mod action
         Wait,
         Action,
     }
-    
+
+    #[derive(Debug, Clone)]
+    pub enum SpecialActionParam
+    {
+        ActionFork(u32),
+        ActionIncantation(Point, u8, Vec<u32>)
+    }
 
     /***********************************************************************
      * the 3 params of this struct is :
@@ -270,7 +276,7 @@ pub mod action
                         teams[i].nb_total_players += 1;
                         println!("team {} -> nb total players: {}", teams[i].name, teams[i].nb_total_players);
                         let tmp = teams.clone();
-                        teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone() });
+                        teams[i].eggs.push(Egg { id: get_nb_total_players(&tmp), count: 600, coord: player.coord.clone(), life: player.life });
                     }
                 }
             }
@@ -292,7 +298,7 @@ pub mod action
             0
         }
 
-        pub fn incantation(&self, player: &Player, teams: &Vec<Team>) -> String
+        pub fn incantation(&self, player: &Player, teams: &mut Vec<Team>) -> bool
         {
             let mut nb_players = 0;
             let mut is_enough_players_on_coord = false;
@@ -309,33 +315,59 @@ pub mod action
                 (level_requirement[player.level as usize].get(&"thystate".to_string()), player.ivt.thystate),
             ];
 
-            for team in teams
+            for team in teams.clone()
             {
                 for tmp_player in &team.players
                 {
-                    if tmp_player.coord.x == player.coord.x && tmp_player.coord.y == player.coord.y
+                    if tmp_player.coord.x == player.coord.x
+                        && tmp_player.coord.y == player.coord.y
+                        && tmp_player.level == player.level
                     {
                         nb_players += 1;
                     }
                 }
             }
-            if nb_players == *level_requirement[player.level as usize].get(&"nb_players".to_string()).unwrap()
+            //println!("level requirement -------------> {:?}", level_requirement);
+            //println!("nb players -------------> {:?}", nb_players);
+            if nb_players == *level_requirement[(player.level as i32 - 1) as usize].get(&"nb_players".to_string()).unwrap()
             {
                 is_enough_players_on_coord = true;
             }
+            //println!("elems -------------> {:?}", elems);
             for elem in elems
             {
-                if elem.0 != Some(&elem.1)
+                //println!("elem -------------> {:?}", elem);
+                if elem.0.unwrap() > &elem.1
                 {
+                    //println!("================ galinette cendre =====================");
                     is_enough_ressources_for_player = false;
+                    break ;
                 }
             }
+            //println!("enough players and ressources ? -------------> {} {}", is_enough_players_on_coord, is_enough_ressources_for_player);
             if is_enough_players_on_coord == true && is_enough_ressources_for_player == true
             {
-                return "Elevation en cours".to_string();
+                //println!("================ carabistouille =====================");
+                let mut tmp_teams = teams.clone();
+                // add incantation action to players concerned by it
+                for team in &tmp_teams
+                {
+                    for tmp_player in &mut team.players.clone()
+                    {
+                        if tmp_player.coord.x == player.coord.x
+                            && tmp_player.coord.y == player.coord.y
+                            && tmp_player.level == player.level
+                        {
+                            let incantation: Action = action_from_action_template(INCANTATION);
+                            tmp_player.actions.insert(0, incantation);
+                        }
+                    }
+                }
+                *teams = tmp_teams.clone();
+                return true;
             }
             // qu'est ce qu'on envoie en cas d'erreur ???
-            "".to_string()
+            false
         }
 
         pub fn broadcast(&self, player: &Player, teams: &Vec<Team>) -> bool
@@ -501,6 +533,17 @@ pub mod action
         //println!("cell ({},{}) --> {:?}", coord.x, coord.y, cell_content);
         
         cell_content
+    }
+
+    fn action_from_action_template(action_template: ActionTemplate) -> Action
+    {
+        Action
+        {
+            state: State::Idle,
+            action_name: action_template.action_name.to_string(),
+            count: action_template.count,
+            arg: action_template.arg
+        }
     }
 
     fn get_level_requirement() -> Vec<HashMap<String, u8>>

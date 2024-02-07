@@ -23,9 +23,10 @@ fn extract_lines(buffer: &str) -> Vec<String>
 
 fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command_sent: &mut u8)
 {
+    println!("vec string {:?}", vec_string);
     for command in vec_string
     {
-        //println!("vec string {:?}", vec_string);
+        //println!("command {:?}", command);
         if *number_command_sent < vec_string.len() as u8
         {
             //stream.write(command.as_bytes());
@@ -39,7 +40,7 @@ fn send_command(stream: &mut TcpStream, vec_string: &Vec<String>, number_command
             {
                 result_array[i] = c as u8;
             }
-            println!("{:?}", result_array);
+            //println!("result array --> {:?}", result_array);
             stream.write(&result_array);
             // stream.write(b"]");
             // use std::thread::sleep as sleep;
@@ -54,7 +55,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let teamname = args[1].clone();
-    let mut data = [0 as u8; BUF_SIZE]; // using 6 byte buffer
+    let mut data = [0 as u8; BUF_SIZE];
     //println!("{:?}", args);
 
     let contents = fs::read_to_string(args[2].clone())
@@ -98,7 +99,7 @@ fn main() {
                             {
                                 send_command(&mut stream, &vec_command, &mut number_command_send);
                                 //number_command_send = 0;
-                                //println!("{}", number_command_send);
+                                println!("{}", number_command_send);
                                 // let text = from_utf8(&data).unwrap();
                             }
                             _ => 

@@ -1,7 +1,7 @@
 
 pub mod game_utils
 {
-    use crate::action::action::ReadyAction;
+    use crate::action::action::{ReadyAction, SpecialActionParam, FORK, INCANTATION};
     use crate::cell::cell::Point;
     use crate::player;
     use crate::player::player::{Egg, Player, PlayerType};
@@ -50,6 +50,52 @@ pub mod game_utils
             }
         }
         None
+    }
+
+    pub fn get_pre_actions(teams: &Vec<Team>) -> Option<Vec<(u32, SpecialActionParam)>>
+    {
+        let mut actions: Vec<(u32, SpecialActionParam)> = Vec::new();
+
+        for team in teams
+        {
+            for player in &team.players
+            {
+                if player.actions.len() > 0
+                {
+                    if player.actions[0].action_name == format!("fork") && player.actions[0].count + 1 == FORK.count
+                    {
+                        actions.push((player.id, SpecialActionParam::ActionFork(player.id)));
+                    }
+                    else if player.actions[0].action_name == format!("incantation") && player.actions[0].count + 1 == INCANTATION.count
+                    {
+                        let mut ids: Vec<u32> = find_players_from_coord(player.coord.clone(), teams);
+                        //let index = ids.iter().position(|x| *x == player.id).unwrap();
+                        //ids.remove(index);
+                        actions.push((player.id, SpecialActionParam::ActionIncantation(player.coord.clone(), player.level, ids)));
+                    }
+                }
+            }
+        }
+        //println!("action for sending before pkt ---> {:?}", actions);
+        if actions.len() == 0 { return  None; }
+        Some(actions)
+    }
+
+    pub fn find_players_from_coord(coord: Point, teams: &Vec<Team>) -> Vec<u32>
+    {
+        let mut ids: Vec<u32> = Vec::new();
+
+        for team in teams
+        {
+            for player in &team.players
+            {
+                if coord.x == player.coord.x && coord.y == player.coord.y
+                {
+                    ids.push(player.id);
+                }
+            }
+        }
+        ids
     }
 
     pub fn find_hatch_egg(teams: Vec<Team>) -> Option<Egg>

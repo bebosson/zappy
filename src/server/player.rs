@@ -31,6 +31,7 @@ pub mod player
         pub id: u32,
         pub count: u16,
         pub coord: Point,
+        pub life: u16,
     }
 
     impl Egg
@@ -38,6 +39,7 @@ pub mod player
         pub fn update(&mut self)
         {
             self.count = self.count - 1;
+            self.life = self.life - 1;
         }
     }
 
@@ -78,7 +80,7 @@ pub mod player
             }
         }
 
-        pub fn new_from_egg(id_a: u32, coord: Point) -> Self
+        pub fn new_from_egg(id_a: u32, coord: Point, life: u16) -> Self
         {
             Player
             {
@@ -86,7 +88,7 @@ pub mod player
                 port: 42,
                 coord: Point::new(coord.x, coord.y),
                 ivt: Ressources::new(),
-                life: 1260,
+                life: life,
                 orientation: get_random_orientation(),
                 level: 1,
                 actions: Vec::new(),

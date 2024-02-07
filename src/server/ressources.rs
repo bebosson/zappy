@@ -14,8 +14,32 @@ pub mod ressources{
     }
 
     impl Ressources{
-        pub fn new() -> Self {
-            Ressources { food: 0, sibur: 0, mendiane: 0, linemate: 0, deraumere: 0, phiras: 0, thystate: 0 }
+        pub fn new() -> Self
+        {
+            /*
+            Ressources
+            {
+                food: 1,
+                sibur: 1,
+                mendiane: 1,
+                linemate: 1,
+                deraumere: 1,
+                phiras: 1,
+                thystate: 1
+            }
+            */
+            //*
+            Ressources
+            {
+                food: 0,
+                sibur: 0,
+                mendiane: 0,
+                linemate: 0,
+                deraumere: 0,
+                phiras: 0,
+                thystate: 0
+            }
+            //*/
         }
     }
 }

@@ -12,12 +12,13 @@ use teams::team::Team;
 use stream_utils::stream_utils::send_pkt_to_stream;
 use utils::utils::copy_until_char;
 use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
+use crate::action::action::SpecialActionParam;
 use crate::paket_crafter::paquet_crafter::{ craft_gfx_packet_action_receive,
                                             craft_gfx_packet_action_ready,
                                             craft_gfx_packet_die,
                                             craft_client_packet_action_receive, craft_client_packet_die, craft_client_packet_action_ready};
 use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl};
-use crate::game_utils::game_utils::{find_player_from_id, find_index_action};
+use crate::game_utils::game_utils::{find_index_action, find_player_from_id, get_pre_actions};
 
 
 //add module in the crate root
@@ -222,10 +223,10 @@ fn get_obj_from_string(command: &String) -> Option<String>
 **  return:
 **      Vec<Action>: list of all new cmd receive from stream
 **/
-fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<ReadyAction>
+fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)// -> Vec<ReadyAction>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
-    let mut actions : Vec<ReadyAction> = Vec::new();
+    //let mut actions : Vec<ReadyAction> = Vec::new();
 
     // println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
@@ -245,10 +246,10 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
                     // pertinentes ! il faudra donc modifier ca pour n'envoyer des cmd
                     // que lorsqu'on a une reponse
                     let mut vec_string_command: Vec<String> = Vec::with_capacity(10);
-                    // cut the buffer into 10 segments of 16 bytes to retreive the 10 cmds
+                    // cut the buffer into 10 segments of BUF_SIZE/10 bytes to retreive the 10 cmds
                     for i in 0..10
                     {
-                        vec_string_command.push(copy_until_char(&action_receive[16 * i..16 * (i+1)], b'0'));
+                        vec_string_command.push(copy_until_char(&action_receive[(BUF_SIZE / 10) * i..(BUF_SIZE / 10) * (i+1)], b'0'));
                     }
                     if vec_string_command.is_empty() == false
                     {
@@ -257,7 +258,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
                             if is_valid_cmd(&string_command)
                             {
                                 // keep the new commands into actions in order to create corresponding gfx pkt
-                                actions.push(ReadyAction{id: player.id, action: Action::new_from_string(string_command.clone())});
+                                //actions.push(ReadyAction{id: player.id, action: Action::new_from_string(string_command.clone())});
                                 player.action_push(string_command);
                             }
                         }
@@ -268,7 +269,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> V
         }
     }
     //println!("new actions receive -> {:?}", actions);
-    actions
+    //actions
 }
 
 /*
@@ -351,7 +352,7 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
         "pose" => ActionResult::ActionBool(action.pose(&mut game_ctrl.cells[player.coord.y as usize][player.coord.x as usize], &mut player, ready_action.action.arg.clone().unwrap())),
         "expulse" => ActionResult::ActionBool(action.expulse(&mut game_ctrl.teams, &player, &game_ctrl.x, &game_ctrl.y)),
         "broadcast" => ActionResult::ActionBool(action.broadcast(&player, &game_ctrl.teams)),
-        "incantation" => ActionResult::ActionString(action.incantation(&player, &game_ctrl.teams)),
+        "incantation" => ActionResult::ActionBool(action.incantation(&player, &mut game_ctrl.teams)),
         "fork" => ActionResult::ActionBool(action.fork(&player, &mut game_ctrl.teams)),
         "connect_nbr" => ActionResult::ActionInt(action.connect_nbr(&player, &game_ctrl.teams)),
         _ => return None,
@@ -385,7 +386,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let mut stream_hashmap: HashMap<u32, TcpStream> = HashMap::new();
     // use to trigger the execution
     let mut wait_for_answer: bool = true;
-    let mut current_actions: Vec<ReadyAction> = Vec::new();
+    let mut special_actions: Vec<(u32, SpecialActionParam)> = Vec::new();
+    //let mut current_actions: Vec<ReadyAction> = Vec::new();
     let mut hashmap: HashMap<String, u8> = HashMap::new();
     let mut id: u32 = 0;
     //let duration: Duration = Duration::new(0, 100000000);
@@ -440,15 +442,16 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let _ = stream.1.write(b"sendme");
                 wait_for_answer = false;
             }
-            current_actions = receive_action(stream.1, &mut game_ctrl);
-            //current_actions = receive_action(& mut stream_hashmap.1.unwrap(), & mut game_ctrl);
+            //current_actions = receive_action(stream.1, &mut game_ctrl);
+            receive_action(stream.1, &mut game_ctrl);
             break ;
         }
 
+        /*
         // this part is in order to send pkt to gfx & client at the beginning of the receive cmd
         if current_actions.len() > 0
         {
-            println!("current action list --> {:?}", current_actions);
+            //println!("current action list --> {:?}", current_actions);
             for current_action in &current_actions
             {
                 let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
@@ -466,18 +469,19 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 }
             }
         }
+        */
 
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
         if ready_action_list.len() > 0
         {
-            println!("ready action list --> {:?}", ready_action_list);
+            //println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
                 // list before = get list des id de tous les joueurs
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
-                println!("gfx pkt ready action ---> {:?}", gfx_pkt);
+                //println!("gfx pkt ready action ---> {:?}", gfx_pkt);
                 if let Some(packet) = gfx_pkt 
                 {
                     send_pkt_to_stream(packet, &mut gfx_stream);
@@ -521,6 +525,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             // update game datas (life, counter etc) and retrieve dead players list
             let dead_players = game_ctrl.update_game_datas();
 
+            // send dead pkt to clients and gfx
             let mut pkts = craft_gfx_packet_die(&dead_players);
             if let Some(gfx_pkt_tmp) = pkts
             {
@@ -529,13 +534,42 @@ fn main() -> Result<(), Box<dyn GenericError>>
             pkts = craft_client_packet_die(&dead_players);
             if let Some(client_pkt_tmp) = pkts
             {
-                //send_pkt_to_stream(client_pkt_tmp, &vec_stream);
+                println!("dead players --> {:?}", dead_players);
+                for i in 0..dead_players.len()
+                {
+                    // ici il faut envoyer le paquet mort a chaque stream concerne
+                    send_pkt_to_stream(client_pkt_tmp.clone(), stream_hashmap.get(&dead_players[i].0).unwrap());
+                }
+            }
+
+            // send gfx pkt for starting fork or incantation
+            if let Some(special_actions) = get_pre_actions(&game_ctrl.teams)
+            {
+                //println!("special actions --> {:?}", special_actions);
+                pkts = craft_gfx_packet_action_receive(special_actions.clone(), &game_ctrl.teams);
+                if let Some(gfx_pkt_tmp) = pkts
+                {
+                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
+                }
+                pkts = craft_client_packet_action_receive(&special_actions.clone());
+                if let Some(gfx_pkt_tmp) = pkts
+                {
+                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
+                }
             }
 
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("\n");
+
+            /*
+            if game_ctrl.timestamp > 1262
+            {
+                use std::process;
+                process::exit(0);
+            }
+            */
         }
 
         //game_ctrl.print_all_players();

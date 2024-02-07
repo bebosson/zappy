@@ -41,15 +41,24 @@ pub mod init
     {
         let mut rng = thread_rng();
 
-        let ressource : Ressources = Ressources {
+        let ressource : Ressources = Ressources
+        {
+            /*    
             food        : rng.gen_range(0..4),
-            //sibur       : rng.gen_range(0..2),
-            sibur       : 1,
+            sibur       : rng.gen_range(0..2),
             mendiane    : rng.gen_range(0..2),
             linemate    : rng.gen_range(0..2),
             deraumere   : rng.gen_range(0..2),
             phiras      : rng.gen_range(0..2),
             thystate    : rng.gen_range(0..2),
+            */
+            food        : 1,
+            sibur       : 1,
+            mendiane    : 1,
+            linemate    : 1,
+            deraumere   : 1,
+            phiras      : 1,
+            thystate    : 1,
         };
         let cell : Cell = Cell {ressources : ressource};
         cell
