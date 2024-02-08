@@ -225,7 +225,7 @@ pub mod paquet_crafter
                 // TODO :   creer le paquet de debut d'incantation 
                 //          + creer le paquet de debut d'incantation
                 let mut ret = 0;
-                //println!("action result ma gueule {:?}", action_result);
+                println!("action result ma gueule {:?}", action_result);
                 if *action_result == ActionResult::ActionBool(true) { ret = 1; }
                 cmd.push(packet_gfx_incantation(player.coord.clone(), ret));
                 cmd.push(packet_gfx_level_up(player.id, player.level));
@@ -235,7 +235,8 @@ pub mod paquet_crafter
                     {
                         if incantation_is_finish(&player, &tmp_player)
                         {
-                            cmd.push(packet_gfx_level_up(tmp_player.id, tmp_player.level));
+                            println!("tmp player lvl ----> {}", tmp_player.level);
+                            cmd.push(packet_gfx_level_up(tmp_player.id, tmp_player.level + ret));
                         }
                     }
                 }
@@ -384,7 +385,7 @@ pub mod paquet_crafter
     /*
     **  generate pkt for player `incantation` command
     */
-    fn packet_gfx_incantation(coord: Point, result: u32) -> String
+    fn packet_gfx_incantation(coord: Point, result: u8) -> String
     {
         format!("pie {} {} {}\n", coord.x, coord.y, result)
     }
@@ -505,8 +506,10 @@ pub mod paquet_crafter
     {
         if ref_player.coord.x == player.coord.x && ref_player.coord.y == player.coord.y
         {
+            
             if player.actions.len() > 0
             {
+                println!("lala --------> {}", player.actions[0].count);
                 if player.actions[0].action_name == "incantation".to_string() &&
                     player.actions[0].count == 1
                 {

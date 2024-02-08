@@ -16,7 +16,7 @@ pub mod ressources{
     impl Ressources{
         pub fn new() -> Self
         {
-            /*
+            //*
             Ressources
             {
                 food: 1,
@@ -27,8 +27,8 @@ pub mod ressources{
                 phiras: 1,
                 thystate: 1
             }
-            */
-            //*
+            //*/
+            /*
             Ressources
             {
                 food: 0,
@@ -39,7 +39,7 @@ pub mod ressources{
                 phiras: 0,
                 thystate: 0
             }
-            //*/
+            */
         }
     }
 }

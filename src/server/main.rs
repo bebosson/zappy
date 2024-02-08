@@ -18,7 +18,7 @@ use crate::paket_crafter::paquet_crafter::{ craft_gfx_packet_action_receive,
                                             craft_gfx_packet_die,
                                             craft_client_packet_action_receive, craft_client_packet_die, craft_client_packet_action_ready};
 use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl};
-use crate::game_utils::game_utils::{find_index_action, find_player_from_id, get_pre_actions};
+use crate::game_utils::game_utils::{find_index_action, find_player_from_id, get_post_actions, get_pre_actions};
 
 
 //add module in the crate root
@@ -360,9 +360,12 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     // find the index of the executed actions
     // TODO:    normally the ready action is on top of the
     //          player action list, so the index is always 0
-    let index_action = find_index_action(&ready_action, &player);
-    // remove action from player action list
-    player.actions.remove(index_action);
+    if ready_action.action.action_name != "incantation".to_string()
+    {
+        let index_action = find_index_action(&ready_action, &player);
+        // remove action from player action list
+        player.actions.remove(index_action);
+    }
     
     // TODO :   find a better way to apply the modification of the
     //          player on the team directly
@@ -519,8 +522,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
         if game_ctrl.update_timestamp(&start_time, vec_args.t)
         {
-            game_ctrl.print_all_players();
             println!("timestamp --> {}", game_ctrl.timestamp);
+            game_ctrl.print_all_players();
             
             // update game datas (life, counter etc) and retrieve dead players list
             let dead_players = game_ctrl.update_game_datas();
@@ -545,7 +548,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             // send gfx pkt for starting fork or incantation
             if let Some(special_actions) = get_pre_actions(&game_ctrl.teams)
             {
-                //println!("special actions --> {:?}", special_actions);
+                println!("special actions --> {:?}", special_actions);
                 pkts = craft_gfx_packet_action_receive(special_actions.clone(), &game_ctrl.teams);
                 if let Some(gfx_pkt_tmp) = pkts
                 {
@@ -558,18 +561,37 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 }
             }
 
+            // remove action with count = 0
+            for team in &mut game_ctrl.teams
+            {
+                for player in &mut team.players
+                {
+                    if player.actions.len() > 0
+                    {
+                        if player.actions[0].action_name == "incantation".to_string()
+                            && player.actions[0].count == 0
+                        {
+                            println!("chien du chocolat");
+                            player.actions.remove(0);
+                        }
+                    }
+                }
+            }
+
+
+            game_ctrl.print_all_players();
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("\n");
 
-            /*
-            if game_ctrl.timestamp > 1262
+            //*
+            if game_ctrl.timestamp > 303
             {
                 use std::process;
                 process::exit(0);
             }
-            */
+            //*/
         }
 
         //game_ctrl.print_all_players();

@@ -37,7 +37,15 @@ pub mod stream_utils
     
         for pkt in pkts
         {
-            println!("sending pkt -----> {}", pkt);
+            //println!("stream port ---> {}", stream.peer_addr().unwrap().port());
+            if stream.peer_addr().unwrap().port() == 1312
+            {
+                println!("sending pkt to gfx -----> {}", pkt);
+            }
+            else
+            {
+                println!("sending pkt to cli -----> {}", pkt);
+            }
             buf = translate_string_to_buffer(pkt);
             let _ = stream.write(&buf);
         }

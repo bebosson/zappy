@@ -52,6 +52,35 @@ pub mod game_utils
         None
     }
 
+    pub fn get_post_actions(teams: &Vec<Team>) -> Option<Vec<(u32, SpecialActionParam)>>
+    {
+        let mut actions: Vec<(u32, SpecialActionParam)> = Vec::new();
+
+        for team in teams
+        {
+            for player in &team.players
+            {
+                if player.actions.len() > 0
+                {
+                    if player.actions[0].action_name == format!("fork") && player.actions[0].count == 0
+                    {
+                        actions.push((player.id, SpecialActionParam::ActionFork(player.id)));
+                    }
+                    else if player.actions[0].action_name == format!("incantation") && player.actions[0].count == 0
+                    {
+                        let mut ids: Vec<u32> = find_players_from_coord(player.coord.clone(), teams);
+                        //let index = ids.iter().position(|x| *x == player.id).unwrap();
+                        //ids.remove(index);
+                        actions.push((player.id, SpecialActionParam::ActionIncantation(player.coord.clone(), player.level, ids)));
+                    }
+                }
+            }
+        }
+        //println!("action for sending before pkt ---> {:?}", actions);
+        if actions.len() == 0 { return  None; }
+        Some(actions)
+    }
+
     pub fn get_pre_actions(teams: &Vec<Team>) -> Option<Vec<(u32, SpecialActionParam)>>
     {
         let mut actions: Vec<(u32, SpecialActionParam)> = Vec::new();
