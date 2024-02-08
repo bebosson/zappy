@@ -450,30 +450,6 @@ fn main() -> Result<(), Box<dyn GenericError>>
             break ;
         }
 
-        /*
-        // this part is in order to send pkt to gfx & client at the beginning of the receive cmd
-        if current_actions.len() > 0
-        {
-            //println!("current action list --> {:?}", current_actions);
-            for current_action in &current_actions
-            {
-                let gfx_pkt = craft_gfx_packet_action_receive(&current_action, &game_ctrl.teams);
-                if let Some(gfx_pkt_tmp) = gfx_pkt
-                {
-                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
-                }
-
-                let client_pkt = craft_client_packet_action_receive(&current_action.action, &game_ctrl.teams);
-                if let Some(client_pkt_tmp) = client_pkt
-                {
-                    // l'action est une incantation, donc je recup les stream concernees par l'incantation
-                    // et je boucle pour envoyer a tous ces streams
-                    send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&current_action.id).unwrap());
-                }
-            }
-        }
-        */
-
         // when command finish to wait, execute action and send packet to client and gfx
         let ready_action_list = get_ready_action_list(&game_ctrl.teams);
         if ready_action_list.len() > 0
@@ -481,7 +457,6 @@ fn main() -> Result<(), Box<dyn GenericError>>
             //println!("ready action list --> {:?}", ready_action_list);
             for ready_action in ready_action_list
             {
-                // list before = get list des id de tous les joueurs
                 let action_result = exec_action(&ready_action, & mut game_ctrl);
                 let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
                 //println!("gfx pkt ready action ---> {:?}", gfx_pkt);
@@ -493,27 +468,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 if let Some(packet) = client_pkt 
                 {
                     send_pkt_to_stream(packet, stream_hashmap.get(&ready_action.id).unwrap());
-
-                    //hashmap.add_keys(ready_action.id) == stream(packet)
                 }
-
-                //let tmp_id = get_nb_total_players(teams)
-                //stream.incoming()
-                //{
-                //    hashmap.insert(tmp_id, stream);
-                //}
-
-                // list after = get list des id de tous les joueurs
-                // new list = list after - list before  == nouveau joueurs ne d'un oeuf
-                // hashmap.insert(new list) --> on aura un stream = None
-
-                
-
-                // pour le fork, on attend les 42 cycles et on envoie ok au client
-                // a ce moment le client cree un nouveau stream directement pour son oeuf
-                // le serveur ecoute donc (avec timeout) si y a un stream incomming()
-
-                // on associe le strean incomming au hashmap.id = stream
 
             }
         }
