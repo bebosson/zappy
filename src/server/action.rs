@@ -535,7 +535,7 @@ pub mod action
         cell_content
     }
 
-    fn action_from_action_template(action_template: ActionTemplate) -> Action
+    pub fn action_from_action_template(action_template: ActionTemplate) -> Action
     {
         Action
         {

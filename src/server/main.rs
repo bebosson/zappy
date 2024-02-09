@@ -7,16 +7,14 @@ use std::time::Duration;
 use std::time::SystemTime;
 
 use args::args::{Args, ParsingError};
+use game_utils::game_utils::find_players_from_coord;
 use gamecontrol::game::GameController;
 use teams::team::Team;
 use stream_utils::stream_utils::send_pkt_to_stream;
 use utils::utils::copy_until_char;
-use action::action::{ReadyAction, Action, ActionResult, NO_ACTION};
+use action::action::{action_from_action_template, Action, ActionResult, ReadyAction, INCANTATION, NO_ACTION};
 use crate::action::action::SpecialActionParam;
-use crate::paket_crafter::paquet_crafter::{ craft_gfx_packet_action_receive,
-                                            craft_gfx_packet_action_ready,
-                                            craft_gfx_packet_die,
-                                            craft_client_packet_action_receive, craft_client_packet_die, craft_client_packet_action_ready};
+use crate::paket_crafter::paquet_crafter::{ craft_client_packet_action_ready, craft_client_packet_die, craft_client_packet_pre_action, craft_gfx_packet_action_ready, craft_gfx_packet_action_receive, craft_gfx_packet_die, craft_gfx_packet_pre_action};
 use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl};
 use crate::game_utils::game_utils::{find_index_action, find_player_from_id, get_post_actions, get_pre_actions};
 
@@ -223,10 +221,10 @@ fn get_obj_from_string(command: &String) -> Option<String>
 **  return:
 **      Vec<Action>: list of all new cmd receive from stream
 **/
-fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)// -> Vec<ReadyAction>
+fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController) -> Vec<ReadyAction>
 {
     let mut action_receive = [0 as u8; BUF_SIZE];
-    //let mut actions : Vec<ReadyAction> = Vec::new();
+    let mut actions : Vec<ReadyAction> = Vec::new();
 
     // println!("receive action from : {:?}", stream);
     if let  Ok(_) = stream.read(& mut action_receive)  
@@ -258,7 +256,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)// ->
                             if is_valid_cmd(&string_command)
                             {
                                 // keep the new commands into actions in order to create corresponding gfx pkt
-                                //actions.push(ReadyAction{id: player.id, action: Action::new_from_string(string_command.clone())});
+                                actions.push(ReadyAction{id: player.id, action: Action::new_from_string(string_command.clone())});
                                 player.action_push(string_command);
                             }
                         }
@@ -269,7 +267,7 @@ fn receive_action(stream: & mut TcpStream, game_ctrl: & mut GameController)// ->
         }
     }
     //println!("new actions receive -> {:?}", actions);
-    //actions
+    actions
 }
 
 /*
@@ -383,6 +381,49 @@ fn exec_action(ready_action: &ReadyAction, game_ctrl: & mut GameController) -> O
     Some(ret)
 }
 
+
+/*
+** For action incantation I must to apply incantation of the concerned players on the game
+** params:
+**      ready_actiom: action receive during the current loop
+**      teams: teams
+**  return:
+**      Vec<u32> list of players concerned by the incantation
+**
+**  TODO: tester
+*/
+fn apply_incantation_to_concerned_players(ready_action: &ReadyAction, teams: &mut Vec<Team>) -> Vec<u32>
+{
+    let mut ids: Vec<u32> = Vec::new();
+
+    match ready_action.action.action_name.as_str()
+    {
+        "incantation" => 
+        {
+            //let mut teams = teams_ref.clone();
+            let player_ref = find_player_from_id(teams.clone(), &ready_action.id);
+            if let Some(player) = player_ref
+            {
+                ids = find_players_from_coord(player.coord, &teams);
+                let incantation = action_from_action_template(INCANTATION);
+                for team in teams
+                {
+                    for player in &mut team.players
+                    {
+                        if ids.contains(&player.id)
+                        {
+                            player.actions.insert(0, incantation.clone());
+                        }
+                    }
+                }
+                //teams_ref = &teams.clone();
+            }
+        },
+        _ => ()
+    }
+    ids
+}
+
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
     let mut gfx_stream: TcpStream;
@@ -397,6 +438,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
 
     // parsing
     let mut vec_args = parsing()?;
+
+    let mut new_actions: Vec<ReadyAction> = Vec::new();
 
     // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
@@ -435,54 +478,67 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let start_time = SystemTime::now();
     //println!("start_time ---> {:?}", start_time);
 
-    loop
+    Ok(loop
     {
+        // BIG condition d'arret de la loop
+        if check_winner(&game_ctrl.teams) { break; }
+
+
+
+        // 1
+        // receive pkts from clients
         for stream in &mut stream_hashmap
-        {
-            if check_winner(&game_ctrl.teams) { break; }
+        {  
             if wait_for_answer == true
             {
                 let _ = stream.1.write(b"sendme");
                 wait_for_answer = false;
             }
-            //current_actions = receive_action(stream.1, &mut game_ctrl);
-            receive_action(stream.1, &mut game_ctrl);
-            break ;
+            println!("stream --> {:?}", stream);
+            new_actions = receive_action(stream.1, &mut game_ctrl);
+            //break ;
         }
 
-        // when command finish to wait, execute action and send packet to client and gfx
-        let ready_action_list = get_ready_action_list(&game_ctrl.teams);
-        if ready_action_list.len() > 0
-        {
-            //println!("ready action list --> {:?}", ready_action_list);
-            for ready_action in ready_action_list
-            {
-                let action_result = exec_action(&ready_action, & mut game_ctrl);
-                let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
-                //println!("gfx pkt ready action ---> {:?}", gfx_pkt);
-                if let Some(packet) = gfx_pkt 
-                {
-                    send_pkt_to_stream(packet, &mut gfx_stream);
-                }
-                let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
-                if let Some(packet) = client_pkt 
-                {
-                    send_pkt_to_stream(packet, stream_hashmap.get(&ready_action.id).unwrap());
-                }
 
+        // 2
+        // get new actions for sending pre pakets
+        for new_action in &new_actions
+        {
+            let players_incantated = apply_incantation_to_concerned_players(new_action, &mut game_ctrl.teams);
+            let gfx_pkt = craft_gfx_packet_pre_action(new_action, players_incantated, &game_ctrl.teams);
+    
+            if let Some(gfx_pkt_tmp) = gfx_pkt
+            {
+                send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
+            }
+            let client_pkt = craft_client_packet_pre_action(&new_action);
+            if let Some(client_pkt_tmp) = client_pkt
+            {
+                send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&new_action.id).unwrap());
+                for id in players_incantated
+                {
+                    send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&id).unwrap());
+                }
             }
         }
 
-        //println!("end of get ready action");
 
+        // 3
+        // update le timestamp
         if game_ctrl.update_timestamp(&start_time, vec_args.t)
         {
             println!("timestamp --> {}", game_ctrl.timestamp);
             game_ctrl.print_all_players();
             
+
+
+            // 3.1
             // update game datas (life, counter etc) and retrieve dead players list
             let dead_players = game_ctrl.update_game_datas();
 
+
+
+            //3.2
             // send dead pkt to clients and gfx
             let mut pkts = craft_gfx_packet_die(&dead_players);
             if let Some(gfx_pkt_tmp) = pkts
@@ -500,38 +556,21 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 }
             }
 
-            // send gfx pkt for starting fork or incantation
-            if let Some(special_actions) = get_pre_actions(&game_ctrl.teams)
-            {
-                println!("special actions --> {:?}", special_actions);
-                pkts = craft_gfx_packet_action_receive(special_actions.clone(), &game_ctrl.teams);
-                if let Some(gfx_pkt_tmp) = pkts
-                {
-                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
-                }
-                pkts = craft_client_packet_action_receive(&special_actions.clone());
-                if let Some(gfx_pkt_tmp) = pkts
-                {
-                    send_pkt_to_stream(gfx_pkt_tmp, &mut gfx_stream);
-                }
-            }
 
-            // remove action with count = 0
-            for team in &mut game_ctrl.teams
+            /*
+            EST CE QU'une action A FINIT ?
             {
-                for player in &mut team.players
+                ID_ACTION_FINIT = EXEC Action // ReadyAction
+                CRAFT pkts
+                est ce qu'il y a eu un fork ?
                 {
-                    if player.actions.len() > 0
-                    {
-                        if player.actions[0].action_name == "incantation".to_string()
-                            && player.actions[0].count == 0
-                        {
-                            println!("chien du chocolat");
-                            player.actions.remove(0);
-                        }
-                    }
+                    ecoute nouveau stream
+                    enregistrer nouveau player
                 }
+
             }
+            */
+            
 
 
             game_ctrl.print_all_players();
@@ -540,17 +579,26 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("------------------------------------------------------------------------------");
             println!("\n");
 
-            //*
+            /*
             if game_ctrl.timestamp > 303
             {
                 use std::process;
                 process::exit(0);
             }
-            //*/
+            */
         }
 
+
+        /*
+        if game_ctrl.timestamp > 303
+        {
+            use std::process;
+            process::exit(0);
+        }
+        */
+
         //game_ctrl.print_all_players();
-    }
+    })
     
 }
 

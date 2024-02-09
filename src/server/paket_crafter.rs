@@ -52,6 +52,29 @@ pub mod paquet_crafter
         None
     }
 
+    pub fn craft_gfx_packet_pre_action(action_ref: &ReadyAction, ids: Vec<u32>, teams: &Vec<Team>) -> Option<Vec<String>>
+    {
+        let action = action_ref.clone();
+        let mut pkt: Vec<String> = Vec::new();
+        let player = find_player_from_id(teams.clone(), &action.id).unwrap();
+
+        match action.action.action_name.as_str()
+        {
+            "incantation" =>
+            {
+                pkt.push(packet_gfx_incantation_start(&player.coord, ids, player.level))
+            },
+            "fork" =>
+            {
+                pkt.push(packet_gfx_fork_start(action.id))
+            },
+            _ => ()
+        }
+        //println!("craft_gfx_packet_action_receive ---------------> {:?}", pkt);
+        if pkt.len() > 0 { return Some(pkt); }
+        None
+    }
+
     pub fn craft_client_packet_action_ready(ready_action_ref: &ReadyAction, action_result_ref: &Option<ActionResult>, game_ctrl: &GameController) -> Option<Vec<String>>
     {
         let ready_action: ReadyAction = ready_action_ref.clone();
@@ -425,16 +448,14 @@ pub mod paquet_crafter
     }
 
 
-    pub fn craft_client_packet_action_receive(actions: &Vec<(u32, SpecialActionParam)>) -> Option<Vec<String>>
+    pub fn craft_client_packet_pre_action(action: &ReadyAction) -> Option<Vec<String>>
     {
         let mut pkts: Vec<String> = Vec::new();
-        for action in actions
+        
+        match action.action.action_name.as_str()
         {
-            match action.1
-            {
-                SpecialActionParam::ActionIncantation(_, _, _) => pkts.push(packet_client_pre_incantation()),
-                _ => { return None; }
-            }
+            "incantation" => pkts.push(packet_client_pre_incantation()),
+            _ => { return None; }
         }
         Some(pkts)
     }
