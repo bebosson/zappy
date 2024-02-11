@@ -10,7 +10,7 @@ pub mod game
     use crate::player::player::{Player, PlayerType};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
-    use crate::game_utils::game_utils::get_dead_people_list;
+    use crate::game_utils::game_utils::{get_dead_people_list, get_dead_player_list};
 
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
@@ -88,20 +88,9 @@ pub mod game
         **/
         pub fn update_game_datas(& mut self) -> Vec<(u32, PlayerType)>
         {
-            // get all id of eggs and players before updating timestamp
-            let before_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
+            let dead_list = get_dead_player_list(&self.teams.clone());
             self.teams.iter_mut().for_each(|t| t.update());
-            // get all id of eggs and players after updating timestamp
-            let after_id: Vec<(u32, PlayerType)> = self.get_players_eggs_id();
-
-            //println!("before and after {:?} --- {:?}", before_id, after_id);
-
-            // remove after_id from before_id
-            let dead_players: Vec<(u32, PlayerType)> = get_dead_people_list(before_id, after_id);
-            
-            // retirer de la hashmap de stream les dead_players
-
-            dead_players
+            dead_list
         }
 
         pub fn packet_gfx_ressources_map(&self) -> Vec<String>

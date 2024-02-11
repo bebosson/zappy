@@ -13,9 +13,9 @@ use teams::team::Team;
 use stream_utils::stream_utils::send_pkt_to_stream;
 use utils::utils::copy_until_char;
 use action::action::{action_from_action_template, Action, ActionResult, ReadyAction, INCANTATION, NO_ACTION};
-use crate::action::action::SpecialActionParam;
+use crate::action::action::{get_nb_total_players, SpecialActionParam};
 use crate::paket_crafter::paquet_crafter::{ craft_client_packet_action_ready, craft_client_packet_die, craft_client_packet_pre_action, craft_gfx_packet_action_ready, craft_gfx_packet_action_receive, craft_gfx_packet_die, craft_gfx_packet_pre_action};
-use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl};
+use crate::stream_utils::stream_utils::{first_connection_gfx, get_initial_gfx_packets_from_game_ctrl, get_new_connexion};
 use crate::game_utils::game_utils::{find_index_action, find_player_from_id, get_post_actions, get_pre_actions};
 
 
@@ -426,63 +426,57 @@ fn apply_incantation_to_concerned_players(ready_action: &ReadyAction, teams: &mu
 
 fn main() -> Result<(), Box<dyn GenericError>> 
 {
+    let mut id: u32 = 0;
     let mut gfx_stream: TcpStream;
     let mut stream_hashmap: HashMap<u32, TcpStream> = HashMap::new();
-    // use to trigger the execution
     let mut wait_for_answer: bool = true;
-    let mut special_actions: Vec<(u32, SpecialActionParam)> = Vec::new();
-    //let mut current_actions: Vec<ReadyAction> = Vec::new();
     let mut hashmap: HashMap<String, u8> = HashMap::new();
-    let mut id: u32 = 0;
-    //let duration: Duration = Duration::new(0, 100000000);
-
-    // parsing
     let mut vec_args = parsing()?;
-
     let mut new_actions: Vec<ReadyAction> = Vec::new();
+
 
     // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
-    //println!("{:#?}", game_ctrl);
+
 
     // network initialization
     let listener = TcpListener::bind(format!("127.0.0.1:{}", vec_args.p)).unwrap();
     println!("Start server");
 
+
     // listen for client connexion
     for tcpstream in listener.incoming()
     {
-        // println!("{:?}", listener.incoming());
-        let mut stream = tcpstream?;
         println!("Connection established!");
-        
-        let _ = stream.write(b"Bienvenue");
-        // register the new client
-        create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
-        // set timeout
-        let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
-        //game_ctrl.stream_hashmap.insert(id, Some(stream));
-        stream_hashmap.insert(id, stream);
-        if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) { break ; }
+        if let Ok(mut stream) = tcpstream
+        {
+            let _ = stream.write(b"Bienvenue");
+            // register the new client
+            create_player_or_kick(& mut stream, & mut hashmap, & mut vec_args, & mut id, & mut game_ctrl);
+            // set timeout
+            let _ = stream.set_read_timeout(Some(Duration::new(0, 10000000)));
+            stream_hashmap.insert(id, stream);
+            if client_all_connect(vec_args.c, vec_args.n.len(), & mut hashmap) { break ; }
+        }
     }
-
     println!("Everybody is connected, let's start the game");
-    //println!("vec stream -> {:?}", vec_stream);
     
+
     // connect to GFX server
     gfx_stream = first_connection_gfx().unwrap();
     // connexion handshake with the GFX server
     send_pkt_to_stream(get_initial_gfx_packets_from_game_ctrl(&game_ctrl), &mut gfx_stream); 
     
+
     // take initial timestamp
     let start_time = SystemTime::now();
     //println!("start_time ---> {:?}", start_time);
+
 
     Ok(loop
     {
         // BIG condition d'arret de la loop
         if check_winner(&game_ctrl.teams) { break; }
-
 
 
         // 1
@@ -494,18 +488,18 @@ fn main() -> Result<(), Box<dyn GenericError>>
                 let _ = stream.1.write(b"sendme");
                 wait_for_answer = false;
             }
-            println!("stream --> {:?}", stream);
+            //println!("stream --> {:?}", stream);
             new_actions = receive_action(stream.1, &mut game_ctrl);
             //break ;
         }
 
 
         // 2
-        // get new actions for sending pre pakets
+        // get new actions for sending pre pakets (fork / incantation)
         for new_action in &new_actions
         {
             let players_incantated = apply_incantation_to_concerned_players(new_action, &mut game_ctrl.teams);
-            let gfx_pkt = craft_gfx_packet_pre_action(new_action, players_incantated, &game_ctrl.teams);
+            let gfx_pkt = craft_gfx_packet_pre_action(new_action, players_incantated.clone(), &game_ctrl.teams);
     
             if let Some(gfx_pkt_tmp) = gfx_pkt
             {
@@ -514,10 +508,10 @@ fn main() -> Result<(), Box<dyn GenericError>>
             let client_pkt = craft_client_packet_pre_action(&new_action);
             if let Some(client_pkt_tmp) = client_pkt
             {
-                send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&new_action.id).unwrap());
+                send_pkt_to_stream(client_pkt_tmp.clone(), stream_hashmap.get(&new_action.id).unwrap());
                 for id in players_incantated
                 {
-                    send_pkt_to_stream(client_pkt_tmp, stream_hashmap.get(&id).unwrap());
+                    send_pkt_to_stream(client_pkt_tmp.clone(), stream_hashmap.get(&id).unwrap());
                 }
             }
         }
@@ -529,13 +523,12 @@ fn main() -> Result<(), Box<dyn GenericError>>
         {
             println!("timestamp --> {}", game_ctrl.timestamp);
             game_ctrl.print_all_players();
-            
 
 
             // 3.1
             // update game datas (life, counter etc) and retrieve dead players list
             let dead_players = game_ctrl.update_game_datas();
-
+            if dead_players.len() > 0 { println!("dead_players {:?}", dead_players); }
 
 
             //3.2
@@ -548,56 +541,54 @@ fn main() -> Result<(), Box<dyn GenericError>>
             pkts = craft_client_packet_die(&dead_players);
             if let Some(client_pkt_tmp) = pkts
             {
-                println!("dead players --> {:?}", dead_players);
                 for i in 0..dead_players.len()
                 {
-                    // ici il faut envoyer le paquet mort a chaque stream concerne
-                    send_pkt_to_stream(client_pkt_tmp.clone(), stream_hashmap.get(&dead_players[i].0).unwrap());
+                    send_pkt_to_stream(vec![client_pkt_tmp[0].clone()], stream_hashmap.get(&dead_players[i].0).unwrap());
                 }
             }
 
 
-            /*
-            EST CE QU'une action A FINIT ?
+            // 3.3
+            // check action finsished and exec --> if an action is fork, listen new connexion
+            let ready_action_list = get_ready_action_list(&game_ctrl.teams);
+            if ready_action_list.len() > 0
             {
-                ID_ACTION_FINIT = EXEC Action // ReadyAction
-                CRAFT pkts
-                est ce qu'il y a eu un fork ?
+                //println!("ready action list --> {:?}", ready_action_list);
+                for ready_action in ready_action_list
                 {
-                    ecoute nouveau stream
-                    enregistrer nouveau player
+                    // list before = get list des id de tous les joueurs
+                    let action_result = exec_action(&ready_action, & mut game_ctrl);
+                    let gfx_pkt = craft_gfx_packet_action_ready(&ready_action, &action_result, &game_ctrl);
+                    //println!("gfx pkt ready action ---> {:?}", gfx_pkt);
+                    if let Some(packet) = gfx_pkt 
+                    {
+                        send_pkt_to_stream(packet, &mut gfx_stream);
+                    }
+                    let client_pkt = craft_client_packet_action_ready(&ready_action, &action_result, &game_ctrl);
+                    if let Some(packet) = client_pkt 
+                    {
+                        send_pkt_to_stream(packet, stream_hashmap.get(&ready_action.id).unwrap());
+                    }
+
+                    if ready_action.action.action_name.as_str() == "fork"
+                    { // TODO
+                        let new_connexion_opt: Option<HashMap<u32, TcpStream>> = get_new_connexion(get_nb_total_players(&game_ctrl.teams), &listener); // egg id
+                        if let Some(new_connexion) = new_connexion_opt
+                        {
+                            println!("new connexion incomming --> {:?}", new_connexion);
+                            stream_hashmap.extend(new_connexion);
+                        }
+                    }
                 }
-
-            }
-            */
-            
-
-
-            game_ctrl.print_all_players();
+            }            
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("------------------------------------------------------------------------------");
             println!("\n");
 
-            /*
-            if game_ctrl.timestamp > 303
-            {
-                use std::process;
-                process::exit(0);
-            }
-            */
-        }
-
-
-        /*
-        if game_ctrl.timestamp > 303
-        {
             use std::process;
-            process::exit(0);
+            if game_ctrl.timestamp > 1261 { process::exit(0); }
         }
-        */
-
-        //game_ctrl.print_all_players();
     })
     
 }

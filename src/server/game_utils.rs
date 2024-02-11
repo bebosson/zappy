@@ -1,6 +1,8 @@
 
 pub mod game_utils
 {
+    use std::collections::HashMap;
+
     use crate::action::action::{ReadyAction, SpecialActionParam, FORK, INCANTATION};
     use crate::cell::cell::Point;
     use crate::player;
@@ -19,14 +21,81 @@ pub mod game_utils
     **  return:
     **      vector of dead players
     **/
-    pub fn get_dead_people_list(before_id: Vec<(u32, PlayerType)>, after_id: Vec<(u32, PlayerType)>) -> Vec<(u32, PlayerType)>
+    pub fn get_dead_people_list(before_ids: Vec<(u32, PlayerType)>, after_ids: Vec<(u32, PlayerType)>) -> Vec<(u32, PlayerType)>
     {
-        before_id
-            .iter()
-            .filter(|&x| !after_id.contains(&x))
-            .chain(after_id.iter().filter(|&x| !before_id.contains(&x)))
-            .cloned()
-            .collect()
+        let mut result_list: Vec<(u32, PlayerType)> = Vec::new();
+        let mut duplicates: Vec<u32> = Vec::new();
+
+        for (num, _type) in after_ids.clone()
+        {
+            if !duplicates.contains(&num) { duplicates.push(num); }
+        }
+
+        println!("aaaaaaaaaaaaaaaa      {:?}", duplicates);
+
+        duplicates.sort();
+        duplicates.dedup();
+
+        println!("aaaaaaaaaaaaaaaa      {:?}", duplicates);
+ 
+        for after_id in after_ids.clone()
+        {
+            if duplicates.contains(&after_id.0) && after_id.1 == PlayerType::Egg
+            {
+                println!("remove this player from list --> {:?}", after_id)
+            }
+            else
+            {
+                result_list.push(after_id);    
+            }
+        }
+
+        println!("ttttttttttttttttttt      {:?}", result_list);
+
+        let mut ids: Vec<(u32, PlayerType)> = Vec::new();
+       
+        for before_id in before_ids
+        {
+            if !result_list.contains(&before_id)
+            {
+
+            }
+        }
+
+        ids
+
+        //let after_ids = after_ids.clone().iter().filter(&|| ).clone().collect();
+        //let ids: Vec<(u32, PlayerType)> = before_ids
+        //            .iter()
+        //            .filter(|&x| !after_ids.contains(&x))
+        //            .chain(after_ids.iter().filter(|&x| !before_ids.contains(&x)))
+        //            .cloned()
+        //            .collect();
+        //ids
+    }
+
+    pub fn get_dead_player_list(teams: &Vec<Team>) -> Vec<(u32, PlayerType)>
+    {
+        let mut dead_list: Vec<(u32, PlayerType)> = Vec::new();
+
+        for team in teams
+        {
+            for player in team.players.clone()
+            {
+                if player.life - 1 == 0
+                {
+                    dead_list.push((player.id, PlayerType::Player));
+                }
+            }
+            for egg in team.eggs.clone()
+            {
+                if egg.life - 1 == 0
+                {
+                    dead_list.push((egg.id, PlayerType::Egg));
+                }
+            }
+        }
+        dead_list
     }
 
     /*

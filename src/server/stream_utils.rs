@@ -1,7 +1,10 @@
 pub mod stream_utils
 {
-    use std::net::TcpStream;
     use std::io::{Write, Read};
+    use std::collections::HashMap;
+    use std::net::{TcpListener, TcpStream};
+    use std::thread;
+    use std::time::Duration;
 
     use crate::{BUF_SIZE, GFX_SERVER_PORT};
     use crate::gamecontrol::game::GameController;
@@ -38,19 +41,59 @@ pub mod stream_utils
         for pkt in pkts
         {
             //println!("stream port ---> {}", stream.peer_addr().unwrap().port());
-            if stream.peer_addr().unwrap().port() == 1312
+            if stream.peer_addr().unwrap().port() == GFX_SERVER_PORT
             {
-                println!("sending pkt to gfx -----> {}", pkt);
+                println!("sending pkt to gfx --> {}", pkt);
             }
             else
             {
-                println!("sending pkt to cli -----> {}", pkt);
+                println!("sending pkt to cli --> {}", pkt);
             }
             buf = translate_string_to_buffer(pkt);
             let _ = stream.write(&buf);
         }
-
     }
+
+
+    /*
+    **  Tente d'ecouter les nouvelles connexions entrantes apres 
+    **  l'eclosion d'un oeuf, pour l'instant il y a 10 tentatives 
+    **  avant qu'on dise que la connexion a echoué (et on passe en mode non bloquant
+    **  avec 10ms de sleep)
+    */
+    pub fn get_new_connexion(id: u32, listener: &TcpListener) -> Option<HashMap<u32, TcpStream>>
+    {
+        let mut new_connexion: HashMap<u32, TcpStream> = HashMap::new();
+
+        if let Ok(_nb) = listener.set_nonblocking(true)
+        {
+            let mut i = 0;
+            for tcpstream in listener.incoming()
+            {
+                thread::sleep(Duration::from_millis(10));
+                if i > 9 { break ; } // on laisse 10 try au client pour l'y connecter au server
+                match tcpstream
+                {
+                    Ok(stream) =>
+                    {
+                        //println!("new connexion is ---------> {:?}", stream);
+                        new_connexion.insert(id, stream);
+                    },
+                    Err(_) =>
+                    {
+                        println!("no stream found");
+                    }
+                }
+                i += 1;
+            }
+            let _ = listener.set_nonblocking(false);
+        }
+        
+        if new_connexion.is_empty() { return None; }
+        Some(new_connexion)
+    }
+
+
 
     pub fn first_connection_gfx() -> Option<TcpStream>
     {

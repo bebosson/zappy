@@ -45,7 +45,7 @@ pub mod team
                 }
             });
             // remove dead eggs
-            self.eggs.retain(|egg| egg.count != 0 || egg.life != 0);
+            self.eggs.retain(|egg| egg.count > 0 && egg.life > 0);
         }
 
         pub fn packet_gfx_add_teams(&self) -> Vec<String>
