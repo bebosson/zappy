@@ -575,7 +575,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
                         let new_connexion_opt: Option<HashMap<u32, TcpStream>> = get_new_connexion(get_nb_total_players(&game_ctrl.teams), &listener); // egg id
                         if let Some(new_connexion) = new_connexion_opt
                         {
-                            println!("new connexion incomming --> {:?}", new_connexion);
+                            //println!("new connexion incomming --> {:?}", new_connexion);
                             stream_hashmap.extend(new_connexion);
                         }
                     }
@@ -586,8 +586,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
             println!("------------------------------------------------------------------------------");
             println!("\n");
 
-            use std::process;
-            if game_ctrl.timestamp > 1261 { process::exit(0); }
+            //use std::process;
+            //if game_ctrl.timestamp > 1260 { process::exit(0); }
         }
     })
     

@@ -47,7 +47,7 @@ pub mod stream_utils
             }
             else
             {
-                println!("sending pkt to cli --> {}", pkt);
+                println!("sending pkt to cli {} --> {}", stream.peer_addr().unwrap().port(), pkt);
             }
             buf = translate_string_to_buffer(pkt);
             let _ = stream.write(&buf);
@@ -76,12 +76,13 @@ pub mod stream_utils
                 {
                     Ok(stream) =>
                     {
-                        //println!("new connexion is ---------> {:?}", stream);
+                        // est ce qu'on fait la procedure de handshake ??
+                        println!("a new connexion is incomming --> {:?}", stream);
                         new_connexion.insert(id, stream);
                     },
                     Err(_) =>
                     {
-                        println!("no stream found");
+                        println!("no stream found try {}/10", i + 1);
                     }
                 }
                 i += 1;

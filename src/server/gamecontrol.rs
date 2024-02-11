@@ -10,7 +10,7 @@ pub mod game
     use crate::player::player::{Player, PlayerType};
     use crate::cell::cell::Cell;
     use crate::init::init::init_map_cells;
-    use crate::game_utils::game_utils::{get_dead_people_list, get_dead_player_list};
+    use crate::game_utils::game_utils::get_dead_player_list;
 
 /**********************************************************************
  * Struct GameController, this is the main structure of the program
