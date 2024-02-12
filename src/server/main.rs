@@ -431,9 +431,8 @@ fn main() -> Result<(), Box<dyn GenericError>>
     let mut stream_hashmap: HashMap<u32, TcpStream> = HashMap::new();
     let mut wait_for_answer: bool = true;
     let mut hashmap: HashMap<String, u8> = HashMap::new();
-    let mut vec_args = parsing()?;
     let mut new_actions: Vec<ReadyAction> = Vec::new();
-
+    let mut vec_args = parsing()?;
 
     // game controller initialization
     let mut game_ctrl = GameController::new(&vec_args);
@@ -490,7 +489,7 @@ fn main() -> Result<(), Box<dyn GenericError>>
             }
             //println!("stream --> {:?}", stream);
             new_actions = receive_action(stream.1, &mut game_ctrl);
-            //break ;
+            break ;
         }
 
 
